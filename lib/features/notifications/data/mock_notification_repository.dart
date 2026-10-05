@@ -2,141 +2,122 @@ import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/features/notifications/domain/notification_models.dart';
 import 'package:mlc_mobile/features/notifications/domain/notification_repository.dart';
 
-/// État en mémoire avec données fictives réalistes (Mali).
 class MockNotificationRepository implements NotificationRepository {
   const MockNotificationRepository();
 
-  static final List<AppNotification> _items = _initial();
+  static final List<AppNotification> _items = _seed();
+  static bool simulateError = false;
 
-  static List<AppNotification> _initial() => [
-        AppNotification(
-          id: 'notif-1',
-          titre: 'Demande de mise en relation',
-          message:
-              'Atelier Métallurgie du Baoulé (Bamako, Commune VI) souhaite échanger avec vous suite à votre profil en Soudure.',
-          type: NotificationType.miseEnRelation,
-          dateCreation: DateTime.now().subtract(const Duration(minutes: 25)),
-          destinataire: NotificationDestinataire(
-            lu: false,
-            dateReception:
-                DateTime.now().subtract(const Duration(minutes: 25)),
-          ),
-          referenceId: 'rel-1',
-        ),
-        AppNotification(
-          id: 'notif-2',
-          titre: 'Compétence validée',
-          message:
-              'Félicitations ! Votre compétence « Soudure à l\'arc » a été validée avec succès par le Centre de Formation Professionnelle de Bamako.',
-          type: NotificationType.validation,
-          dateCreation: DateTime.now().subtract(const Duration(hours: 3)),
-          destinataire: NotificationDestinataire(
-            lu: false,
-            dateReception: DateTime.now().subtract(const Duration(hours: 3)),
-          ),
-          referenceId: 'val-1',
-        ),
-        AppNotification(
-          id: 'notif-3',
-          titre: 'Nouvelle opportunité disponible',
-          message:
-              'Programme d\'insertion et perfectionnement pour jeunes artisans à Sikasso. Les candidatures sont ouvertes.',
-          type: NotificationType.opportunite,
-          dateCreation: DateTime.now().subtract(const Duration(days: 1)),
-          destinataire: NotificationDestinataire(
-            lu: true,
-            dateReception: DateTime.now().subtract(const Duration(days: 1)),
-            dateLecture:
-                DateTime.now().subtract(const Duration(hours: 18)),
-          ),
-          referenceId: 'opp-1',
-        ),
-        AppNotification(
-          id: 'notif-4',
-          titre: 'Passeport de compétences incomplet',
-          message:
-              'Ajoutez une attestation ou un document pour valoriser votre compétence en Couture professionnelle.',
-          type: NotificationType.rappel,
-          dateCreation: DateTime.now().subtract(const Duration(days: 2)),
-          destinataire: NotificationDestinataire(
-            lu: true,
-            dateReception: DateTime.now().subtract(const Duration(days: 2)),
-            dateLecture:
-                DateTime.now().subtract(const Duration(days: 1, hours: 4)),
-          ),
-          referenceId: 'cc-2',
-        ),
-        AppNotification(
-          id: 'notif-5',
-          titre: 'Session de tests numériques',
-          message:
-              'Évaluez vos compétences numériques de base et obtenez un badge officiel vérifié pour votre passeport.',
-          type: NotificationType.systeme,
-          dateCreation: DateTime.now().subtract(const Duration(days: 4)),
-          destinataire: NotificationDestinataire(
-            lu: true,
-            dateReception: DateTime.now().subtract(const Duration(days: 4)),
-            dateLecture: DateTime.now().subtract(const Duration(days: 3)),
-          ),
-          referenceId: 'test-1',
-        ),
-      ];
+  static List<AppNotification> _seed() {
+    final now = DateTime.now();
+    return [
+      AppNotification(
+        id: 'nd-1',
+        notificationId: 'n-1',
+        title: 'Votre compétence a été validée',
+        message:
+            'Votre compétence en soudure à l’arc a été validée par un centre.',
+        type: NotificationType.validation,
+        receivedAt: now.subtract(const Duration(hours: 2)),
+        createdAt: now.subtract(const Duration(hours: 2)),
+        isRead: false,
+      ),
+      AppNotification(
+        id: 'nd-2',
+        notificationId: 'n-2',
+        title: 'Nouvelle opportunité à Bamako',
+        message: 'Une formation en énergie solaire vient d’être publiée.',
+        type: NotificationType.opportunite,
+        receivedAt: now.subtract(const Duration(days: 1)),
+        createdAt: now.subtract(const Duration(days: 1)),
+        isRead: false,
+      ),
+      AppNotification(
+        id: 'nd-3',
+        notificationId: 'n-3',
+        title: 'Demande de mise en relation',
+        message:
+            'Une organisation souhaite échanger au sujet de vos compétences.',
+        type: NotificationType.miseEnRelation,
+        receivedAt: now.subtract(const Duration(days: 3)),
+        createdAt: now.subtract(const Duration(days: 3)),
+        isRead: true,
+        readAt: now.subtract(const Duration(days: 2)),
+      ),
+      AppNotification(
+        id: 'nd-4',
+        notificationId: 'n-4',
+        title: 'Bienvenue sur MaliCompétences',
+        message: 'Complétez votre passeport pour présenter vos compétences.',
+        type: NotificationType.systeme,
+        receivedAt: now.subtract(const Duration(days: 5)),
+        createdAt: now.subtract(const Duration(days: 5)),
+        isRead: true,
+        readAt: now.subtract(const Duration(days: 5)),
+      ),
+    ];
+  }
 
-  /// Pour les tests : remet la liste initiale.
-  static void resetForTests() => _items
-    ..clear()
-    ..addAll(_initial());
+  static void resetForTests() {
+    _items
+      ..clear()
+      ..addAll(_seed());
+    simulateError = false;
+  }
 
-  Future<void> _latency([int ms = 300]) =>
-      Future<void>.delayed(Duration(milliseconds: ms));
+  Future<void> _wait() async {
+    await Future<void>.delayed(const Duration(milliseconds: 380));
+    if (simulateError) throw const NetworkFailure();
+  }
 
-  @override
-  Future<List<AppNotification>> list({int page = 0, int size = 20}) async {
-    await _latency(350);
-    final sorted = [..._items]
-      ..sort((a, b) => b.dateCreation.compareTo(a.dateCreation));
-    return sorted.skip(page * size).take(size).toList();
+  List<AppNotification> _page(List<AppNotification> items, int page, int size) {
+    if (page < 0 || size <= 0) throw ValidationFailure();
+    final start = page * size;
+    if (start >= items.length) return const [];
+    return items.skip(start).take(size).toList();
   }
 
   @override
-  Future<int> unreadCount() async {
-    await _latency(150);
-    return _items.where((n) => !n.lu).length;
+  Future<List<AppNotification>> list({int page = 0, int size = 20}) async {
+    await _wait();
+    final sorted = [..._items]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return _page(sorted, page, size);
   }
 
   @override
   Future<AppNotification> get(String id) async {
-    await _latency(250);
-    if (id == 'error-network') throw const NetworkFailure();
-    if (id == 'error-server') throw const ServerFailure();
-
-    final notif = _items.firstWhere(
-      (n) => n.id == id,
+    await _wait();
+    if (id == 'network-error') throw const NetworkFailure();
+    return _items.firstWhere(
+      (e) => e.id == id,
       orElse: () => throw const NotFoundFailure(),
     );
-    return notif;
   }
 
   @override
-  Future<void> markRead(String id) async {
-    await _latency(200);
-    final index = _items.indexWhere((n) => n.id == id);
-    if (index >= 0) {
-      final notif = _items[index];
-      if (!notif.lu) {
-        _items[index] = notif.markAsRead();
-      }
-    }
+  Future<int> unreadCount() async {
+    await _wait();
+    return _items.where((e) => !e.isRead).length;
+  }
+
+  @override
+  Future<AppNotification> markRead(String id) async {
+    await _wait();
+    final i = _items.indexWhere((e) => e.id == id);
+    if (i < 0) throw const NotFoundFailure();
+    final updated = _items[i].copyWith(isRead: true, readAt: DateTime.now());
+    _items[i] = updated;
+    return updated;
   }
 
   @override
   Future<void> markAllRead() async {
-    await _latency(300);
+    await _wait();
     final now = DateTime.now();
     for (var i = 0; i < _items.length; i++) {
-      if (!_items[i].lu) {
-        _items[i] = _items[i].markAsRead(readAt: now);
-      }
+      if (!_items[i].isRead)
+        _items[i] = _items[i].copyWith(isRead: true, readAt: now);
     }
   }
 }

@@ -14,6 +14,7 @@ import 'package:mlc_mobile/features/competences/presentation/competences_provide
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
+import 'package:mlc_mobile/features/home/presentation/blocks/opportunites_block.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -35,36 +36,46 @@ class HomeScreen extends ConsumerWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        body: ListView(padding: EdgeInsets.zero, children: [
-          _Header(
-              comps: comps, onRetry: () => ref.invalidate(competencesProvider)),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const _PassportCard(),
-              const SizedBox(height: 28),
-              const SectionHeader(title: 'Accès rapide'),
-              GridView.count(
-                crossAxisCount: 4,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 8,
-                childAspectRatio: 0.8,
+        body: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _Header(
+              comps: comps,
+              onRetry: () => ref.invalidate(competencesProvider),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final s in _shortcuts)
-                    _Shortcut(
-                        label: s.$1,
-                        icon: s.$2,
-                        onTap: () => context.push(s.$3))
+                  const _PassportCard(),
+                  const SizedBox(height: 28),
+                  const SectionHeader(title: 'Accès rapide'),
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.8,
+                    children: [
+                      for (final s in _shortcuts)
+                        _Shortcut(
+                          label: s.$1,
+                          icon: s.$2,
+                          onTap: () => context.push(s.$3),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  const NotificationsBlock(),
+                  const SizedBox(height: 28),
+                  const OpportunitesBlock(),
                 ],
               ),
-              const SizedBox(height: 28),
-              const NotificationsBlock(),
-            ]),
-          ),
-        ]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -83,66 +94,91 @@ class _Header extends StatelessWidget {
         color: AppColors.green,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
-      child: Stack(children: [
-        const Positioned.fill(child: BogolanPattern(color: Color(0x2EC09427))),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Bonjour',
-                  style: text.bodyMedium?.copyWith(color: Colors.white70)),
-              const SizedBox(height: 4),
-              Text('Votre passeport\nde compétences',
-                  style: text.headlineMedium?.copyWith(color: Colors.white)),
-              const SizedBox(height: 24),
-              comps.when(
-                loading: () => const SizedBox(
-                    height: 72,
-                    child: Center(
-                        child:
-                            CircularProgressIndicator(color: AppColors.gold))),
-                error: (e, _) => Row(children: [
-                  Expanded(
-                      child: Text(failureMessage(e),
-                          style: const TextStyle(color: Colors.white))),
-                  TextButton(
-                    onPressed: onRetry,
-                    style:
-                        TextButton.styleFrom(foregroundColor: AppColors.gold),
-                    child: const Text('Réessayer'),
-                  ),
-                ]),
-                data: (items) {
-                  int n(EtatCompetence e) =>
-                      items.where((c) => c.etat == e).length;
-                  return Column(children: [
-                    Row(children: [
-                      _Stat(
-                          label: 'déclarées',
-                          value: n(EtatCompetence.declaree)),
-                      _Stat(
-                          label: 'attestées',
-                          value: n(EtatCompetence.attestee)),
-                      _Stat(
-                          label: 'validées', value: n(EtatCompetence.validee)),
-                    ]),
-                    const SizedBox(height: 20),
-                    AppProgressBar(
-                      onDark: true,
-                      label: 'Compétences validées',
-                      value: items.isEmpty
-                          ? 0
-                          : n(EtatCompetence.validee) / items.length,
-                    ),
-                  ]);
-                },
-              ),
-            ]),
+      child: Stack(
+        children: [
+          const Positioned.fill(
+            child: BogolanPattern(color: Color(0x2EC09427)),
           ),
-        ),
-      ]),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bonjour',
+                    style: text.bodyMedium?.copyWith(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Votre passeport\nde compétences',
+                    style: text.headlineMedium?.copyWith(color: Colors.white),
+                  ),
+                  const SizedBox(height: 24),
+                  comps.when(
+                    loading: () => const SizedBox(
+                      height: 72,
+                      child: Center(
+                        child: CircularProgressIndicator(color: AppColors.gold),
+                      ),
+                    ),
+                    error: (e, _) => Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            failureMessage(e),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: onRetry,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.gold,
+                          ),
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    ),
+                    data: (items) {
+                      int n(EtatCompetence e) =>
+                          items.where((c) => c.etat == e).length;
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              _Stat(
+                                label: 'déclarées',
+                                value: n(EtatCompetence.declaree),
+                              ),
+                              _Stat(
+                                label: 'attestées',
+                                value: n(EtatCompetence.attestee),
+                              ),
+                              _Stat(
+                                label: 'validées',
+                                value: n(EtatCompetence.validee),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          AppProgressBar(
+                            onDark: true,
+                            label: 'Compétences validées',
+                            value: items.isEmpty
+                                ? 0
+                                : n(EtatCompetence.validee) / items.length,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -156,41 +192,55 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Expanded(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('$value', style: text.displaySmall?.copyWith(color: Colors.white)),
-        Text(label, style: text.bodySmall?.copyWith(color: Colors.white70)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$value',
+            style: text.displaySmall?.copyWith(color: Colors.white),
+          ),
+          Text(label, style: text.bodySmall?.copyWith(color: Colors.white70)),
+        ],
+      ),
     );
   }
 }
 
 class _Shortcut extends StatelessWidget {
-  const _Shortcut(
-      {required this.label, required this.icon, required this.onTap});
+  const _Shortcut({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
   final String label;
   final IconData icon;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Column(children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-                color: AppColors.greenSoft,
-                borderRadius: BorderRadius.circular(18)),
-            child: Icon(icon, color: AppColors.green, size: 26),
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Column(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.greenSoft,
+            borderRadius: BorderRadius.circular(18),
           ),
-          const SizedBox(height: 8),
-          Text(label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: Theme.of(context).textTheme.labelSmall),
-        ]),
-      );
+          child: Icon(icon, color: AppColors.green, size: 26),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+      ],
+    ),
+  );
 }
 
 class _PassportCard extends ConsumerWidget {
@@ -203,31 +253,44 @@ class _PassportCard extends ConsumerWidget {
     final completion = ref.watch(profileCompletionProvider);
     return AppCard(
       onTap: () => context.go('/passeport'),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          const Icon(AppIcons.passport, color: AppColors.green),
-          const SizedBox(width: 10),
-          Expanded(child: Text('Mon passeport', style: text.titleMedium)),
-          if (citizenCode(citoyen) != null)
-            Text(citizenCode(citoyen)!,
-                style: text.labelMedium?.copyWith(color: AppColors.goldDeep)),
-        ]),
-        const SizedBox(height: 14),
-        completion.when(
-          loading: () => const SizedBox(
-              height: 40, child: Center(child: CircularProgressIndicator())),
-          error: (e, _) => Text(failureMessage(e), style: text.bodySmall),
-          data: (c) =>
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            AppProgressBar(label: 'Passeport complété', value: c.ratio),
-            if (c.next != null) ...[
-              const SizedBox(height: 10),
-              Text('Prochaine étape : ${c.next!.hint}',
-                  style: text.bodySmall?.copyWith(color: AppColors.muted)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(AppIcons.passport, color: AppColors.green),
+              const SizedBox(width: 10),
+              Expanded(child: Text('Mon passeport', style: text.titleMedium)),
+              if (citizenCode(citoyen) != null)
+                Text(
+                  citizenCode(citoyen)!,
+                  style: text.labelMedium?.copyWith(color: AppColors.goldDeep),
+                ),
             ],
-          ]),
-        ),
-      ]),
+          ),
+          const SizedBox(height: 14),
+          completion.when(
+            loading: () => const SizedBox(
+              height: 40,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (e, _) => Text(failureMessage(e), style: text.bodySmall),
+            data: (c) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppProgressBar(label: 'Passeport complété', value: c.ratio),
+                if (c.next != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    'Prochaine étape : ${c.next!.hint}',
+                    style: text.bodySmall?.copyWith(color: AppColors.muted),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,14 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:mlc_mobile/core/widgets/placeholder_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/core/utils/validators.dart';
+import 'package:mlc_mobile/core/widgets/app_text_field.dart';
+import 'package:mlc_mobile/core/widgets/state_views.dart';
+import 'package:mlc_mobile/core/widgets/form_scaffold.dart';
+import 'package:mlc_mobile/features/parametres/domain/settings_models.dart';
+import 'package:mlc_mobile/features/parametres/presentation/settings_providers.dart';
 
-// TODO: Afficher/éditer téléphone et email du compte (Utilisateur). Changement de téléphone = revalidation (contrat backend à définir).
-
-//   COMPOSANTS À RÉUTILISER (ne pas recréer) : FormScaffold, AppTextField.
-// Route : /parametres/compte  |  Écran : Compte
-class AccountSettingsScreen extends StatelessWidget {
+class AccountSettingsScreen extends ConsumerWidget {
   const AccountSettingsScreen({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final account = ref.watch(accountProvider);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mon compte')),
+      body: AsyncValueView<UserAccount>(
+        value: account,
+        onRetry: () => ref.invalidate(accountProvider),
+        data: (value) => _AccountForm(account: value),
+      ),
+    );
+  }
+}
+
+class _AccountForm extends ConsumerStatefulWidget {
+  const _AccountForm({required this.account});
+  final UserAccount account;
+  @override
+  ConsumerState<_AccountForm> createState() => _AccountFormState();
+}
+
+class _AccountFormState extends ConsumerState<_AccountForm> {
+  final _key = GlobalKey<FormState>();
+  late final TextEditingController _phone, _email;
+  bool _saving = false;
+  Object? _error;
+  @override
+  void initState() {
+    super.initState();
+    _phone = TextEditingController(text: widget.account.telephone);
+    _email = TextEditingController(text: widget.account.email ?? '');
+  }
 
   @override
-  Widget build(BuildContext context) =>
-      const PlaceholderScreen(title: "Compte");
+  void dispose() {
+    _phone.dispose();
+    _email.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FormScaffold(
+    title: 'Coordonnées',
+    formKey: _key,
+    submitLabel: 'Enregistrer',
+    isLoading: _saving,
+    error: _error,
+    onSubmit: _save,
+    children: [
+      AppTextField(
+        label: 'Téléphone',
+        controller: _phone,
+        keyboardType: TextInputType.phone,
+        validator: Validators.phone,
+      ),
+      AppTextField(
+        label: 'Email (facultatif)',
+        controller: _email,
+        keyboardType: TextInputType.emailAddress,
+        validator: Validators.emailOptional,
+      ),
+      const Text(
+        'Une modification du téléphone peut demander une nouvelle vérification.',
+        style: TextStyle(color: Colors.black54),
+      ),
+    ],
+  );
+  Future<void> _save() async {
+    if (!_key.currentState!.validate()) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(settingsRepositoryProvider)
+          .updateAccount(
+            AccountChanges(telephone: _phone.text, email: _email.text),
+          );
+      ref.read(accountRevisionProvider.notifier).state++;
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Coordonnées mises à jour.')),
+        );
+    } catch (e) {
+      if (mounted)
+        setState(() => _error = e is AppFailure ? e : const UnknownFailure());
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 }

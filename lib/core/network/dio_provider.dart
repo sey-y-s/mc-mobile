@@ -13,15 +13,18 @@ final dioProvider = Provider<Dio>((ref) {
   );
 });
 
-Dio buildDio(
-    {required TokenStorage storage,
-    required Future<void> Function() onUnauthorized}) {
-  final dio = Dio(BaseOptions(
-    baseUrl: AppConfig.apiBaseUrl,
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 20),
-    headers: {'Accept': 'application/json'},
-  ));
+Dio buildDio({
+  required TokenStorage storage,
+  required Future<void> Function() onUnauthorized,
+}) {
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: AppConfig.apiBaseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      headers: {'Accept': 'application/json'},
+    ),
+  );
   // Volontairement aucun LogInterceptor : pas de token ni de données perso dans les logs.
   dio.interceptors.add(AuthInterceptor(storage, onUnauthorized));
   return dio;
@@ -36,7 +39,9 @@ class AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     if (!_isAuthCall(options)) {
       final token = await _storage.readAccess();
       if (token != null) options.headers['Authorization'] = 'Bearer $token';
@@ -46,8 +51,10 @@ class AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onError(
-      DioException err, ErrorInterceptorHandler handler) async {
-    // TODO: si le backend expose POST /api/auth/refresh, tenter ici UN renouvellement
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    // TODO: si le backend expose le renouvellement de session, utiliser ApiEndpoints.refresh.
     // (verrou pour éviter les refresh concurrents), rejouer la requête une fois, et n'appeler
     // _onUnauthorized() qu'en cas d'échec. Tant que le backend ne le propose pas : logout direct.
     if (err.response?.statusCode == 401 && !_isAuthCall(err.requestOptions)) {

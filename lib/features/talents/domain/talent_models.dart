@@ -9,20 +9,24 @@ enum TalentAvailability {
   final String apiCode;
   final String label;
 
-  static TalentAvailability fromApi(String? value) => TalentAvailability.values
-      .firstWhere((e) => e.apiCode == value?.toUpperCase(),
-          orElse: () => TalentAvailability.disponible);
+  static TalentAvailability fromApi(String? value) =>
+      TalentAvailability.values.firstWhere(
+        (e) => e.apiCode == value?.toUpperCase(),
+        orElse: () => TalentAvailability.disponible,
+      );
 }
 
 class TalentCompetence {
   const TalentCompetence({
     required this.name,
     required this.level,
+    this.competenceId,
     this.validated = false,
     this.hasEvidence = false,
   });
   final String name;
   final Niveau level;
+  final String? competenceId;
   final bool validated;
   final bool hasEvidence;
 
@@ -30,6 +34,7 @@ class TalentCompetence {
       TalentCompetence(
         name: (json['competenceNom'] ?? json['nom'] ?? 'Compétence').toString(),
         level: Niveau.fromApi((json['niveau'] ?? 'DEBUTANT').toString()),
+        competenceId: json['competenceId']?.toString(),
         validated: json['validee'] == true || json['validee'] == 'VALIDEE',
         hasEvidence: json['aPreuve'] == true,
       );
@@ -46,6 +51,9 @@ class TalentSummary {
     required this.validationCount,
     required this.evidenceCount,
     required this.hasPortfolio,
+    this.regionId,
+    this.communeId,
+    this.metierIds = const [],
   });
   final String id;
   final List<TalentCompetence> skills;
@@ -55,22 +63,40 @@ class TalentSummary {
   final int validationCount;
   final int evidenceCount;
   final bool hasPortfolio;
+  final String? regionId;
+  final String? communeId;
+  final List<String> metierIds;
 
   factory TalentSummary.fromJson(Map<String, dynamic> json) {
     final rawSkills = json['competences'];
+    final rawMetiers = json['metierIds'];
     return TalentSummary(
       id: (json['id'] ?? json['identifiantAnonyme'] ?? '').toString(),
       skills: rawSkills is List
-          ? rawSkills.whereType<Map>().map((e) =>
-              TalentCompetence.fromJson(Map<String, dynamic>.from(e))).toList()
+          ? rawSkills
+                .whereType<Map>()
+                .map(
+                  (e) =>
+                      TalentCompetence.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .toList()
           : const [],
-      regionName: (json['regionNom'] ?? json['region'] ?? 'Région non précisée').toString(),
-      communeName: (json['communeNom'] ?? json['commune'] ?? 'Commune non précisée').toString(),
+      regionName: (json['regionNom'] ?? json['region'] ?? 'Région non précisée')
+          .toString(),
+      communeName:
+          (json['communeNom'] ?? json['commune'] ?? 'Commune non précisée')
+              .toString(),
       availability: TalentAvailability.fromApi(
-          (json['disponibilite'] ?? json['availability'])?.toString()),
+        (json['disponibilite'] ?? json['availability'])?.toString(),
+      ),
       validationCount: _int(json['nbValidations']),
       evidenceCount: _int(json['nbPreuves']),
       hasPortfolio: json['aPortfolio'] == true,
+      regionId: json['regionId']?.toString(),
+      communeId: json['communeId']?.toString(),
+      metierIds: rawMetiers is List
+          ? rawMetiers.map((e) => e.toString()).toList()
+          : const [],
     );
   }
 }
@@ -85,16 +111,17 @@ class TalentProfileAnonymized {
 
   factory TalentProfileAnonymized.fromJson(Map<String, dynamic> json) =>
       TalentProfileAnonymized(
-        summary: TalentSummary.fromJson(json['resume'] is Map
-            ? Map<String, dynamic>.from(json['resume'] as Map)
-            : json),
-        portfolioTitles: (json['portfolio'] is List
-                ? json['portfolio'] as List
-                : const [])
-            .whereType<Map>()
-            .map((e) => (e['titre'] ?? '').toString())
-            .where((e) => e.isNotEmpty)
-            .toList(),
+        summary: TalentSummary.fromJson(
+          json['resume'] is Map
+              ? Map<String, dynamic>.from(json['resume'] as Map)
+              : json,
+        ),
+        portfolioTitles:
+            (json['portfolio'] is List ? json['portfolio'] as List : const [])
+                .whereType<Map>()
+                .map((e) => (e['titre'] ?? '').toString())
+                .where((e) => e.isNotEmpty)
+                .toList(),
       );
 }
 
@@ -130,16 +157,19 @@ class TalentFilters {
     bool clearCommune = false,
     bool clearAvailability = false,
     bool clearMinimumLevel = false,
-  }) =>
-      TalentFilters(
-        query: query ?? this.query,
-        competenceId: clearCompetence ? null : (competenceId ?? this.competenceId),
-        metierId: clearMetier ? null : (metierId ?? this.metierId),
-        regionId: clearRegion ? null : (regionId ?? this.regionId),
-        communeId: clearCommune ? null : (communeId ?? this.communeId),
-        availability: clearAvailability ? null : (availability ?? this.availability),
-        minimumLevel: clearMinimumLevel ? null : (minimumLevel ?? this.minimumLevel),
-      );
+  }) => TalentFilters(
+    query: query ?? this.query,
+    competenceId: clearCompetence ? null : (competenceId ?? this.competenceId),
+    metierId: clearMetier ? null : (metierId ?? this.metierId),
+    regionId: clearRegion ? null : (regionId ?? this.regionId),
+    communeId: clearCommune ? null : (communeId ?? this.communeId),
+    availability: clearAvailability
+        ? null
+        : (availability ?? this.availability),
+    minimumLevel: clearMinimumLevel
+        ? null
+        : (minimumLevel ?? this.minimumLevel),
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -154,7 +184,15 @@ class TalentFilters {
 
   @override
   int get hashCode => Object.hash(
-      query, competenceId, metierId, regionId, communeId, availability, minimumLevel);
+    query,
+    competenceId,
+    metierId,
+    regionId,
+    communeId,
+    availability,
+    minimumLevel,
+  );
 }
 
-int _int(Object? value) => value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+int _int(Object? value) =>
+    value is num ? value.toInt() : int.tryParse('$value') ?? 0;

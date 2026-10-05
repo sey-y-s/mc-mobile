@@ -6,8 +6,8 @@ import 'package:mlc_mobile/core/storage/token_storage.dart';
 import 'package:mlc_mobile/features/auth/domain/auth_repository.dart';
 
 /// Contrat provisoire (à confirmer avec le backend) :
-///  POST /api/auth/login    {identifiant, motDePasse} -> {accessToken, refreshToken?}
-///  POST /api/auth/register {nom, prenom, telephone, email?, motDePasse, communeId?} -> idem login
+/// Authentification : POST ApiEndpoints.login, corps aligné sur le backend.
+/// Le contrat d'inscription reste à harmoniser ; voir docs/CONTRAT_API_PROVISOIRE.md.
 ///  401 sur login => identifiants invalides.
 class ApiAuthRepository implements AuthRepository {
   ApiAuthRepository(this._dio, this._storage);
@@ -15,12 +15,17 @@ class ApiAuthRepository implements AuthRepository {
   final TokenStorage _storage;
 
   @override
-  Future<void> login({required String identifiant, required String password}) async {
+  Future<void> login({
+    required String identifiant,
+    required String password,
+  }) async {
     try {
-      final res = await guardDio(() => _dio.post<Map<String, dynamic>>(
-            ApiEndpoints.login,
-            data: {'identifiant': identifiant, 'motDePasse': password},
-          ));
+      final res = await guardDio(
+        () => _dio.post<Map<String, dynamic>>(
+          ApiEndpoints.login,
+          data: {'identifiant': identifiant, 'password': password},
+        ),
+      );
       await _saveTokens(res.data);
     } on UnauthorizedFailure {
       throw const InvalidCredentialsFailure();
@@ -29,14 +34,19 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> register(RegisterData d) async {
-    final res = await guardDio(() => _dio.post<Map<String, dynamic>>(ApiEndpoints.register, data: {
+    final res = await guardDio(
+      () => _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.register,
+        data: {
           'nom': d.nom,
           'prenom': d.prenom,
           'telephone': d.telephone,
           if (d.email != null) 'email': d.email,
           'motDePasse': d.password,
           if (d.communeId != null) 'communeId': d.communeId,
-        }));
+        },
+      ),
+    );
     await _saveTokens(res.data);
   }
 
@@ -53,16 +63,30 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> requestPasswordReset(String identifiant) =>
-      guardDio(() => _dio.post<void>(ApiEndpoints.forgotPassword, data: {'identifiant': identifiant}));
+  Future<void> requestPasswordReset(String identifiant) => guardDio(
+    () => _dio.post<void>(
+      ApiEndpoints.forgotPassword,
+      data: {'identifiant': identifiant},
+    ),
+  );
 
   @override
-  Future<void> resetPassword({required String code, required String newPassword}) =>
-      guardDio(() => _dio.post<void>(ApiEndpoints.resetPassword, data: {'code': code, 'motDePasse': newPassword}));
+  Future<void> resetPassword({
+    required String code,
+    required String newPassword,
+  }) => guardDio(
+    () => _dio.post<void>(
+      ApiEndpoints.resetPassword,
+      data: {'code': code, 'motDePasse': newPassword},
+    ),
+  );
 
   Future<void> _saveTokens(Map<String, dynamic>? data) async {
-    final access = data?['accessToken'];
+    final access = data?['token'] ?? data?['accessToken'];
     if (access is! String) throw const UnknownFailure();
-    await _storage.save(access: access, refresh: data?['refreshToken'] as String?);
+    await _storage.save(
+      access: access,
+      refresh: data?['refreshToken'] as String?,
+    );
   }
 }

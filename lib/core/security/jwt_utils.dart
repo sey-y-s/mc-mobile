@@ -8,7 +8,9 @@ class JwtUtils {
     try {
       final parts = token?.split('.');
       if (parts == null || parts.length != 3) return null;
-      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
       final subject = (jsonDecode(payload) as Map<String, dynamic>)['sub'];
       return subject is String && subject.isNotEmpty ? subject : null;
     } catch (_) {
@@ -22,10 +24,15 @@ class JwtUtils {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return false;
-      final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
       final exp = (jsonDecode(payload) as Map<String, dynamic>)['exp'];
       if (exp is! int) return false;
-      final expiry = DateTime.fromMillisecondsSinceEpoch(exp * 1000, isUtc: true);
+      final expiry = DateTime.fromMillisecondsSinceEpoch(
+        exp * 1000,
+        isUtc: true,
+      );
       return (now ?? DateTime.now().toUtc()).isAfter(expiry);
     } catch (_) {
       return false;

@@ -43,18 +43,14 @@ class OpportuniteDetailScreen extends ConsumerWidget {
     final oppAsync = ref.watch(opportuniteDetailProvider(oppId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Détail de l\'opportunité'),
-      ),
+      appBar: AppBar(title: const Text('Détail de l\'opportunité')),
       body: AsyncValueView<Opportunite>(
         value: oppAsync,
         onRetry: () => ref.invalidate(opportuniteDetailProvider(oppId)),
         data: (opp) {
-          final isUrgent = opp.expirationDate != null &&
-              opp.expirationDate!
-                  .difference(DateTime.now())
-                  .inDays <=
-                  5;
+          final isUrgent =
+              opp.expirationDate != null &&
+              opp.expirationDate!.difference(DateTime.now()).inDays <= 5;
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -77,10 +73,8 @@ class OpportuniteDetailScreen extends ConsumerWidget {
               const SizedBox(height: 14),
               Text(
                 opp.title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      height: 1.3,
-                    ),
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold, height: 1.3),
               ),
               const SizedBox(height: 24),
               AppCard(
@@ -91,10 +85,8 @@ class OpportuniteDetailScreen extends ConsumerWidget {
                     const SectionHeader(title: 'Description'),
                     Text(
                       opp.description,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            height: 1.5,
-                            color: AppColors.anthracite,
-                          ),
+                      style: Theme.of(context).textTheme.bodyLarge
+                          ?.copyWith(height: 1.5, color: AppColors.anthracite),
                     ),
                   ],
                 ),
@@ -140,8 +132,11 @@ class OpportuniteDetailScreen extends ConsumerWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(AppIcons.error,
-                          color: AppColors.error, size: 20),
+                      const Icon(
+                        AppIcons.error,
+                        color: AppColors.error,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -164,8 +159,10 @@ class OpportuniteDetailScreen extends ConsumerWidget {
                   icon: AppIcons.copy,
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: opp.externalUrl!));
-                    showSuccessSnackBar(
-                        context, 'Lien de candidature copié dans le presse-papiers');
+                    showSuccess(
+                      context,
+                      'Lien de candidature copié dans le presse-papiers',
+                    );
                   },
                 ),
               ],

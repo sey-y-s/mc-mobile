@@ -4,56 +4,38 @@ import 'package:mlc_mobile/features/notifications/data/mock_notification_reposit
 
 void main() {
   late MockNotificationRepository repository;
-
   setUp(() {
     MockNotificationRepository.resetForTests();
     repository = const MockNotificationRepository();
   });
 
   group('MockNotificationRepository', () {
-    test('list returns paginated results sorted by dateCreation descending',
-        () async {
+    test('returns a date-sorted page', () async {
       final items = await repository.list(page: 0, size: 3);
-      expect(items.length, 3);
-      expect(items[0].dateCreation.isAfter(items[1].dateCreation) ||
-              items[0].dateCreation.isAtSameMomentAs(items[1].dateCreation),
-          isTrue);
+      expect(items, hasLength(3));
+      expect(
+        items[0].createdAt.isAfter(items[1].createdAt) ||
+            items[0].createdAt.isAtSameMomentAs(items[1].createdAt),
+        isTrue,
+      );
     });
 
-    test('unreadCount returns number of unread notifications', () async {
-      final count = await repository.unreadCount();
-      expect(count, greaterThan(0));
-    });
-
-    test('markRead marks a single notification as read', () async {
-      final initialUnread = await repository.unreadCount();
-      await repository.markRead('notif-1');
-
-      final notif = await repository.get('notif-1');
-      expect(notif.lu, isTrue);
-
-      final newUnread = await repository.unreadCount();
-      expect(newUnread, initialUnread - 1);
-    });
-
-    test('markAllRead marks all notifications as read', () async {
+    test('marks one or all notifications as read', () async {
+      final before = await repository.unreadCount();
+      await repository.markRead('nd-1');
+      expect((await repository.get('nd-1')).isRead, isTrue);
+      expect(await repository.unreadCount(), before - 1);
       await repository.markAllRead();
-      final count = await repository.unreadCount();
-      expect(count, 0);
+      expect(await repository.unreadCount(), 0);
     });
 
-    test('get throws NotFoundFailure for non-existent id', () async {
-      expect(
-        () => repository.get('notif-inconnue-xyz'),
-        throwsA(isA<NotFoundFailure>()),
-      );
+    test('rejects an unknown identifier', () {
+      expect(() => repository.get('missing'), throwsA(isA<NotFoundFailure>()));
     });
 
-    test('get throws NetworkFailure for special error id', () async {
-      expect(
-        () => repository.get('error-network'),
-        throwsA(isA<NetworkFailure>()),
-      );
+    test('surfaces simulated network errors', () async {
+      MockNotificationRepository.simulateError = true;
+      expect(() => repository.list(), throwsA(isA<NetworkFailure>()));
     });
   });
 }

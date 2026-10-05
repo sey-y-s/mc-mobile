@@ -62,4 +62,17 @@ class AppIcons {
   static const markAllRead = Icons.done_all_rounded;
   static const unreadDot = Icons.circle;
   static const refresh = Icons.refresh_rounded;
+
+  // Icônes ajoutées pour les parcours mobiles.
+  static const search = Icons.search_rounded;
+  static const filter = Icons.filter_alt_outlined;
+  static const lock = Icons.lock_outline_rounded;
+  static const phone = Icons.phone_outlined;
+  static const email = Icons.email_outlined;
+  static const clock = Icons.schedule_outlined;
+  static const check = Icons.check_rounded;
+  static const arrowRight = Icons.arrow_forward_rounded;
+  static const tune = Icons.tune_rounded;
+  static const logout = Icons.logout_rounded;
+  static const dataSaver = Icons.data_saver_on_outlined;
 }

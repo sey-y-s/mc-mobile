@@ -9,9 +9,11 @@ enum NotificationType {
   final String apiCode;
   final String label;
 
-  static NotificationType fromApi(String? value) => NotificationType.values
-      .firstWhere((e) => e.apiCode == value?.toUpperCase(),
-          orElse: () => NotificationType.systeme);
+  static NotificationType fromApi(String? value) =>
+      NotificationType.values.firstWhere(
+        (e) => e.apiCode == value?.toUpperCase(),
+        orElse: () => NotificationType.systeme,
+      );
 }
 
 class AppNotification {
@@ -25,6 +27,7 @@ class AppNotification {
     required this.createdAt,
     required this.isRead,
     this.readAt,
+    this.referenceId,
   });
 
   /// Identifiant de la liaison destinataire, utilisé par l'API pour marquer lu.
@@ -37,18 +40,20 @@ class AppNotification {
   final DateTime createdAt;
   final bool isRead;
   final DateTime? readAt;
+  final String? referenceId;
 
   AppNotification copyWith({bool? isRead, DateTime? readAt}) => AppNotification(
-        id: id,
-        notificationId: notificationId,
-        title: title,
-        message: message,
-        type: type,
-        receivedAt: receivedAt,
-        createdAt: createdAt,
-        isRead: isRead ?? this.isRead,
-        readAt: readAt ?? this.readAt,
-      );
+    id: id,
+    notificationId: notificationId,
+    title: title,
+    message: message,
+    type: type,
+    receivedAt: receivedAt,
+    createdAt: createdAt,
+    isRead: isRead ?? this.isRead,
+    readAt: readAt ?? this.readAt,
+    referenceId: referenceId,
+  );
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     final fallback = DateTime.fromMillisecondsSinceEpoch(0);
@@ -57,16 +62,24 @@ class AppNotification {
       if (value is String) return DateTime.tryParse(value) ?? defaultValue;
       return defaultValue;
     }
+
     return AppNotification(
       id: (json['destinataireId'] ?? json['id'] ?? '').toString(),
       notificationId: (json['id'] ?? '').toString(),
       title: (json['titre'] ?? json['title'] ?? '').toString(),
       message: (json['message'] ?? '').toString(),
       type: NotificationType.fromApi(json['type']?.toString()),
-      receivedAt: date(json['dateReception'], date(json['dateCreation'], fallback)),
+      receivedAt: date(
+        json['dateReception'],
+        date(json['dateCreation'], fallback),
+      ),
       createdAt: date(json['dateCreation'], fallback),
       isRead: json['lu'] == true || json['isRead'] == true,
-      readAt: json['dateLecture'] == null ? null : date(json['dateLecture'], fallback),
+      readAt: json['dateLecture'] == null
+          ? null
+          : date(json['dateLecture'], fallback),
+      referenceId: (json['referenceId'] ?? json['objetId'] ?? json['reference'])
+          ?.toString(),
     );
   }
 }

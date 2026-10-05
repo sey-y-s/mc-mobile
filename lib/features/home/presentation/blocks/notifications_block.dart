@@ -10,25 +10,18 @@ import 'package:mlc_mobile/core/widgets/section_header.dart';
 import 'package:mlc_mobile/features/notifications/domain/notification_models.dart';
 import 'package:mlc_mobile/features/notifications/presentation/notification_providers.dart';
 
-/// Bloc « Dernières notifications » affiché sur la page d'accueil.
 class NotificationsBlock extends ConsumerWidget {
   const NotificationsBlock({super.key});
-
-  IconData _iconForType(NotificationType type) {
-    return switch (type) {
-      NotificationType.miseEnRelation => AppIcons.relations,
-      NotificationType.validation => AppIcons.validations,
-      NotificationType.opportunite => AppIcons.opportunites,
-      NotificationType.rappel => AppIcons.competences,
-      NotificationType.systeme => AppIcons.passport,
-      NotificationType.autre => AppIcons.notifications,
-    };
-  }
-
+  IconData _icon(NotificationType type) => switch (type) {
+    NotificationType.miseEnRelation => AppIcons.relations,
+    NotificationType.validation => AppIcons.validations,
+    NotificationType.opportunite => AppIcons.opportunites,
+    NotificationType.besoinCompetence => AppIcons.competences,
+    NotificationType.systeme => AppIcons.passport,
+  };
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifsAsync = ref.watch(recentNotificationsProvider);
-
+    final async = ref.watch(recentNotificationsProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,129 +30,73 @@ class NotificationsBlock extends ConsumerWidget {
           actionLabel: 'Voir tout',
           onAction: () => context.push('/notifications'),
         ),
-        notifsAsync.when(
+        async.when(
           loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
+            padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    failureMessage(e),
-                    style: const TextStyle(color: AppColors.error, fontSize: 13),
-                  ),
+          error: (e, _) => Row(
+            children: [
+              Expanded(
+                child: Text(
+                  failureMessage(e),
+                  style: const TextStyle(color: AppColors.error),
                 ),
-                TextButton(
-                  onPressed: () =>
-                      ref.invalidate(recentNotificationsProvider),
-                  child: const Text('Réessayer'),
-                ),
-              ],
-            ),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(recentNotificationsProvider),
+                child: const Text('Réessayer'),
+              ),
+            ],
           ),
-          data: (items) {
-            if (items.isEmpty) {
-              return AppCard(
-                child: Row(
+          data: (items) => items.isEmpty
+              ? const AppCard(child: Text('Aucune notification récente.'))
+              : Column(
                   children: [
-                    const Icon(AppIcons.notifications,
-                        color: AppColors.muted, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Aucune nouvelle notification.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: AppColors.muted),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return Column(
-              children: [
-                for (final notif in items) ...[
-                  AppCard(
-                    accentColor: !notif.lu ? AppColors.gold : null,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    onTap: () => context.push('/notifications/${notif.id}'),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: !notif.lu
-                                ? AppColors.goldSoft
-                                : AppColors.greenSoft,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            _iconForType(notif.type),
-                            size: 18,
-                            color:
-                                !notif.lu ? AppColors.goldDeep : AppColors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                    for (final item in items)
+                      AppCard(
+                        padding: const EdgeInsets.all(12),
+                        accentColor: item.isRead ? null : AppColors.gold,
+                        onTap: () => context.push('/notifications/' + item.id),
+                        child: Row(
+                          children: [
+                            Icon(_icon(item.type), color: AppColors.green),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      notif.titre,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: !notif.lu
-                                            ? FontWeight.bold
-                                            : FontWeight.w500,
-                                      ),
+                                  Text(
+                                    item.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: item.isRead
+                                          ? FontWeight.w500
+                                          : FontWeight.bold,
                                     ),
                                   ),
-                                  if (!notif.lu) ...[
-                                    const SizedBox(width: 6),
-                                    const Icon(
-                                      AppIcons.unreadDot,
-                                      size: 8,
-                                      color: AppColors.goldDeep,
+                                  Text(
+                                    formatDateFr(item.receivedAt),
+                                    style: const TextStyle(
+                                      color: AppColors.muted,
+                                      fontSize: 11,
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                formatDateFr(notif.dateCreation),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.muted,
-                                ),
+                            ),
+                            if (!item.isRead)
+                              const Icon(
+                                AppIcons.unreadDot,
+                                size: 10,
+                                color: AppColors.goldDeep,
                               ),
-                            ],
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(AppIcons.chevron,
-                            size: 16, color: AppColors.muted),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ],
-            );
-          },
+                      ),
+                  ],
+                ),
         ),
       ],
     );

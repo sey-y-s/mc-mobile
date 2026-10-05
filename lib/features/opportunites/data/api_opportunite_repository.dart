@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/network/api_endpoints.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
 import 'package:mlc_mobile/core/network/page_utils.dart';
@@ -9,9 +10,24 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
   const ApiOpportuniteRepository(this._dio);
   final Dio _dio;
 
-  List<Opportunite> _list(dynamic body) => pageItems(body)
-      .map((e) => Opportunite.fromJson(e as Map<String, dynamic>))
-      .toList();
+  Future<List<Opportunite>> _all() async {
+    final response = await guardDio(
+      () => _dio.get<dynamic>(ApiEndpoints.mobileOpportunities),
+    );
+    return pageItems(response.data)
+        .whereType<Map>()
+        .map((item) => Opportunite.fromJson(Map<String, dynamic>.from(item)))
+        .where((item) => item.isVisible)
+        .toList()
+      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+  }
+
+  List<Opportunite> _page(List<Opportunite> items, int page, int size) {
+    if (page < 0 || size <= 0) throw ValidationFailure();
+    final start = page * size;
+    if (start >= items.length) return const [];
+    return items.skip(start).take(size).toList();
+  }
 
   @override
   Future<List<Opportunite>> list({
@@ -20,25 +36,23 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
     int page = 0,
     int size = 20,
   }) async {
-    final query = <String, dynamic>{
-      'page': page,
-      'size': size,
-      if (type != null) 'type': type.apiCode,
-      if (categoryId != null && categoryId.isNotEmpty)
-        'categoryId': categoryId,
-    };
-
-    final res = await guardDio(() => _dio.get<dynamic>(
-          ApiEndpoints.opportunites,
-          queryParameters: query,
-        ));
-    return _list(res.data);
+    final filtered = (await _all())
+        .where(
+          (item) =>
+              (type == null || item.type == type) &&
+              (categoryId == null || item.categoryId == categoryId),
+        )
+        .toList();
+    return _page(filtered, page, size);
   }
 
   @override
   Future<Opportunite> get(String id) async {
-    final res = await guardDio(() =>
-        _dio.get<Map<String, dynamic>>(ApiEndpoints.opportunite(id)));
-    return Opportunite.fromJson(res.data!);
+    final response = await guardDio(
+      () => _dio.get<Map<String, dynamic>>(ApiEndpoints.mobileOpportunity(id)),
+    );
+    final item = Opportunite.fromJson(response.data!);
+    if (!item.isVisible) throw const NotFoundFailure();
+    return item;
   }
 }
