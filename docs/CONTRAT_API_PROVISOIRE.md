@@ -55,4 +55,8 @@ Le login mobile est aligné sur `POST /api/v1/auth/login` avec `{identifiant, pa
 
 ## Activation mode API
 
-Par défaut, `AppConfig.useMocks` reste activé pour permettre d’essayer les écrans sans serveur. Basculer en mode API seulement après validation des routes signalées comme provisoires et des contrôles de confidentialité/autorisation mentionnés ci-dessus.
+Par défaut, l’application utilise les repositories API (`USE_MOCKS=false`). Pour tester l’interface hors ligne avec des données fictives, lancer `flutter run --dart-define=USE_MOCKS=true`.
+
+Sur l’émulateur Android, l’URL par défaut est `http://10.0.2.2:8080`. Sur un téléphone physique, passer l’adresse de la machine qui héberge le backend avec `--dart-define=API_BASE_URL=http://<adresse-du-backend>:8080`.
+
+Les routes signalées comme provisoires ci-dessus doivent être ajoutées au backend avant que leurs actions puissent fonctionner avec des données serveur. Les listes et détails affichent leur état d’erreur avec une action Réessayer si une route est indisponible. Les formulaires affichent l’échec de l’action lorsque le serveur ne fournit pas encore la route. En production, `APP_ENV=prod` force toujours le mode API.
