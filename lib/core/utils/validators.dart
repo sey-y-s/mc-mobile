@@ -22,4 +22,11 @@ class Validators {
     if (v == null || v.trim().isEmpty) return null;
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim()) ? null : 'Email invalide';
   }
+
+  /// Code reçu par SMS ou email
+  static String? resetCode(String? v) {
+    final r = required(v, field: 'Le code');
+    if (r != null) return r;
+    return RegExp(r'^\d{4,8}$').hasMatch(v!.trim()) ? null : 'Le code contient uniquement des chiffres';
+  }
 }

@@ -6,6 +6,7 @@ import 'package:mlc_mobile/features/auth/domain/auth_repository.dart';
 /// sauf le mot de passe "mauvaismdp" (pour tester l'erreur).
 class MockAuthRepository implements AuthRepository {
   MockAuthRepository(this._storage);
+  static const testResetCode = '123456';
   final TokenStorage _storage;
 
   Future<void> _latency() => Future<void>.delayed(const Duration(milliseconds: 300));
@@ -30,5 +31,8 @@ class MockAuthRepository implements AuthRepository {
   Future<void> requestPasswordReset(String identifiant) => _latency();
 
   @override
-  Future<void> resetPassword({required String code, required String newPassword}) => _latency();
+  Future<void> resetPassword({required String code, required String newPassword}) async {
+    await _latency();
+    if (code != testResetCode) throw ValidationFailure('Code incorrect ou expiré.');
+  }
 }
