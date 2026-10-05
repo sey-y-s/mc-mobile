@@ -19,9 +19,12 @@ import 'package:mlc_mobile/shared/widgets/profile_header.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
 import 'package:mlc_mobile/features/preuves/presentation/preuve_providers.dart';
 import 'package:mlc_mobile/shared/widgets/preuve_tile.dart';
+import 'package:mlc_mobile/features/experiences/presentation/experience_labels.dart';
+import 'package:mlc_mobile/features/experiences/presentation/experience_providers.dart';
+import 'package:mlc_mobile/shared/widgets/experience_tile.dart';
 
 /// Route : /passeport (onglet). Vue d'ensemble du passeport du citoyen.
-/// TODO(PISTE A, étapes « preuves » et « expériences »): ajouter sous « Compétences » deux blocs
+/// 
 /// SectionHeader + liste de 3 PreuveTile (preuves récentes) puis 3 expériences récentes, chacun avec « Voir tout ».
 class PassportScreen extends ConsumerWidget {
   const PassportScreen({super.key});
@@ -123,6 +126,11 @@ class _Content extends ConsumerWidget {
             onAction: () => context.push('/preuves')),
         const _RecentProofs(),
         const SizedBox(height: 16),
+
+        SectionHeader(title: 'Expériences', actionLabel: 'Voir tout', onAction: () => context.push('/experiences')),
+        const _RecentExperiences(),
+        const SizedBox(height: 16),
+
         SectionHeader(
             title: 'Localisation',
             actionLabel: 'Modifier',
@@ -236,6 +244,38 @@ class _RecentProofs extends ConsumerWidget {
                   dateLabel: formatDateFr(p.date),
                   statut: p.statut,
                   onTap: () => context.push('/preuves/${p.id}'),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ]),
+    );
+  }
+}
+
+class _RecentExperiences extends ConsumerWidget {
+  const _RecentExperiences();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(recentExperiencesProvider);
+    return value.when(
+      loading: () => const SizedBox(height: 80, child: LoadingView()),
+      error: (e, _) => SizedBox(height: 160, child: ErrorView(error: e, onRetry: () => ref.invalidate(recentExperiencesProvider))),
+      data: (items) => items.isEmpty
+          ? Column(children: [
+              Text("Aucune expérience pour l'instant.", style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.muted)),
+              const SizedBox(height: 12),
+              AppButton(label: 'Ajouter une expérience', variant: AppButtonVariant.secondary, onPressed: () => context.push('/experiences/nouvelle')),
+            ])
+          : Column(children: [
+              for (final e in items) ...[
+                ExperienceTile(
+                  titre: e.titre,
+                  entreprise: e.entreprise,
+                  periodLabel: experiencePeriodLabel(e),
+                  enCours: e.enCours,
+                  reconversion: e.reconversion,
+                  onTap: () => context.push('/experiences/${e.id}'),
                 ),
                 const SizedBox(height: 12),
               ],
