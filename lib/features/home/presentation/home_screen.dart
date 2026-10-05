@@ -16,10 +16,6 @@ import 'package:mlc_mobile/features/passport/presentation/passport_providers.dar
 import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
 import 'package:mlc_mobile/features/home/presentation/blocks/opportunites_block.dart';
 
-import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
-import 'package:mlc_mobile/features/home/presentation/blocks/opportunites_block.dart';
-
-
 /// Dashboard citoyen : en-tête (résumé + progression), carte « Mon passeport », accès rapide,
 /// puis les blocs notifications et opportunités (voir features/home/presentation/blocks/).
 
@@ -80,11 +76,9 @@ class HomeScreen extends ConsumerWidget {
                   const OpportunitesBlock(),
                 ],
               ),
-              const NotificationsBlock(),
-              const OpportunitesBlock(),
-            ]),
-          ),
-        ]),
+            ),
+          ],
+        ),
       ),
     );
   }
