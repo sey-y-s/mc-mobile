@@ -1,8 +1,11 @@
-/// Contrat de la fonctionnalité « opportunites » (endpoint : /api/opportunites).
-///
-/// TODO: déclarer ici les méthodes suivantes avec les modèles de domain/opportunite_models.dart,
-/// puis les implémenter dans Mock*Repository ET Api*Repository (mêmes signatures) :
-///  - list({type, categorieId, page, size})
-///  - get(id)
-/// Règles : listes paginées (page/size) ; les erreurs sont des AppFailure (jamais d'exception Dio brute).
-abstract interface class OpportuniteRepository {}
+import 'package:mlc_mobile/features/opportunites/domain/opportunite_models.dart';
+
+abstract interface class OpportuniteRepository {
+  Future<List<Opportunite>> list({
+    OpportuniteType? type,
+    String? categoryId,
+    int page = 0,
+    int size = 20,
+  });
+  Future<Opportunite> get(String id);
+}

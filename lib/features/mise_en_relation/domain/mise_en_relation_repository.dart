@@ -1,11 +1,9 @@
-/// Contrat de la fonctionnalité « mise_en_relation » (endpoint : /api/demandes-mise-en-relation).
-///
-/// TODO: déclarer ici les méthodes suivantes avec les modèles de domain/mise_en_relation_models.dart,
-/// puis les implémenter dans Mock*Repository ET Api*Repository (mêmes signatures) :
-///  - listReceived({page,size})
-///  - listSent({page,size})
-///  - get(id)
-///  - send(talentId, message?)
-///  - respond(id, accept: bool)
-/// Règles : listes paginées (page/size) ; les erreurs sont des AppFailure (jamais d'exception Dio brute).
-abstract interface class MiseEnRelationRepository {}
+import 'package:mlc_mobile/features/mise_en_relation/domain/mise_en_relation_models.dart';
+
+abstract interface class MiseEnRelationRepository {
+  Future<List<MiseEnRelation>> listReceived({int page = 0, int size = 20});
+  Future<List<MiseEnRelation>> listSent({int page = 0, int size = 20});
+  Future<MiseEnRelation> get(String id);
+  Future<MiseEnRelation> send(String talentId, {String? message});
+  Future<MiseEnRelation> respond(String id, {required bool accept});
+}

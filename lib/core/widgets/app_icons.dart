@@ -59,4 +59,7 @@ class AppIcons {
 
   static const calendar = Icons.calendar_today_outlined;
   static const delete = Icons.delete_outline_rounded;
+  static const markAllRead = Icons.done_all_rounded;
+  static const unreadDot = Icons.circle;
+  static const refresh = Icons.refresh_rounded;
 }

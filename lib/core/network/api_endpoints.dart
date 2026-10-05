@@ -46,4 +46,18 @@ class ApiEndpoints {
   static const String notifications = '/api/notifications';
   static const String opportunites = '/api/opportunites';
   static const String skillsGap = '/api/skills-gap';
+
+  // ==========================================
+  // --- Notifications Endpoints ---
+  // ==========================================
+  static String notification(String id) => '$notifications/$id';
+  static String notificationRead(String id) => '$notifications/$id/lire';
+  static const String notificationsReadAll = '$notifications/tout-lire';
+  static const String notificationsUnreadCount = '$notifications/non-lues/count';
+  static String citoyenNotifications(String id) => '$citoyens/$id/notifications';
+
+  // ==========================================
+  // --- Opportunites Endpoints ---
+  // ==========================================
+  static String opportunite(String id) => '$opportunites/$id';
 }

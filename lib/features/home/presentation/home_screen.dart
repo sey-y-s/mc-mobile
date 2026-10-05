@@ -13,6 +13,7 @@ import 'package:mlc_mobile/features/competences/presentation/competences_provide
 
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
+import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -59,6 +60,8 @@ class HomeScreen extends ConsumerWidget {
                         onTap: () => context.push(s.$3))
                 ],
               ),
+              const SizedBox(height: 28),
+              const NotificationsBlock(),
             ]),
           ),
         ]),
