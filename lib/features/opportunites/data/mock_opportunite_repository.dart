@@ -100,6 +100,7 @@ class MockOpportuniteRepository implements OpportuniteRepository {
             .where(
               (e) =>
                   e.isVisible &&
+                  e.type != OpportuniteType.insertion &&
                   (type == null || e.type == type) &&
                   (categoryId == null || e.categoryId == categoryId),
             )
@@ -113,7 +114,7 @@ class MockOpportuniteRepository implements OpportuniteRepository {
     await _wait();
     if (id == 'network-error') throw const NetworkFailure();
     return _items.firstWhere(
-      (e) => e.id == id && e.isVisible,
+      (e) => e.id == id && e.isVisible && e.type != OpportuniteType.insertion,
       orElse: () => throw const NotFoundFailure(),
     );
   }

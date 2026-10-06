@@ -16,7 +16,7 @@ class AppConfig {
   );
   static const bool _useMocksFlag = bool.fromEnvironment(
     'USE_MOCKS',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static AppEnv get env => AppEnv.values.firstWhere(

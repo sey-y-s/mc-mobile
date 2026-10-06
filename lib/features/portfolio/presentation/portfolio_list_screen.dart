@@ -7,6 +7,7 @@ import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/paginated_list_view.dart';
 import 'package:mlc_mobile/features/portfolio/domain/portfolio_models.dart';
+import 'package:mlc_mobile/features/portfolio/presentation/portfolio_media_preview.dart';
 import 'package:mlc_mobile/features/portfolio/presentation/portfolio_providers.dart';
 
 class PortfolioListScreen extends ConsumerWidget {
@@ -40,23 +41,12 @@ class PortfolioListScreen extends ConsumerWidget {
               if (image != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    image.url,
+                  child: PortfolioMediaPreview(
+                    url: image.url,
+                    localBytes: image.localBytes,
                     width: 68,
                     height: 68,
-                    fit: BoxFit.cover,
                     cacheWidth: 160,
-                    loadingBuilder: (ctx, child, progress) => progress == null
-                        ? child
-                        : const SizedBox(
-                            width: 68,
-                            height: 68,
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                    errorBuilder: (ctx, e, stack) =>
-                        _MediaIcon(type: image.type),
                   ),
                 )
               else

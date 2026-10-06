@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
@@ -50,7 +49,8 @@ class _FilePickerFieldState extends ConsumerState<FilePickerField> {
   String? _error;
   bool _picking = false;
 
-  bool get _uploading => widget.uploadProgress != null && widget.uploadProgress! < 1;
+  bool get _uploading =>
+      widget.uploadProgress != null && widget.uploadProgress! < 1;
   bool get _locked => !widget.enabled || _uploading || _picking;
 
   Future<void> _open() async {
@@ -66,13 +66,18 @@ class _FilePickerFieldState extends ConsumerState<FilePickerField> {
       if (media == null) return; // annulé
       final max = widget.limits.maxBytesFor(media.kind);
       if (media.sizeBytes > max) {
-        setState(() => _error = 'Fichier trop lourd (${media.sizeLabel}). Maximum : ${formatBytes(max)}.');
+        setState(
+          () => _error =
+              'Fichier trop lourd (${media.sizeLabel}). Maximum : ${formatBytes(max)}.',
+        );
         return;
       }
       setState(() => _error = null);
       widget.onChanged(media);
     } on AppFailure catch (e) {
       setState(() => _error = e.message);
+    } catch (_) {
+      setState(() => _error = 'Impossible d’ouvrir le fichier. Réessayez.');
     } finally {
       if (mounted) setState(() => _picking = false);
     }
@@ -84,8 +89,12 @@ class _FilePickerFieldState extends ConsumerState<FilePickerField> {
       if (widget.allowed.contains(MediaKind.video)) 'vidéo',
       if (widget.allowed.contains(MediaKind.document)) 'document',
     ];
-    final joined = names.length <= 1 ? names.join() : '${names.sublist(0, names.length - 1).join(', ')} ou ${names.last}';
-    return joined.isEmpty ? '' : '${joined[0].toUpperCase()}${joined.substring(1)}';
+    final joined = names.length <= 1
+        ? names.join()
+        : '${names.sublist(0, names.length - 1).join(', ')} ou ${names.last}';
+    return joined.isEmpty
+        ? ''
+        : '${joined[0].toUpperCase()}${joined.substring(1)}';
   }
 
   @override
@@ -93,67 +102,100 @@ class _FilePickerFieldState extends ConsumerState<FilePickerField> {
     final text = Theme.of(context).textTheme;
     final error = widget.errorText ?? _error;
     final media = widget.value;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Semantics(
-        button: true,
-        label: media == null ? widget.label : 'Changer le fichier ${media.name}',
-        child: InkWell(
-          onTap: _locked ? null : _open,
-          borderRadius: BorderRadius.circular(AppRadius.field),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 88),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(AppRadius.field),
-              border: Border.all(color: error != null ? AppColors.error : AppColors.border, width: error != null ? 1.6 : 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          button: true,
+          label: media == null
+              ? widget.label
+              : 'Changer le fichier ${media.name}',
+          child: InkWell(
+            onTap: _locked ? null : _open,
+            borderRadius: BorderRadius.circular(AppRadius.field),
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 88),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(AppRadius.field),
+                border: Border.all(
+                  color: error != null ? AppColors.error : AppColors.border,
+                  width: error != null ? 1.6 : 1,
+                ),
+              ),
+              child: media == null ? _empty(text) : _selected(text, media),
             ),
-            child: media == null ? _empty(text) : _selected(text, media),
           ),
         ),
-      ),
-      if (widget.uploadProgress != null) ...[
-        const SizedBox(height: 12),
-        AppProgressBar(value: widget.uploadProgress!, label: _uploading ? 'Envoi en cours' : 'Envoyé'),
+        if (widget.uploadProgress != null) ...[
+          const SizedBox(height: 12),
+          AppProgressBar(
+            value: widget.uploadProgress!,
+            label: _uploading ? 'Envoi en cours' : 'Envoyé',
+          ),
+        ],
+        if (error != null) ...[
+          const SizedBox(height: 8),
+          Text(error, style: text.bodySmall?.copyWith(color: AppColors.error)),
+        ],
       ],
-      if (error != null) ...[
-        const SizedBox(height: 8),
-        Text(error, style: text.bodySmall?.copyWith(color: AppColors.error)),
-      ],
-    ]);
+    );
   }
 
-  Widget _empty(TextTheme text) => Row(children: [
-        _IconBox(icon: _picking ? null : AppIcons.upload),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget _empty(TextTheme text) => Row(
+    children: [
+      _IconBox(icon: _picking ? null : AppIcons.upload),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(widget.label, style: text.titleSmall),
-            if (_hint.isNotEmpty) Text(_hint, style: text.bodySmall?.copyWith(color: AppColors.muted)),
-          ]),
+            if (_hint.isNotEmpty)
+              Text(
+                _hint,
+                style: text.bodySmall?.copyWith(color: AppColors.muted),
+              ),
+          ],
         ),
-      ]);
+      ),
+    ],
+  );
 
-  Widget _selected(TextTheme text, PickedMedia media) => Row(children: [
-        _Thumbnail(media: media),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(media.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.titleSmall),
-            Text(media.sizeLabel, style: text.bodySmall?.copyWith(color: AppColors.muted)),
-          ]),
+  Widget _selected(TextTheme text, PickedMedia media) => Row(
+    children: [
+      _Thumbnail(media: media),
+      const SizedBox(width: 14),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              media.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.titleSmall,
+            ),
+            Text(
+              media.sizeLabel,
+              style: text.bodySmall?.copyWith(color: AppColors.muted),
+            ),
+          ],
         ),
-        IconButton(
-          tooltip: 'Retirer le fichier',
-          icon: const Icon(AppIcons.close),
-          onPressed: _locked
-              ? null
-              : () {
-                  setState(() => _error = null);
-                  widget.onChanged(null);
-                },
-        ),
-      ]);
+      ),
+      IconButton(
+        tooltip: 'Retirer le fichier',
+        icon: const Icon(AppIcons.close),
+        onPressed: _locked
+            ? null
+            : () {
+                setState(() => _error = null);
+                widget.onChanged(null);
+              },
+      ),
+    ],
+  );
 }
 
 class _IconBox extends StatelessWidget {
@@ -162,13 +204,19 @@ class _IconBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(16)),
-        child: icon == null
-            ? const Padding(padding: EdgeInsets.all(14), child: CircularProgressIndicator(strokeWidth: 2.5))
-            : Icon(icon, color: AppColors.green),
-      );
+    width: 52,
+    height: 52,
+    decoration: BoxDecoration(
+      color: AppColors.greenSoft,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: icon == null
+        ? const Padding(
+            padding: EdgeInsets.all(14),
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          )
+        : Icon(icon, color: AppColors.green),
+  );
 }
 
 class _Thumbnail extends StatelessWidget {
@@ -184,15 +232,16 @@ class _Thumbnail extends StatelessWidget {
         MediaKind.document => AppIcons.document,
       },
     );
-    if (media.kind != MediaKind.image) return fallback;
+    final bytes = media.bytes;
+    if (media.kind != MediaKind.image || bytes == null) return fallback;
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Image.file(
-        File(media.path),
+      child: Image.memory(
+        bytes,
         width: 52,
         height: 52,
         fit: BoxFit.cover,
-        cacheWidth: 160, // miniature légère : jamais l'image pleine résolution en mémoire
+        cacheWidth: 160,
         errorBuilder: (_, __, ___) => fallback,
       ),
     );
@@ -206,17 +255,26 @@ class _SourceSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget option(IconData icon, String label, PickSource source) => ListTile(
-          leading: Icon(icon, color: AppColors.green),
-          title: Text(label),
-          onTap: () => Navigator.of(context).pop(source),
-        );
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      if (allowed.contains(MediaKind.image)) ...[
-        option(AppIcons.camera, 'Prendre une photo', PickSource.camera),
-        option(AppIcons.gallery, 'Choisir une photo', PickSource.gallery),
+      leading: Icon(icon, color: AppColors.green),
+      title: Text(label),
+      onTap: () => Navigator.of(context).pop(source),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (allowed.contains(MediaKind.image)) ...[
+          option(AppIcons.camera, 'Prendre une photo', PickSource.camera),
+          option(AppIcons.gallery, 'Choisir une photo', PickSource.gallery),
+        ],
+        if (allowed.contains(MediaKind.video))
+          option(AppIcons.video, 'Choisir une vidéo', PickSource.video),
+        if (allowed.contains(MediaKind.document))
+          option(
+            AppIcons.document,
+            'Choisir un document (PDF, Word)',
+            PickSource.document,
+          ),
       ],
-      if (allowed.contains(MediaKind.video)) option(AppIcons.video, 'Choisir une vidéo', PickSource.video),
-      if (allowed.contains(MediaKind.document)) option(AppIcons.document, 'Choisir un document (PDF, Word)', PickSource.document),
-    ]);
+    );
   }
 }

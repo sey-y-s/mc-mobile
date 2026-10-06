@@ -10,6 +10,7 @@ import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/portfolio/domain/portfolio_models.dart';
+import 'package:mlc_mobile/features/portfolio/presentation/portfolio_media_preview.dart';
 import 'package:mlc_mobile/features/portfolio/presentation/portfolio_providers.dart';
 
 class PortfolioDetailScreen extends ConsumerWidget {
@@ -65,30 +66,13 @@ class PortfolioDetailScreen extends ConsumerWidget {
                         if (media.type == PortfolioMediaType.image)
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              media.url,
+                            child: PortfolioMediaPreview(
+                              url: media.url,
+                              localBytes: media.localBytes,
                               height: 210,
                               width: double.infinity,
                               fit: BoxFit.cover,
                               cacheWidth: 720,
-                              loadingBuilder: (ctx, child, progress) =>
-                                  progress == null
-                                  ? child
-                                  : const SizedBox(
-                                      height: 180,
-                                      child: Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                              errorBuilder: (ctx, e, stack) => const SizedBox(
-                                height: 120,
-                                child: Center(
-                                  child: Icon(
-                                    AppIcons.portfolio,
-                                    color: AppColors.muted,
-                                  ),
-                                ),
-                              ),
                             ),
                           )
                         else

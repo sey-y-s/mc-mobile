@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,7 +14,9 @@ abstract interface class FilePickerService {
 }
 
 class DevicePickerService implements FilePickerService {
-  DevicePickerService({ImagePicker? imagePicker}) : _images = imagePicker ?? ImagePicker();
+  DevicePickerService({ImagePicker? imagePicker})
+    : _images = imagePicker ?? ImagePicker();
+
   final ImagePicker _images;
 
   @override
@@ -21,39 +24,83 @@ class DevicePickerService implements FilePickerService {
     try {
       switch (source) {
         case PickSource.camera:
-          return await _fromXFile(await _images.pickImage(source: ImageSource.camera, maxWidth: 1600, maxHeight: 1600, imageQuality: 70), MediaKind.image);
+          return await _fromXFile(
+            await _images.pickImage(
+              source: ImageSource.camera,
+              maxWidth: 1600,
+              maxHeight: 1600,
+              imageQuality: 70,
+            ),
+            MediaKind.image,
+          );
         case PickSource.gallery:
-          return await _fromXFile(await _images.pickImage(source: ImageSource.gallery, maxWidth: 1600, maxHeight: 1600, imageQuality: 70), MediaKind.image);
+          return await _fromXFile(
+            await _images.pickImage(
+              source: ImageSource.gallery,
+              maxWidth: 1600,
+              maxHeight: 1600,
+              imageQuality: 70,
+            ),
+            MediaKind.image,
+          );
         case PickSource.video:
-          return await _fromXFile(await _images.pickVideo(source: ImageSource.gallery, maxDuration: const Duration(minutes: 1)), MediaKind.video);
+          return await _fromXFile(
+            await _images.pickVideo(
+              source: ImageSource.gallery,
+              maxDuration: const Duration(minutes: 1),
+            ),
+            MediaKind.video,
+          );
         case PickSource.document:
-          // Appel direct sans .platform
           final file = await FilePicker.pickFile(
             type: FileType.custom,
             allowedExtensions: const ['pdf', 'doc', 'docx'],
           );
-          if (file == null || file.path == null) return null;
-          
-          final sizeBytes = file.lengthSync() ?? await file.length() ?? 0;
+          if (file == null) return null;
 
+          final bytes = kIsWeb || file.path == null
+              ? await file.readAsBytes()
+              : null;
+          final fileSize = (await file.length()) ?? bytes?.length ?? 0;
           return PickedMedia(
-            path: file.path!,
+            path: file.path ?? '',
             name: file.name,
-            sizeBytes: sizeBytes,
+            sizeBytes: fileSize,
             kind: MediaKind.document,
+            bytes: bytes,
           );
       }
     } on PlatformException catch (e) {
       throw FileFailure(_messageFor(e.code));
+    } on FileFailure {
+      rethrow;
+    } catch (_) {
+      throw const FileFailure('Impossible d’ouvrir le fichier. Réessayez.');
     }
   }
 
-  Future<PickedMedia?> _fromXFile(XFile? f, MediaKind kind) async =>
-      f == null ? null : PickedMedia(path: f.path, name: f.name, sizeBytes: await f.length(), kind: kind);
+  Future<PickedMedia?> _fromXFile(XFile? file, MediaKind kind) async {
+    if (file == null) return null;
+    final size = await file.length();
+    // Les images ont besoin de leurs octets pour l'aperçu multiplateforme.
+    // Sur le Web, les chemins blob ne sont pas lisibles par MultipartFile.fromFile.
+    final bytes = kIsWeb || kind == MediaKind.image
+        ? await file.readAsBytes()
+        : null;
+    return PickedMedia(
+      path: file.path,
+      name: file.name,
+      sizeBytes: size,
+      kind: kind,
+      bytes: bytes,
+    );
+  }
 
   String _messageFor(String code) => code.contains('denied')
       ? "Autorisez l'accès à la caméra ou aux photos dans les réglages du téléphone."
       : "Impossible d'ouvrir le fichier. Réessayez.";
 }
 
-final filePickerServiceProvider = Provider<FilePickerService>((ref) => DevicePickerService());
+final filePickerServiceProvider = Provider<FilePickerService>(
+  (ref) => DevicePickerService(),
+);
