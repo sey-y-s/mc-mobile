@@ -75,4 +75,11 @@ class AppIcons {
   static const tune = Icons.tune_rounded;
   static const logout = Icons.logout_rounded;
   static const dataSaver = Icons.data_saver_on_outlined;
+  static const opportunityCategory = Icons.category_outlined;
+  static const training = Icons.school_outlined;
+  static const scholarship = Icons.account_balance_outlined;
+  static const program = Icons.auto_awesome_outlined;
+  static const callForApplications = Icons.assignment_outlined;
+  static const competition = Icons.emoji_events_outlined;
+  static const support = Icons.support_agent_outlined;
 }

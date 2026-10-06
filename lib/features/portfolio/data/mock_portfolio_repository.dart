@@ -25,7 +25,7 @@ class MockPortfolioRepository implements PortfolioRepository {
             id: 'media-1',
             portfolioId: 'portfolio-1',
             type: PortfolioMediaType.image,
-            url: 'https://images.example.invalid/panneau-solaire.jpg',
+            url: '',
             fileName: 'panneau-solaire.jpg',
           ),
         ],
@@ -40,7 +40,7 @@ class MockPortfolioRepository implements PortfolioRepository {
             id: 'media-2',
             portfolioId: 'portfolio-2',
             type: PortfolioMediaType.document,
-            url: 'https://example.invalid/bogolan.pdf',
+            url: '',
             fileName: 'fiche-bogolan.pdf',
           ),
         ],
@@ -151,8 +151,9 @@ class MockPortfolioRepository implements PortfolioRepository {
       id: 'media-${DateTime.now().microsecondsSinceEpoch}',
       portfolioId: portfolioId,
       type: type,
-      url: 'https://example.invalid/mock/${Uri.encodeComponent(file.name)}',
+      url: '',
       fileName: file.name,
+      localBytes: file.bytes,
     );
     final old = _items[index];
     _items[index] = PortfolioRealisation(

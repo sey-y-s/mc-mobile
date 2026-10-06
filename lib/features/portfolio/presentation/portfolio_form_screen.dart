@@ -26,6 +26,8 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
   final List<PickedMedia?> _files = List<PickedMedia?>.filled(3, null);
   final Map<int, double> _progress = {};
   final Set<String> _removeIds = {};
+  final Set<int> _uploadedFiles = {};
+  String? _createdId;
   bool _saving = false;
   Object? _error;
   @override
@@ -122,8 +124,13 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
           label: 'Ajouter un média',
           value: _files[i],
           allowed: const {MediaKind.image, MediaKind.video, MediaKind.document},
-          onChanged: (file) => setState(() => _files[i] = file),
           uploadProgress: _progress[i],
+          enabled: !_saving,
+          onChanged: (file) => setState(() {
+            _files[i] = file;
+            _uploadedFiles.remove(i);
+            _progress.remove(i);
+          }),
         ),
     ],
   );
@@ -152,15 +159,19 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
         date: _date,
         linkUrl: _url.text.trim().isEmpty ? null : _url.text.trim(),
       );
-      final saved = widget.initial == null
+      final existingId = widget.initial?.id ?? _createdId;
+      final saved = existingId == null
           ? await repo.create(input)
-          : await repo.update(widget.initial!.id, input);
-      for (final mediaId in _removeIds) {
+          : await repo.update(existingId, input);
+      _createdId = saved.id;
+
+      for (final mediaId in _removeIds.toList()) {
         await repo.removeMedia(saved.id, mediaId);
+        _removeIds.remove(mediaId);
       }
       for (var i = 0; i < _files.length; i++) {
         final file = _files[i];
-        if (file == null) continue;
+        if (file == null || _uploadedFiles.contains(i)) continue;
         setState(() => _progress[i] = 0);
         await repo.addMedia(
           saved.id,
@@ -169,12 +180,15 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
             if (mounted) setState(() => _progress[i] = value);
           },
         );
+        _uploadedFiles.add(i);
+        if (mounted) setState(() => _progress[i] = 1);
       }
       ref.read(portfolioRevisionProvider.notifier).state++;
       if (mounted) context.go('/portfolio/' + saved.id);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = e is AppFailure ? e : const UnknownFailure());
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

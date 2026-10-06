@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 enum PortfolioMediaType {
   image('IMAGE', 'Photo'),
   video('VIDEO', 'Vidéo'),
@@ -8,9 +10,11 @@ enum PortfolioMediaType {
   final String apiCode;
   final String label;
 
-  static PortfolioMediaType fromApi(String? value) => PortfolioMediaType.values
-      .firstWhere((e) => e.apiCode == value?.toUpperCase(),
-          orElse: () => PortfolioMediaType.autre);
+  static PortfolioMediaType fromApi(String? value) =>
+      PortfolioMediaType.values.firstWhere(
+        (e) => e.apiCode == value?.toUpperCase(),
+        orElse: () => PortfolioMediaType.autre,
+      );
 }
 
 class PortfolioMedia {
@@ -21,7 +25,9 @@ class PortfolioMedia {
     required this.url,
     this.fileName,
     this.caption,
+    this.localBytes,
   });
+
   final String id;
   final String portfolioId;
   final PortfolioMediaType type;
@@ -29,16 +35,20 @@ class PortfolioMedia {
   final String? fileName;
   final String? caption;
 
-  factory PortfolioMedia.fromJson(Map<String, dynamic> json,
-          {String portfolioId = ''}) =>
-      PortfolioMedia(
-        id: (json['id'] ?? '').toString(),
-        portfolioId: portfolioId,
-        type: PortfolioMediaType.fromApi(json['type']?.toString()),
-        url: (json['urlMedia'] ?? json['url'] ?? '').toString(),
-        fileName: (json['nomFichier'] ?? json['fileName'])?.toString(),
-        caption: (json['legende'] ?? json['caption'])?.toString(),
-      );
+  /// Octets gardés en mémoire uniquement par le dépôt mock pour l'aperçu local.
+  final Uint8List? localBytes;
+
+  factory PortfolioMedia.fromJson(
+    Map<String, dynamic> json, {
+    String portfolioId = '',
+  }) => PortfolioMedia(
+    id: (json['id'] ?? '').toString(),
+    portfolioId: portfolioId,
+    type: PortfolioMediaType.fromApi(json['type']?.toString()),
+    url: (json['urlMedia'] ?? json['url'] ?? '').toString(),
+    fileName: (json['nomFichier'] ?? json['fileName'])?.toString(),
+    caption: (json['legende'] ?? json['caption'])?.toString(),
+  );
 }
 
 class PortfolioRealisation {
@@ -50,6 +60,7 @@ class PortfolioRealisation {
     this.date,
     this.linkUrl,
   });
+
   final String id;
   final String title;
   final String description;
@@ -69,9 +80,15 @@ class PortfolioRealisation {
           : null,
       linkUrl: (json['lienUrl'] ?? json['linkUrl'])?.toString(),
       media: rawMedia is List
-          ? rawMedia.whereType<Map>().map((e) =>
-              PortfolioMedia.fromJson(Map<String, dynamic>.from(e),
-                  portfolioId: id)).toList()
+          ? rawMedia
+                .whereType<Map>()
+                .map(
+                  (e) => PortfolioMedia.fromJson(
+                    Map<String, dynamic>.from(e),
+                    portfolioId: id,
+                  ),
+                )
+                .toList()
           : const [],
     );
   }
@@ -84,6 +101,7 @@ class PortfolioInput {
     this.date,
     this.linkUrl,
   });
+
   final String title;
   final String description;
   final DateTime? date;

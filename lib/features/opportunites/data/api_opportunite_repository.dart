@@ -17,7 +17,9 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
     return pageItems(response.data)
         .whereType<Map>()
         .map((item) => Opportunite.fromJson(Map<String, dynamic>.from(item)))
-        .where((item) => item.isVisible)
+        .where(
+          (item) => item.isVisible && item.type != OpportuniteType.insertion,
+        )
         .toList()
       ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
   }
@@ -52,7 +54,9 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
       () => _dio.get<Map<String, dynamic>>(ApiEndpoints.mobileOpportunity(id)),
     );
     final item = Opportunite.fromJson(response.data!);
-    if (!item.isVisible) throw const NotFoundFailure();
+    if (!item.isVisible || item.type == OpportuniteType.insertion) {
+      throw const NotFoundFailure();
+    }
     return item;
   }
 }

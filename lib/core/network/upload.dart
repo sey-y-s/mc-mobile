@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/media/picked_media.dart';
 
 /// Envoi multipart avec progression (0..1). À entourer de guardDio() par le repository.
-/// Contrat provisoire : un champ fichier nommé `fichier` + des champs texte (voir docs/CONTRAT_API_PROVISOIRE.md).
 Future<Response<T>> uploadMultipart<T>(
   Dio dio,
   String path, {
@@ -14,7 +15,7 @@ Future<Response<T>> uploadMultipart<T>(
 }) async {
   final form = FormData.fromMap({
     ...fields,
-    fileField: await MultipartFile.fromFile(file.path, filename: file.name),
+    fileField: await _multipartFile(file),
   });
   return dio.post<T>(
     path,
@@ -24,6 +25,22 @@ Future<Response<T>> uploadMultipart<T>(
       if (total > 0) onProgress?.call(sent / total);
     },
   );
+}
+
+Future<MultipartFile> _multipartFile(PickedMedia file) {
+  final bytes = file.bytes;
+  if (bytes != null) {
+    return Future.value(MultipartFile.fromBytes(bytes, filename: file.name));
+  }
+  if (kIsWeb) {
+    throw const FileFailure(
+      'Le fichier ne peut pas être lu dans le navigateur. Sélectionnez-le à nouveau.',
+    );
+  }
+  if (file.path.trim().isEmpty) {
+    throw const FileFailure('Le chemin du fichier est indisponible.');
+  }
+  return MultipartFile.fromFile(file.path, filename: file.name);
 }
 
 /// Pour les repositories Mock : simule un envoi avec progression.
