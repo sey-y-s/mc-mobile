@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
-/// Erreur métier/technique normalisée. Les repositories lèvent uniquement des AppFailure ;
-/// l'UI n'affiche jamais une exception brute (voir [failureMessage]).
+/// Erreur métier/technique normalisée. Les repositories ne laissent pas remonter Dio brut.
 sealed class AppFailure implements Exception {
   const AppFailure(this.message);
   final String message;
@@ -18,8 +17,9 @@ sealed class AppFailure implements Exception {
         if (code == 401) return const UnauthorizedFailure();
         if (code == 403) return const ForbiddenFailure();
         if (code == 404) return const NotFoundFailure();
-        if (code == 400 || code == 409 || code == 422)
+        if (code == 400 || code == 409 || code == 422) {
           return ValidationFailure(_serverMessage(e));
+        }
         if (code >= 500) return const ServerFailure();
         return const UnknownFailure();
       default:
@@ -27,53 +27,56 @@ sealed class AppFailure implements Exception {
     }
   }
 
-  // Contrat provisoire : le backend renvoie {"message": "..."} sur 400/422.
   static String? _serverMessage(DioException e) {
     final data = e.response?.data;
-    if (data is Map && data['message'] is String)
+    if (data is Map && data['message'] is String) {
       return data['message'] as String;
+    }
     return null;
   }
 }
 
 final class NetworkFailure extends AppFailure {
   const NetworkFailure()
-      : super('Pas de connexion. Vérifiez votre réseau et réessayez.');
+    : super('Pas de connexion. Vérifiez votre réseau et réessayez.');
 }
 
 final class ServerFailure extends AppFailure {
   const ServerFailure()
-      : super(
-            'Le service est momentanément indisponible. Réessayez plus tard.');
+    : super('Le service est momentanément indisponible. Réessayez plus tard.');
 }
 
 final class UnauthorizedFailure extends AppFailure {
   const UnauthorizedFailure()
-      : super('Votre session a expiré. Connectez-vous de nouveau.');
+    : super('Votre session a expiré. Connectez-vous de nouveau.');
 }
 
 final class ForbiddenFailure extends AppFailure {
   const ForbiddenFailure()
-      : super("Vous n'avez pas accès à cette information.");
+    : super("Vous n'avez pas accès à cette information.");
 }
 
 final class NotFoundFailure extends AppFailure {
-  const NotFoundFailure() : super('Élément introuvable.');
+  const NotFoundFailure([String? message])
+    : super(message ?? 'Élément introuvable.');
 }
 
 final class ValidationFailure extends AppFailure {
   ValidationFailure([String? serverMessage])
-      : super(serverMessage ?? 'Certaines informations sont invalides.');
+    : super(serverMessage ?? 'Certaines informations sont invalides.');
 }
 
 final class InvalidCredentialsFailure extends AppFailure {
   const InvalidCredentialsFailure()
-      : super('Identifiant ou mot de passe incorrect.');
+    : super('Identifiant ou mot de passe incorrect.');
 }
 
-/// Fichier refusé ou impossible à lire (permission, taille, format).
 final class FileFailure extends AppFailure {
   const FileFailure(super.message);
+}
+
+final class FeatureUnavailableFailure extends AppFailure {
+  const FeatureUnavailableFailure(String message) : super(message);
 }
 
 final class UnknownFailure extends AppFailure {

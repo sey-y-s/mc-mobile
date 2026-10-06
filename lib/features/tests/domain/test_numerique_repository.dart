@@ -1,10 +1,8 @@
-/// Contrat de la fonctionnalité « tests » (endpoint : /api/tests (provisoire)).
-///
-/// TODO: déclarer ici les méthodes suivantes avec les modèles de domain/test_numerique_models.dart,
-/// puis les implémenter dans Mock*Repository ET Api*Repository (mêmes signatures) :
-///  - list()
-///  - get(id) avec questions
-///  - submit(testId, answers) -> ResultatTest
-///  - listResults()
-/// Règles : listes paginées (page/size) ; les erreurs sont des AppFailure (jamais d'exception Dio brute).
-abstract interface class TestNumeriqueRepository {}
+import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
+
+abstract interface class TestNumeriqueRepository {
+  Future<List<TestNumerique>> list({int page = 0, int size = 20});
+  Future<TestNumerique> get(String id);
+  Future<ResultatTest> submit(String testId, TestAnswers answers);
+  Future<List<ResultatTest>> listResults();
+}

@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 
 class AppNavItem {
-  const AppNavItem({required this.label, required this.icon, required this.activeIcon});
+  const AppNavItem({
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+    this.badgeCount = 0,
+  });
   final String label;
   final IconData icon;
   final IconData activeIcon;
+  final int badgeCount;
 }
 
 /// Barre de navigation : fond blanc, trait fin, onglet actif = icône pleine verte + filet or.
@@ -64,9 +70,44 @@ class _Item extends StatelessWidget {
           ),
           Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(selected ? item.activeIcon : item.icon, color: color, size: 24),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(selected ? item.activeIcon : item.icon,
+                      color: color, size: 24),
+                  if (item.badgeCount > 0)
+                    Positioned(
+                      top: -3,
+                      right: -8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        constraints:
+                            const BoxConstraints(minWidth: 16, minHeight: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldDeep,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.badgeCount > 99 ? '99+' : '${item.badgeCount}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 3),
-              Text(item.label, style: TextStyle(fontSize: 11, color: color, fontWeight: selected ? FontWeight.w500 : FontWeight.w400)),
+              Text(item.label,
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: color,
+                      fontWeight:
+                          selected ? FontWeight.w500 : FontWeight.w400)),
             ]),
           ),
         ]),

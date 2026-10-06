@@ -21,6 +21,7 @@ export 'parametres/presentation/account_settings_screen.dart';
 export 'parametres/presentation/preferences_screen.dart';
 export 'parametres/presentation/security_settings_screen.dart';
 export 'parametres/presentation/settings_screen.dart';
+export 'parametres/presentation/terms_screen.dart';
 export 'passport/presentation/availability_screen.dart';
 export 'passport/presentation/location_screen.dart';
 export 'passport/presentation/passport_screen.dart';

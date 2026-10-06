@@ -20,6 +20,7 @@ dependencies:
   go_router: ^18.0.2
   dio: ^5.7.0
   flutter_secure_storage: ^11.2.0
+  shared_preferences: ^2.5.3
   flutter_svg: ^2.0.10+1
   image_picker: ^1.1.2   # photo/vidéo
   file_picker: ^13.1.0  # documents PDF/Word

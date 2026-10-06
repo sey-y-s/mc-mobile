@@ -39,53 +39,176 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (c, s) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (c, s) => const LoginScreen()),
-      GoRoute(path: AppRoutes.register, builder: (c, s) => const RegisterScreen()),
-      GoRoute(path: '/competences', builder: (c, s) => const CompetencesListScreen()),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (c, s) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/competences',
+        builder: (c, s) => const CompetencesListScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
-          GoRoute(path: '/passeport', builder: (c, s) => const PassportScreen()),
-          GoRoute(path: '/talents', builder: (c, s) => const TalentsSearchScreen()),
-          GoRoute(path: '/notifications', builder: (c, s) => const NotificationsScreen()),
-          GoRoute(path: '/parametres', builder: (c, s) => const SettingsScreen()),
+          GoRoute(
+            path: '/passeport',
+            builder: (c, s) => const PassportScreen(),
+          ),
+          GoRoute(
+            path: '/talents',
+            builder: (c, s) => const TalentsSearchScreen(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (c, s) => const NotificationsScreen(),
+          ),
+          GoRoute(
+            path: '/parametres',
+            builder: (c, s) => const SettingsScreen(),
+          ),
         ],
       ),
-      GoRoute(path: '/forgot-password', builder: (c, s) => const ForgotPasswordScreen()),
-      GoRoute(path: '/reset-password', builder: (c, s) => const ResetPasswordScreen()),
-      GoRoute(path: '/passeport/profil', builder: (c, s) => const ProfileEditScreen()),
-      GoRoute(path: '/passeport/localisation', builder: (c, s) => const LocationScreen()),
-      GoRoute(path: '/passeport/disponibilite', builder: (c, s) => const AvailabilityScreen()),
-      GoRoute(path: '/competences/ajouter', builder: (c, s) => const AddCompetenceScreen()),
-      GoRoute(path: '/competences/:id', builder: (c, s) => CompetenceDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/experiences', builder: (c, s) => const ExperiencesListScreen()),
-      GoRoute(path: '/experiences/nouvelle', builder: (c, s) => const ExperienceFormScreen()),
-      GoRoute(path: '/experiences/:id', builder: (c, s) => ExperienceDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/experiences/:id/modifier', builder: (c, s) => ExperienceEditScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/portfolio', builder: (c, s) => const PortfolioListScreen()),
-      GoRoute(path: '/portfolio/nouvelle', builder: (c, s) => const PortfolioFormScreen()),
-      GoRoute(path: '/portfolio/:id', builder: (c, s) => PortfolioDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/portfolio/:id/modifier', builder: (c, s) => PortfolioEditScreen(id: s.pathParameters['id'])),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (c, s) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (c, s) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/passeport/profil',
+        builder: (c, s) => const ProfileEditScreen(),
+      ),
+      GoRoute(
+        path: '/passeport/localisation',
+        builder: (c, s) => const LocationScreen(),
+      ),
+      GoRoute(
+        path: '/passeport/disponibilite',
+        builder: (c, s) => const AvailabilityScreen(),
+      ),
+      GoRoute(
+        path: '/competences/ajouter',
+        builder: (c, s) => const AddCompetenceScreen(),
+      ),
+      GoRoute(
+        path: '/competences/:id',
+        builder: (c, s) => CompetenceDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/experiences',
+        builder: (c, s) => const ExperiencesListScreen(),
+      ),
+      GoRoute(
+        path: '/experiences/nouvelle',
+        builder: (c, s) => const ExperienceFormScreen(),
+      ),
+      GoRoute(
+        path: '/experiences/:id',
+        builder: (c, s) => ExperienceDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/experiences/:id/modifier',
+        builder: (c, s) => ExperienceEditScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/portfolio',
+        builder: (c, s) => const PortfolioListScreen(),
+      ),
+      GoRoute(
+        path: '/portfolio/nouvelle',
+        builder: (c, s) => const PortfolioFormScreen(),
+      ),
+      GoRoute(
+        path: '/portfolio/:id',
+        builder: (c, s) => PortfolioDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/portfolio/:id/modifier',
+        builder: (c, s) => PortfolioEditScreen(id: s.pathParameters['id']),
+      ),
       GoRoute(path: '/preuves', builder: (c, s) => const PreuvesListScreen()),
-      GoRoute(path: '/preuves/ajouter', builder: (c, s) => AddPreuveScreen(competenceId: s.uri.queryParameters['competenceId'])),
-      GoRoute(path: '/preuves/:id', builder: (c, s) => PreuveDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/validations', builder: (c, s) => const ValidationsListScreen()),
-      GoRoute(path: '/validations/historique', builder: (c, s) => const ValidationsHistoryScreen()),
-      GoRoute(path: '/validations/demander', builder: (c, s) => RequestValidationScreen(competenceId: s.uri.queryParameters['competenceId'], preuveId: s.uri.queryParameters['preuveId'],),),
-      GoRoute(path: '/validations/:id', builder: (c, s) => ValidationDetailScreen(id: s.pathParameters['id'])),
+      GoRoute(
+        path: '/preuves/ajouter',
+        builder: (c, s) => AddPreuveScreen(
+          competenceId: s.uri.queryParameters['competenceId'],
+        ),
+      ),
+      GoRoute(
+        path: '/preuves/:id',
+        builder: (c, s) => PreuveDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/validations',
+        builder: (c, s) => const ValidationsListScreen(),
+      ),
+      GoRoute(
+        path: '/validations/historique',
+        builder: (c, s) => const ValidationsHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/validations/demander',
+        builder: (c, s) => RequestValidationScreen(
+          competenceId: s.uri.queryParameters['competenceId'],
+          preuveId: s.uri.queryParameters['preuveId'],
+        ),
+      ),
+      GoRoute(
+        path: '/validations/:id',
+        builder: (c, s) => ValidationDetailScreen(id: s.pathParameters['id']),
+      ),
       GoRoute(path: '/tests', builder: (c, s) => const TestsListScreen()),
-      GoRoute(path: '/tests/:id', builder: (c, s) => TestIntroScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/tests/:id/question', builder: (c, s) => TestQuestionScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/tests/:id/resultat', builder: (c, s) => TestResultScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/talents/:id', builder: (c, s) => TalentProfileScreen(id: s.pathParameters['id'])),
+      GoRoute(
+        path: '/tests/:id',
+        builder: (c, s) => TestIntroScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tests/:id/question',
+        builder: (c, s) => TestQuestionScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/tests/:id/resultat',
+        builder: (c, s) => TestResultScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/talents/:id',
+        builder: (c, s) => TalentProfileScreen(id: s.pathParameters['id']),
+      ),
       GoRoute(path: '/relations', builder: (c, s) => const RelationsScreen()),
-      GoRoute(path: '/relations/:id', builder: (c, s) => RelationDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/opportunites', builder: (c, s) => const OpportunitesListScreen()),
-      GoRoute(path: '/opportunites/:id', builder: (c, s) => OpportuniteDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/notifications/:id', builder: (c, s) => NotificationDetailScreen(id: s.pathParameters['id'])),
-      GoRoute(path: '/parametres/compte', builder: (c, s) => const AccountSettingsScreen()),
-      GoRoute(path: '/parametres/securite', builder: (c, s) => const SecuritySettingsScreen()),
-      GoRoute(path: '/parametres/preferences', builder: (c, s) => const PreferencesScreen()),
+      GoRoute(
+        path: '/relations/:id',
+        builder: (c, s) => RelationDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/opportunites',
+        builder: (c, s) => const OpportunitesListScreen(),
+      ),
+      GoRoute(
+        path: '/opportunites/:id',
+        builder: (c, s) => OpportuniteDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/notifications/:id',
+        builder: (c, s) => NotificationDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/parametres/compte',
+        builder: (c, s) => const AccountSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/parametres/securite',
+        builder: (c, s) => const SecuritySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/parametres/preferences',
+        builder: (c, s) => const PreferencesScreen(),
+      ),
+      GoRoute(
+        path: '/parametres/conditions',
+        builder: (c, s) => const TermsScreen(),
+      ),
     ],
   );
 });
