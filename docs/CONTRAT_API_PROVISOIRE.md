@@ -39,7 +39,23 @@ Routes confirmées :
 - `POST /api/v1/tests-numeriques/{id}/resultats`
 - `GET /api/v1/tests-numeriques/resultats/citoyen/{citoyenId}`
 
+Administration (rôle `ADMIN` ou `SUPER_ADMIN`) :
+
+- `GET /api/admin/tests-numeriques`
+- `POST /api/admin/tests-numeriques`
+- `PUT /api/admin/tests-numeriques/{id}`
+- `DELETE /api/admin/tests-numeriques/{id}` (archivage logique)
+- `GET /api/admin/competences`
+
+L’éditeur mobile admin n’envoie que des questions `CHOIX_MULTIPLE`, avec au
+moins deux propositions et au moins une bonne réponse. Le backend contrôle
+également ces règles et renvoie l’identifiant de compétence pour l’édition.
+
 Il n’existe pas de liste globale : le mobile collecte les tests des compétences du citoyen, puis pagine localement. La soumission attend `citoyenId` et une map `reponses` (question UUID vers liste de propositions UUID). Le mobile ignore systématiquement le champ `correcte` si l’API le renvoie. Le backend ne calcule pas actuellement les réponses libres `TEXTE_LIBRE`; elles ne sont pas incluses dans le score envoyé. La réponse de résultat inclut `preuveId`, utilisé uniquement comme lien vers `/preuves/{id}`.
+
+## Génération du CV
+
+`POST /api/v1/citoyens/me/photo` accepte la photo du citoyen connecté en multipart (`fichier`) et la stocke parmi les médias du backend. `GET /api/v1/citoyens/me/cv` renvoie ensuite un PDF en pièce jointe. Le serveur déduit l’identifiant du citoyen du jeton et rassemble ses coordonnées, sa photo, toutes ses expériences, ses compétences à l’état `VALIDEE` et ses résultats de tests numériques. Le mobile lance le téléchargement depuis le passeport et propose l’enregistrement du PDF sur l’appareil. Les photos JPEG et PNG sont intégrées au PDF ; sinon le CV affiche les initiales du citoyen.
 
 ## Portfolio
 
@@ -60,3 +76,17 @@ Par défaut, l’application utilise les repositories API (`USE_MOCKS=false`). P
 Sur l’émulateur Android, l’URL par défaut est `http://10.0.2.2:8080`. Sur un téléphone physique, passer l’adresse de la machine qui héberge le backend avec `--dart-define=API_BASE_URL=http://<adresse-du-backend>:8080`.
 
 Les routes signalées comme provisoires ci-dessus doivent être ajoutées au backend avant que leurs actions puissent fonctionner avec des données serveur. Les listes et détails affichent leur état d’erreur avec une action Réessayer si une route est indisponible. Les formulaires affichent l’échec de l’action lorsque le serveur ne fournit pas encore la route. En production, `APP_ENV=prod` force toujours le mode API.
+
+## Espace d’administration mobile
+
+Le panneau `/admin` est affiché uniquement pour les rôles `ADMIN` et
+`SUPER_ADMIN` du jeton JWT ; la sécurité effective reste appliquée par le
+backend. La gestion des comptes et rôles (`/api/admin/users`) est réservée au
+`SUPER_ADMIN`. Les opportunités utilisent les routes CRUD `/api/opportunites`
+et `/api/categories-opportunites`, les validations et organisations proposent
+uniquement les changements de statut exposés par leurs routes admin.
+
+Les validations ne sont pas reliées aux catégories d’opportunités (formation,
+concours, bourse, etc.) dans le modèle ni dans l’API backend. Le menu des
+opportunités ne peut donc pas filtrer les validations sans ajouter d’abord cette
+relation métier côté serveur.
