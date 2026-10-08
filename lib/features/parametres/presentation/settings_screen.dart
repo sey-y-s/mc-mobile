@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/app/router/routes.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
@@ -65,6 +66,7 @@ class SettingsScreen extends ConsumerWidget {
               if (!yes || !context.mounted) return;
               try {
                 await ref.read(authControllerProvider.notifier).logout();
+                if (context.mounted) context.go(AppRoutes.login);
               } catch (e) {
                 if (context.mounted)
                   ScaffoldMessenger.of(context)
