@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
@@ -49,13 +48,6 @@ class PreferencesScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                'Ces préférences sont stockées localement.',
-                style: TextStyle(color: AppColors.muted),
               ),
             ),
           ],

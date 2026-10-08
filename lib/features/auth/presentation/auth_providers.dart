@@ -26,8 +26,9 @@ class AuthController extends AsyncNotifier<void> {
   Future<bool> register(RegisterData data) => _run(() => ref.read(authRepositoryProvider).register(data));
 
   Future<void> logout() async {
-    await ref.read(authRepositoryProvider).logout();
-    await ref.read(sessionProvider.notifier).expire();
+    final repositoryLogout = ref.read(authRepositoryProvider).logout();
+    final expireSession = ref.read(sessionProvider.notifier).expire();
+    await Future.wait([repositoryLogout, expireSession]);
   }
 
   Future<bool> _run(Future<void> Function() action) async {

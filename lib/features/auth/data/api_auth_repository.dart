@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/network/api_endpoints.dart';
@@ -52,11 +54,15 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    // Meilleur effort : le jeton local est supprimé même si le serveur est injoignable.
+    // La déconnexion locale ne doit pas dépendre de la disponibilité du serveur.
     try {
-      await _dio.post<void>(ApiEndpoints.logout);
+      await _dio
+          .post<void>(ApiEndpoints.logout)
+          .timeout(const Duration(seconds: 3));
     } on DioException {
-      // ignoré volontairement
+      // Ignoré : les jetons locaux sont supprimés même si le serveur est injoignable.
+    } on TimeoutException {
+      // Le délai réseau est borné pour permettre à l'application de fermer la session.
     } finally {
       await _storage.clear();
     }
