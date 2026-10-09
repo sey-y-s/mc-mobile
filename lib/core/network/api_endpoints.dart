@@ -22,7 +22,8 @@ class ApiEndpoints {
   static String citoyenCommune(String id) => '$citoyens/$id/commune';
   static String citoyenDisponibilite(String id) =>
       '$citoyens/$id/disponibilite';
-  static String citoyenPhoto(String id) => '$citoyens/$id/photo';
+  static String citoyenPhoto(String id) => '/api/v1/citoyens/$id/photo';
+  static String citoyenCv(String id) => '/api/v1/citoyens/$id/cv';
   static const String regions = '/api/regions';
   static String citoyenPreuves(String id) => '$citoyens/$id/preuves';
   static String preuve(String id) => '/api/preuves/$id';
@@ -86,6 +87,19 @@ class ApiEndpoints {
   static String mobileRelation(String id) => '$mobileRelations/$id';
 
   static const String mobileTests = '/api/v1/tests-numeriques';
+  static const String admin = '/api/admin';
+  static String adminDashboard() => '$admin/dashboard';
+  static String adminUsers() => '$admin/users';
+  static String adminUserRole(String id) => '$admin/users/$id/role';
+  static String adminValidations() => '$admin/validations';
+  static String adminValidationStatus(String id) =>
+      '$admin/validations/$id/statut';
+  static String adminTests() => '$admin/tests-numeriques';
+  static String adminTest(String id) => '$admin/tests-numeriques/$id';
+  static String adminOpportunities() => '$admin/opportunites';
+  static String adminOpportunity(String id) => '$opportunites/$id';
+  static const String opportunityCategories = '/api/categories-opportunites';
+  static const String adminCompetences = '$admin/competences';
   static String mobileTestsForCompetence(String competenceId) =>
       '$mobileTests/competence/$competenceId';
   static String mobileTest(String id) => '$mobileTests/$id';

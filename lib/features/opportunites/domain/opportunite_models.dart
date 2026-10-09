@@ -21,6 +21,7 @@ enum OpportuniteStatus {
   publiee('PUBLIEE', 'Publiée'),
   brouillon('BROUILLON', 'Brouillon'),
   expiree('EXPIREE', 'Expirée'),
+  archivee('ARCHIVEE', 'Archivée'),
   annulee('ANNULEE', 'Annulée');
 
   const OpportuniteStatus(this.apiCode, this.label);

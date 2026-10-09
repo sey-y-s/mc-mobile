@@ -7,6 +7,7 @@ import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/features.dart';
+import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
 
 /// Routes protégées : le `redirect` ci-dessous bloque tout accès sans session authentifiée.
 /// Les écrans « onglets » sont dans le ShellRoute (barre de navigation) ; les autres sont plein écran.
@@ -90,6 +91,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const AvailabilityScreen(),
       ),
       GoRoute(
+        path: '/passeport/cv',
+        builder: (c, s) => const CvScreen(),
+      ),
+      GoRoute(
         path: '/competences/ajouter',
         builder: (c, s) => const AddCompetenceScreen(),
       ),
@@ -171,6 +176,65 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tests/:id/resultat',
         builder: (c, s) => TestResultScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (c, s) => AdminRouteGuard(child: const AdminHomeScreen()),
+      ),
+      GoRoute(
+        path: '/admin/opportunites',
+        builder: (c, s) => AdminRouteGuard(
+          child: const AdminOpportunitiesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/opportunites/nouvelle',
+        builder: (c, s) => AdminRouteGuard(
+          child: const AdminOpportunityEditorScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/opportunites/:id/modifier',
+        builder: (c, s) => AdminRouteGuard(
+          child: AdminOpportunityEditorScreen(
+            opportunity: s.extra as AdminOpportunityDraft?,
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/tests',
+        builder: (c, s) => AdminRouteGuard(child: const AdminTestsScreen()),
+      ),
+      GoRoute(
+        path: '/admin/tests/nouveau',
+        builder: (c, s) => AdminRouteGuard(
+          child: const AdminTestEditorScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/tests/:id/modifier',
+        builder: (c, s) => AdminRouteGuard(
+          child: AdminTestEditorScreen(test: s.extra as AdminQcmTest?),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/validations',
+        builder: (c, s) => AdminRouteGuard(
+          child: const AdminValidationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/organisations',
+        builder: (c, s) => AdminRouteGuard(
+          child: const AdminOrganizationsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/utilisateurs',
+        builder: (c, s) => AdminRouteGuard(
+          superAdminOnly: true,
+          child: const AdminUsersScreen(),
+        ),
       ),
       GoRoute(
         path: '/talents/:id',

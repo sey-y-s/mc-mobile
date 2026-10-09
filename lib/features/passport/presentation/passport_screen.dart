@@ -88,6 +88,13 @@ class _Content extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         const _CompletionCard(),
+        const SizedBox(height: 16),
+        AppButton(
+          label: 'Générer mon CV PDF',
+          icon: Icons.download_outlined,
+          variant: AppButtonVariant.secondary,
+          onPressed: () => context.push('/passeport/cv'),
+        ),
         const SizedBox(height: 28),
         SectionHeader(
             title: 'Compétences',
