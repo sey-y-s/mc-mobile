@@ -31,6 +31,10 @@ class _RecordingValidationRepository implements ValidationRepository {
   Future<Validation> request({
     required String citoyenCompetenceId,
     required String preuveId,
+<<<<<<< HEAD
+=======
+    String? centreId,
+>>>>>>> 4e4a207 (ajout de l'evaluateur)
   }) => throw UnimplementedError();
 }
 
