@@ -94,8 +94,9 @@ class MockPassportRepository implements PassportRepository {
   Future<Citoyen> updateProfile(
       {required String nom, required String prenom, Sexe? sexe}) async {
     await _latency();
-    if (nom.trim().isEmpty || prenom.trim().isEmpty)
+    if (nom.trim().isEmpty || prenom.trim().isEmpty) {
       throw ValidationFailure('Le nom et le prénom sont obligatoires.');
+    }
     return _with(
         nom: nom.trim(), prenom: prenom.trim(), sexe: sexe, setSexe: true);
   }

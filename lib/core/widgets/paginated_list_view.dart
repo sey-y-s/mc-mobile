@@ -99,7 +99,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
         padding: widget.padding,
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: _items.length + (hasFooter ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, i) {
           if (i < _items.length) return widget.itemBuilder(context, _items[i]);
           if (_error != null) {

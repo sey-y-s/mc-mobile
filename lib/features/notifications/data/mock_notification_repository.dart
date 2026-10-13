@@ -116,8 +116,9 @@ class MockNotificationRepository implements NotificationRepository {
     await _wait();
     final now = DateTime.now();
     for (var i = 0; i < _items.length; i++) {
-      if (!_items[i].isRead)
+      if (!_items[i].isRead) {
         _items[i] = _items[i].copyWith(isRead: true, readAt: now);
+      }
     }
   }
 }

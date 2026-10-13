@@ -35,7 +35,7 @@ class PortfolioListScreen extends ConsumerWidget {
             .where((e) => e.type == PortfolioMediaType.image)
             .firstOrNull;
         return AppCard(
-          onTap: () => context.push('/portfolio/' + item.id),
+          onTap: () => context.push('/portfolio/${item.id}'),
           child: Row(
             children: [
               if (image != null)
@@ -73,7 +73,7 @@ class PortfolioListScreen extends ConsumerWidget {
                     Text(
                       item.media.isEmpty
                           ? 'Sans média'
-                          : item.media.length.toString() + ' média(s)',
+                          : '${item.media.length} média(s)',
                       style: const TextStyle(
                         color: AppColors.muted,
                         fontSize: 12,

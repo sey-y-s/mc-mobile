@@ -57,7 +57,7 @@ class NotificationsBlock extends ConsumerWidget {
                       AppCard(
                         padding: const EdgeInsets.all(12),
                         accentColor: item.isRead ? null : AppColors.gold,
-                        onTap: () => context.push('/notifications/' + item.id),
+                        onTap: () => context.push('/notifications/${item.id}'),
                         child: Row(
                           children: [
                             Icon(_icon(item.type), color: AppColors.green),

@@ -32,7 +32,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final ok = await ref.read(passwordResetControllerProvider.notifier).requestCode(_id.text.trim());
     if (!ok || !mounted) return;
     showSuccess(context, "Si ce compte existe, un code vient d'être envoyé.");
-    context.push('/reset-password');
+    context.push('/reset-password', extra: _id.text.trim());
   }
 
   @override
@@ -61,7 +61,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           validator: (v) => Validators.required(v, field: "L'identifiant"),
         ),
         TextButton(
-          onPressed: busy ? null : () => context.push('/reset-password'),
+          onPressed: busy ? null : () => context.push('/reset-password', extra: _id.text.trim()),
           child: const Text("J'ai déjà un code"),
         ),
       ],

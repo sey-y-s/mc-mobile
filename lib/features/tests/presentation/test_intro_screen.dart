@@ -16,8 +16,9 @@ class TestIntroScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final testId = id;
-    if (testId == null || testId.isEmpty)
+    if (testId == null || testId.isEmpty) {
       return const Scaffold(body: ErrorView(error: NotFoundFailure()));
+    }
     final test = ref.watch(testDetailProvider(testId));
     return Scaffold(
       appBar: AppBar(title: const Text('Avant de commencer')),
@@ -53,13 +54,11 @@ class TestIntroScreen extends ConsumerWidget {
                     _Info(
                       icon: AppIcons.clock,
                       text:
-                          'Durée estimée : ' +
-                          item.durationMinutes.toString() +
-                          ' minutes',
+                          'Durée estimée : ${item.durationMinutes} minutes',
                     ),
                   _Info(
                     icon: AppIcons.tests,
-                    text: item.questions.length.toString() + ' question(s)',
+                    text: '${item.questions.length} question(s)',
                   ),
                 ],
               ),
@@ -78,7 +77,7 @@ class TestIntroScreen extends ConsumerWidget {
                 ref.read(testRunProvider(testId).notifier).state = TestRun(
                   testId: testId,
                 );
-                context.go('/tests/' + testId + '/question');
+                context.go('/tests/$testId/question');
               },
             ),
           ],

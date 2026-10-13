@@ -13,8 +13,10 @@ class PasswordResetController extends AsyncNotifier<void> {
       _run(() => ref.read(authRepositoryProvider).requestPasswordReset(identifiant));
 
   /// Retourne true si le mot de passe a été changé.
-  Future<bool> reset({required String code, required String newPassword}) =>
-      _run(() => ref.read(authRepositoryProvider).resetPassword(code: code, newPassword: newPassword));
+  Future<bool> reset({required String identifiant, required String code, required String newPassword}) =>
+      _run(() => ref
+          .read(authRepositoryProvider)
+          .resetPassword(identifiant: identifiant, code: code, newPassword: newPassword));
 
   Future<bool> _run(Future<void> Function() action) async {
     state = const AsyncLoading();

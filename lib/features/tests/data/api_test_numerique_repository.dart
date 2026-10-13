@@ -40,8 +40,9 @@ class ApiTestNumeriqueRepository implements TestNumeriqueRepository {
           row['competenceId'] ??
           (nested is Map ? nested['id'] : null) ??
           row['id'];
-      if (id != null && id.toString().isNotEmpty)
+      if (id != null && id.toString().isNotEmpty) {
         competenceIds.add(id.toString());
+      }
     }
     final byId = <String, TestNumerique>{};
     for (final competenceId in competenceIds) {
@@ -63,8 +64,9 @@ class ApiTestNumeriqueRepository implements TestNumeriqueRepository {
           .toString();
       if (testId.isEmpty) continue;
       final result = ResultatTest.fromJson({...data, 'testId': testId});
-      if (latest[testId] == null || result.date.isAfter(latest[testId]!.date))
+      if (latest[testId] == null || result.date.isAfter(latest[testId]!.date)) {
         latest[testId] = result;
+      }
     }
     final items =
         byId.values.map((e) => e.copyWith(lastResult: latest[e.id])).toList()

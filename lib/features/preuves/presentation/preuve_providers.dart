@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:mlc_mobile/app/config/app_config.dart';
 import 'package:mlc_mobile/core/media/picked_media.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
+import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
 import 'package:mlc_mobile/features/preuves/data/api_preuve_repository.dart';
 import 'package:mlc_mobile/features/preuves/data/mock_preuve_repository.dart';
@@ -13,7 +14,10 @@ import 'package:mlc_mobile/features/preuves/domain/preuve_repository.dart';
 final preuveRepositoryProvider = Provider<PreuveRepository>((ref) {
   return AppConfig.useMocks
       ? const MockPreuveRepository()
-      : ApiPreuveRepository(ref.watch(dioProvider));
+      : ApiPreuveRepository(
+          ref.watch(dioProvider),
+          ref.watch(tokenStorageProvider),
+        );
 });
 
 /// Compteur incrémenté à chaque ajout : tout ce qui l'observe se recharge tout seul

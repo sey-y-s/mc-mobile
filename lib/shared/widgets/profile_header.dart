@@ -33,7 +33,7 @@ class ProfileHeader extends StatelessWidget {
           radius: 30,
           backgroundColor: AppColors.greenSoft,
           foregroundImage: showPhoto ? NetworkImage(avatarUrl!) : null,
-          onForegroundImageError: showPhoto ? (_, __) {} : null,
+          onForegroundImageError: showPhoto ? (_, _) {} : null,
           child: const Icon(AppIcons.person, color: AppColors.green, size: 30),
         ),
       ),

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Configuration par environnement, injectée à la compilation :
 /// `flutter run --dart-define-from-file=config/dev.json`
 /// Aucun secret ici : uniquement des valeurs publiques (URL, drapeaux).
@@ -10,13 +12,20 @@ class AppConfig {
     'APP_ENV',
     defaultValue: 'dev',
   );
-  static const String apiBaseUrl = String.fromEnvironment(
+  static const String _configuredApiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8080',
+    defaultValue: '',
   );
+  static String get apiBaseUrl {
+    if (_configuredApiBaseUrl.isNotEmpty) return _configuredApiBaseUrl;
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+        ? 'http://10.0.2.2:8080'
+        : 'http://localhost:8080';
+  }
+
   static const bool _useMocksFlag = bool.fromEnvironment(
     'USE_MOCKS',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static AppEnv get env => AppEnv.values.firstWhere(

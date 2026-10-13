@@ -1,6 +1,6 @@
 enum Sexe {
-  femme('FEMININ', 'Femme'),
-  homme('MASCULIN', 'Homme');
+  femme('FEMME', 'Femme'),
+  homme('HOMME', 'Homme');
 
   const Sexe(this.apiCode, this.label);
   final String apiCode;
@@ -17,17 +17,18 @@ enum Sexe {
 
 enum Disponibilite {
   disponible('DISPONIBLE', 'Disponible'),
-  bientot('BIENTOT', 'Bientôt disponible'),
-  indisponible('INDISPONIBLE', 'Indisponible');
+  bientot('EN_APPRENTISSAGE', 'Bientôt disponible'),
+  indisponible('NON_DISPONIBLE', 'Indisponible');
 
   const Disponibilite(this.apiCode, this.label);
   final String apiCode;
   final String label;
 
   /// Valeurs API provisoires (à confirmer). Valeur inconnue -> disponible.
-  static Disponibilite fromApi(String? v) =>
-      Disponibilite.values.firstWhere((d) => d.apiCode == v,
-          orElse: () => Disponibilite.disponible);
+  static Disponibilite fromApi(String? v) => Disponibilite.values.firstWhere(
+    (d) => d.apiCode == v,
+    orElse: () => Disponibilite.disponible,
+  );
 }
 
 class Region {
@@ -45,11 +46,12 @@ class Region {
 }
 
 class Commune {
-  const Commune(
-      {required this.id,
-      required this.nom,
-      required this.regionId,
-      required this.regionNom});
+  const Commune({
+    required this.id,
+    required this.nom,
+    required this.regionId,
+    required this.regionNom,
+  });
   final String id;
   final String nom;
   final String regionId;
@@ -58,11 +60,11 @@ class Commune {
   String get fullLabel => '$nom, $regionNom';
 
   factory Commune.fromJson(Map<String, dynamic> j) => Commune(
-        id: j['id'] as String,
-        nom: j['nom'] as String,
-        regionId: j['regionId'] as String,
-        regionNom: j['regionNom'] as String,
-      );
+    id: j['id'] as String,
+    nom: j['nom'] as String,
+    regionId: j['regionId'] as String,
+    regionNom: j['regionNom'] as String,
+  );
 
   @override
   bool operator ==(Object other) => other is Commune && other.id == id;
@@ -95,15 +97,15 @@ class Citoyen {
   String get nomComplet => '$prenom $nom';
 
   factory Citoyen.fromJson(Map<String, dynamic> j) => Citoyen(
-        id: j['id'] as String,
-        nom: j['nom'] as String,
-        prenom: j['prenom'] as String,
-        sexe: Sexe.fromApi(j['sexe'] as String?),
-        photoUrl: j['photoUrl'] as String?,
-        codePasseport: j['codePasseport'] as String,
-        disponibilite: Disponibilite.fromApi(j['disponibilite'] as String?),
-        commune: j['commune'] == null
-            ? null
-            : Commune.fromJson(j['commune'] as Map<String, dynamic>),
-      );
+    id: j['id'] as String,
+    nom: j['nom'] as String,
+    prenom: j['prenom'] as String,
+    sexe: Sexe.fromApi(j['sexe'] as String?),
+    photoUrl: j['photoUrl'] as String?,
+    codePasseport: j['codePasseport'] as String,
+    disponibilite: Disponibilite.fromApi(j['disponibilite'] as String?),
+    commune: j['commune'] == null
+        ? null
+        : Commune.fromJson(j['commune'] as Map<String, dynamic>),
+  );
 }

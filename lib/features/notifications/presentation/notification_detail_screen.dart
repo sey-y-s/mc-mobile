@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
@@ -32,8 +31,9 @@ class _NotificationDetailScreenState
     if (!_marked && id != null && id.isNotEmpty) {
       _marked = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted)
+        if (mounted) {
           ref.read(notificationsControllerProvider.notifier).markAsRead(id);
+        }
       });
     }
   }
@@ -58,7 +58,7 @@ class _NotificationDetailScreenState
               onPressed: () => context.push(
                 item.referenceId == null
                     ? '/relations'
-                    : '/relations/' + item.referenceId!,
+                    : '/relations/${item.referenceId!}',
               ),
             ),
             NotificationType.validation => AppButton(
@@ -67,7 +67,7 @@ class _NotificationDetailScreenState
               onPressed: () => context.push(
                 item.referenceId == null
                     ? '/validations'
-                    : '/validations/' + item.referenceId!,
+                    : '/validations/${item.referenceId!}',
               ),
             ),
             NotificationType.opportunite => AppButton(
@@ -76,7 +76,7 @@ class _NotificationDetailScreenState
               onPressed: () => context.push(
                 item.referenceId == null
                     ? '/opportunites'
-                    : '/opportunites/' + item.referenceId!,
+                    : '/opportunites/${item.referenceId!}',
               ),
             ),
             NotificationType.besoinCompetence => AppButton(

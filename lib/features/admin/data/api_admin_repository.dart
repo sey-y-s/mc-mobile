@@ -33,10 +33,8 @@ class ApiAdminRepository {
 
   Future<void> updateUserRole(String id, String role) async {
     await guardDio(
-      () => _dio.put<void>(
-        ApiEndpoints.adminUserRole(id),
-        data: {'role': role},
-      ),
+      () =>
+          _dio.put<void>(ApiEndpoints.adminUserRole(id), data: {'role': role}),
     );
   }
 
@@ -78,7 +76,7 @@ class ApiAdminRepository {
           .toList();
 
   Future<List<AdminCompetence>> competences() async =>
-      (await _getRows(ApiEndpoints.adminCompetences()))
+      (await _getRows(ApiEndpoints.adminCompetences))
           .map(AdminCompetence.fromJson)
           .toList();
 
@@ -146,10 +144,7 @@ class ApiAdminRepository {
     };
     if (opportunity.id == null) {
       await guardDio(
-        () => _dio.post<void>(
-          ApiEndpoints.mobileOpportunities,
-          data: data,
-        ),
+        () => _dio.post<void>(ApiEndpoints.mobileOpportunities, data: data),
       );
     } else {
       await guardDio(

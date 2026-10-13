@@ -92,7 +92,7 @@ class _Content extends StatelessWidget {
             height: 220,
             fit: BoxFit.cover,
             cacheWidth: 800, // jamais l'image pleine résolution en mémoire
-            errorBuilder: (_, __, ___) => const SizedBox(
+            errorBuilder: (_, _, _) => const SizedBox(
               height: 120,
               child: Center(
                   child:

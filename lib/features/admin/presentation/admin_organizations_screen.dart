@@ -1,23 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
-import 'package:mlc_mobile/core/errors/app_failure.dart';
-import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
-import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
 
 class AdminOrganizationsScreen extends ConsumerWidget {
   const AdminOrganizationsScreen({super.key});
-
-  static const _statuses = [
-    'EN_ATTENTE',
-    'APPROUVEE',
-    'REJETEE',
-    'SUSPENDUE',
-  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,13 +37,13 @@ class AdminOrganizationsScreen extends ConsumerWidget {
   }
 }
 
-class _OrganizationCard extends ConsumerWidget {
+class _OrganizationCard extends StatelessWidget {
   const _OrganizationCard({required this.item});
 
   final AdminOrganization item;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => AppCard(
+  Widget build(BuildContext context) => AppCard(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -67,59 +57,13 @@ class _OrganizationCard extends ConsumerWidget {
           Text(item.description!),
         ],
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _OrganizationStatus.labels.containsKey(item.status)
-              ? item.status
-              : null,
-          decoration: const InputDecoration(
-            labelText: 'Statut',
-            prefixIcon: Icon(Icons.verified_outlined),
-          ),
-          items: [
-            for (final status in AdminOrganizationsScreen._statuses)
-              DropdownMenuItem(
-                value: status,
-                child: Text(_OrganizationStatus.labels[status]!),
-              ),
-          ],
-          onChanged: (status) {
-            if (status != null && status != item.status) {
-              _updateStatus(context, ref, status);
-            }
-          },
+        Text(
+          'Statut : ${_OrganizationStatus.labels[item.status] ?? item.status}',
+          style: const TextStyle(color: AppColors.muted),
         ),
       ],
     ),
   );
-
-  Future<void> _updateStatus(
-    BuildContext context,
-    WidgetRef ref,
-    String status,
-  ) async {
-    final accepted = await confirmDialog(
-      context,
-      title: 'Modifier le statut ?',
-      message:
-          'Le statut de « ${item.name} » sera remplacé par ${_OrganizationStatus.labels[status]}.',
-      confirmLabel: 'Confirmer',
-    );
-    if (!accepted) {
-      ref.invalidate(adminOrganizationsProvider);
-      return;
-    }
-    if (!context.mounted) return;
-    try {
-      await ref
-          .read(apiAdminRepositoryProvider)
-          .updateOrganizationStatus(item.id, status);
-      ref.invalidate(adminOrganizationsProvider);
-      showSuccess(context, 'Statut de l’organisation mis à jour');
-    } catch (error) {
-      ref.invalidate(adminOrganizationsProvider);
-      if (context.mounted) showError(context, failureMessage(error));
-    }
-  }
 }
 
 class _OrganizationStatus {

@@ -104,8 +104,9 @@ class MockMiseEnRelationRepository implements MiseEnRelationRepository {
           e.recipientId == talentId &&
           e.status != RelationStatus.refusee,
     );
-    if (exists)
+    if (exists) {
       throw ValidationFailure('Une demande existe déjà pour ce profil.');
+    }
     final created = MiseEnRelation(
       id: 'relation-${DateTime.now().microsecondsSinceEpoch}',
       senderId: _me,
@@ -127,8 +128,9 @@ class MockMiseEnRelationRepository implements MiseEnRelationRepository {
     if (index < 0) throw const NotFoundFailure();
     final existing = _items[index];
     if (existing.recipientId != _me) throw const ForbiddenFailure();
-    if (existing.status != RelationStatus.enAttente)
+    if (existing.status != RelationStatus.enAttente) {
       throw ValidationFailure('Cette demande a déjà reçu une réponse.');
+    }
     final updated = MiseEnRelation(
       id: existing.id,
       senderId: existing.senderId,

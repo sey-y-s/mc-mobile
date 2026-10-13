@@ -57,6 +57,25 @@ class MockPreuveRepository implements PreuveRepository {
     );
   }
 
+  static void addTestResult({
+    required String preuveId,
+    required String competenceId,
+    required String competenceName,
+    required DateTime date,
+  }) {
+    _items.removeWhere((item) => item.id == preuveId);
+    _items.add(
+      Preuve(
+        id: preuveId,
+        type: PreuveType.testNumerique,
+        citoyenCompetenceId: competenceId,
+        competenceNom: competenceName,
+        date: date,
+        fichierNom: 'resultat-test.pdf',
+      ),
+    );
+  }
+
   Future<void> _latency([int ms = 300]) =>
       Future<void>.delayed(Duration(milliseconds: ms));
 

@@ -21,9 +21,8 @@ class AdminHomeScreen extends ConsumerWidget {
           error: error,
           onRetry: () => ref.invalidate(isAdminProvider),
         ),
-        data: (allowed) => allowed
-            ? const _AdminDashboardBody()
-            : const _ForbiddenAdminView(),
+        data: (allowed) =>
+            allowed ? const _AdminDashboardBody() : const _ForbiddenAdminView(),
       ),
     );
   }
@@ -80,7 +79,7 @@ class _AdminDashboardBody extends ConsumerWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Les changements sont enregistrés directement sur le serveur.',
+                    'Consultez les informations et l’état de la plateforme.',
                     style: TextStyle(color: Color(0xD1FFFFFF)),
                   ),
                 ],
@@ -102,28 +101,28 @@ class _AdminDashboardBody extends ConsumerWidget {
             const SizedBox(height: 10),
             _AdminAction(
               title: 'Opportunités',
-              detail: 'Créer, modifier et supprimer une opportunité',
+              detail: 'Consulter les opportunités publiées et leurs statuts',
               onTap: () => context.push('/admin/opportunites'),
             ),
             _AdminAction(
               title: 'Tests numériques',
-              detail: 'Gérer les tests QCM à réponses multiples',
+              detail: 'Consulter les tests QCM et leurs statuts',
               onTap: () => context.push('/admin/tests'),
             ),
             _AdminAction(
               title: 'Organisations',
-              detail: 'Examiner et mettre à jour leur statut',
+              detail: 'Consulter les organisations et leur statut',
               onTap: () => context.push('/admin/organisations'),
             ),
             _AdminAction(
               title: 'Validations',
-              detail: 'Examiner les demandes et enregistrer une décision',
+              detail: 'Consulter les demandes de validation',
               onTap: () => context.push('/admin/validations'),
             ),
             if (superAdmin)
               _AdminAction(
                 title: 'Comptes et rôles',
-                detail: 'Réservé aux super-administrateurs',
+                detail: 'Consulter les comptes et leurs rôles',
                 onTap: () => context.push('/admin/utilisateurs'),
               ),
           ],
@@ -148,9 +147,8 @@ class _Metric extends StatelessWidget {
         children: [
           Text(
             value.toString(),
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(color: AppColors.green),
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(color: AppColors.green),
           ),
           Text(label, style: const TextStyle(color: AppColors.muted)),
         ],

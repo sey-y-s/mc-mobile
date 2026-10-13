@@ -65,9 +65,10 @@ class PreferencesScreen extends ConsumerWidget {
       await ref.read(settingsRepositoryProvider).savePreferences(value);
       ref.invalidate(preferencesProvider);
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(failureMessage(e))));
+      }
     }
   }
 }

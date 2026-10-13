@@ -2,18 +2,22 @@ import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
 
 enum TalentAvailability {
   disponible('DISPONIBLE', 'Disponible'),
-  bientotDisponible('BIENTOT_DISPONIBLE', 'Bientôt disponible'),
-  indisponible('INDISPONIBLE', 'Indisponible');
+  bientotDisponible('EN_APPRENTISSAGE', 'Bientôt disponible'),
+  indisponible('NON_DISPONIBLE', 'Indisponible');
 
   const TalentAvailability(this.apiCode, this.label);
   final String apiCode;
   final String label;
 
-  static TalentAvailability fromApi(String? value) =>
-      TalentAvailability.values.firstWhere(
-        (e) => e.apiCode == value?.toUpperCase(),
-        orElse: () => TalentAvailability.disponible,
-      );
+  static TalentAvailability fromApi(String? value) {
+    final code = value?.toUpperCase();
+    // Le backend a aussi la valeur OCCUPE : le talent n'est pas disponible.
+    if (code == 'OCCUPE') return TalentAvailability.indisponible;
+    return TalentAvailability.values.firstWhere(
+      (e) => e.apiCode == code,
+      orElse: () => TalentAvailability.disponible,
+    );
+  }
 }
 
 class TalentCompetence {

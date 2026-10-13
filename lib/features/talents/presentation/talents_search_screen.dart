@@ -97,7 +97,7 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
                   child: Text(
                     filters.regionId == null
                         ? 'Résultats anonymisés'
-                        : 'Région : ' + filters.regionId!,
+                        : 'Région : ${filters.regionId!}',
                     style: const TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
@@ -132,7 +132,7 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
                           .search(filters, page: page, size: size);
                     },
                     itemBuilder: (context, talent) => AppCard(
-                      onTap: () => context.push('/talents/' + talent.id),
+                      onTap: () => context.push('/talents/${talent.id}'),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -158,9 +158,7 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
                                       ),
                                     ),
                                     Text(
-                                      talent.communeName +
-                                          ', ' +
-                                          talent.regionName,
+                                      '${talent.communeName}, ${talent.regionName}',
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: AppColors.muted,
@@ -183,7 +181,7 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
                               for (final skill in talent.skills.take(3))
                                 Chip(
                                   label: Text(
-                                    skill.name + ' · ' + skill.level.label,
+                                    '${skill.name} · ${skill.level.label}',
                                   ),
                                   visualDensity: VisualDensity.compact,
                                 ),
@@ -265,7 +263,7 @@ class _TalentFilterSheetState extends ConsumerState<_TalentFilterSheet> {
                 ],
               ),
               data: (regions) => DropdownButtonFormField<String>(
-                value: _regionId ?? '',
+                initialValue: _regionId ?? '',
                 decoration: const InputDecoration(labelText: 'Région'),
                 items: [
                   const DropdownMenuItem(

@@ -53,7 +53,7 @@ class TalentProfileScreen extends ConsumerWidget {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           Text(
-                            talent.communeName + ', ' + talent.regionName,
+                            '${talent.communeName}, ${talent.regionName}',
                             style: const TextStyle(color: AppColors.muted),
                           ),
                         ],
@@ -86,7 +86,7 @@ class TalentProfileScreen extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              'Niveau : ' + skill.level.label,
+                              'Niveau : ${skill.level.label}',
                               style: const TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 12,
@@ -176,8 +176,9 @@ class TalentProfileScreen extends ConsumerWidget {
                         .read(miseEnRelationRepositoryProvider)
                         .send(talentId, message: message);
                     ref.read(relationsRevisionProvider.notifier).state++;
-                    if (context.mounted)
+                    if (context.mounted) {
                       showSuccess(context, 'Demande envoyée.');
+                    }
                   } catch (e) {
                     if (context.mounted) showError(context, failureMessage(e));
                   }

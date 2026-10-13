@@ -19,8 +19,9 @@ class RelationDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final relationId = id;
-    if (relationId == null || relationId.isEmpty)
+    if (relationId == null || relationId.isEmpty) {
       return const Scaffold(body: ErrorView(error: NotFoundFailure()));
+    }
     final value = ref.watch(relationDetailProvider(relationId));
     return Scaffold(
       appBar: AppBar(title: const Text('Demande de mise en relation')),
@@ -162,16 +163,18 @@ class RelationDetailScreen extends ConsumerWidget {
           .read(miseEnRelationRepositoryProvider)
           .respond(id, accept: accept);
       ref.read(relationsRevisionProvider.notifier).state++;
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(accept ? 'Demande acceptée.' : 'Demande refusée.'),
           ),
         );
+      }
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(failureMessage(e))));
+      }
     }
   }
 }

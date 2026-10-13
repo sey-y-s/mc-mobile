@@ -19,8 +19,9 @@ class PortfolioDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemId = id;
-    if (itemId == null || itemId.isEmpty)
+    if (itemId == null || itemId.isEmpty) {
       return const Scaffold(body: ErrorView(error: NotFoundFailure()));
+    }
     final value = ref.watch(portfolioDetailProvider(itemId));
     return Scaffold(
       appBar: AppBar(title: const Text('Réalisation')),
@@ -102,7 +103,7 @@ class PortfolioDetailScreen extends ConsumerWidget {
               label: 'Modifier',
               icon: AppIcons.edit,
               onPressed: () =>
-                  context.push('/portfolio/' + item.id + '/modifier'),
+                  context.push('/portfolio/${item.id}/modifier'),
             ),
             const SizedBox(height: 8),
             AppButton(
@@ -123,10 +124,11 @@ class PortfolioDetailScreen extends ConsumerWidget {
                   ref.read(portfolioRevisionProvider.notifier).state++;
                   if (context.mounted) context.go('/portfolio');
                 } catch (e) {
-                  if (context.mounted)
+                  if (context.mounted) {
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(failureMessage(e))));
+                  }
                 }
               },
             ),

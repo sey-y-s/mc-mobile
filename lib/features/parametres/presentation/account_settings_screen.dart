@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/validators.dart';
+import 'package:mlc_mobile/core/widgets/app_button.dart';
 import 'package:mlc_mobile/core/widgets/app_text_field.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
-import 'package:mlc_mobile/core/widgets/form_scaffold.dart';
 import 'package:mlc_mobile/features/parametres/domain/settings_models.dart';
 import 'package:mlc_mobile/features/parametres/presentation/settings_providers.dart';
 
@@ -51,31 +51,49 @@ class _AccountFormState extends ConsumerState<_AccountForm> {
   }
 
   @override
-  Widget build(BuildContext context) => FormScaffold(
-    title: 'Coordonnées',
-    formKey: _key,
-    submitLabel: 'Enregistrer',
-    isLoading: _saving,
-    error: _error,
-    onSubmit: _save,
-    children: [
-      AppTextField(
-        label: 'Téléphone',
-        controller: _phone,
-        keyboardType: TextInputType.phone,
-        validator: Validators.phone,
+  Widget build(BuildContext context) => SafeArea(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Form(
+        key: _key,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              label: 'Téléphone',
+              controller: _phone,
+              keyboardType: TextInputType.phone,
+              validator: Validators.phone,
+            ),
+            const SizedBox(height: 16),
+            AppTextField(
+              label: 'Email (facultatif)',
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              validator: Validators.emailOptional,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Une modification du téléphone peut demander une nouvelle vérification.',
+              style: TextStyle(color: Colors.black54),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                failureMessage(_error!),
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+            const SizedBox(height: 24),
+            AppButton(
+              label: 'Enregistrer',
+              onPressed: _save,
+              isLoading: _saving,
+            ),
+          ],
+        ),
       ),
-      AppTextField(
-        label: 'Email (facultatif)',
-        controller: _email,
-        keyboardType: TextInputType.emailAddress,
-        validator: Validators.emailOptional,
-      ),
-      const Text(
-        'Une modification du téléphone peut demander une nouvelle vérification.',
-        style: TextStyle(color: Colors.black54),
-      ),
-    ],
+    ),
   );
   Future<void> _save() async {
     if (!_key.currentState!.validate()) return;
@@ -90,13 +108,15 @@ class _AccountFormState extends ConsumerState<_AccountForm> {
             AccountChanges(telephone: _phone.text, email: _email.text),
           );
       ref.read(accountRevisionProvider.notifier).state++;
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Coordonnées mises à jour.')),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = e is AppFailure ? e : const UnknownFailure());
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -61,7 +61,7 @@ class NotificationsScreen extends ConsumerWidget {
           final unread = !item.isRead;
           return AppCard(
             accentColor: unread ? AppColors.gold : null,
-            onTap: () => context.push('/notifications/' + item.id),
+            onTap: () => context.push('/notifications/${item.id}'),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

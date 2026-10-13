@@ -12,8 +12,9 @@ class PortfolioEditScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final itemId = id;
-    if (itemId == null || itemId.isEmpty)
+    if (itemId == null || itemId.isEmpty) {
       return const Scaffold(body: ErrorView(error: NotFoundFailure()));
+    }
     final item = ref.watch(portfolioDetailProvider(itemId));
     return AsyncValueView<PortfolioRealisation>(
       value: item,

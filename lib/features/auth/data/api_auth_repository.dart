@@ -7,10 +7,7 @@ import 'package:mlc_mobile/core/network/dio_provider.dart';
 import 'package:mlc_mobile/core/storage/token_storage.dart';
 import 'package:mlc_mobile/features/auth/domain/auth_repository.dart';
 
-/// Contrat provisoire (à confirmer avec le backend) :
-/// Authentification : POST ApiEndpoints.login, corps aligné sur le backend.
-/// Le contrat d'inscription reste à harmoniser ; voir docs/CONTRAT_API_PROVISOIRE.md.
-///  401 sur login => identifiants invalides.
+/// Authentification et inscription suivent les DTO de l'API Spring.
 class ApiAuthRepository implements AuthRepository {
   ApiAuthRepository(this._dio, this._storage);
   final Dio _dio;
@@ -36,20 +33,20 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> register(RegisterData d) async {
-    final res = await guardDio(
-      () => _dio.post<Map<String, dynamic>>(
+    await guardDio(
+      () => _dio.post<void>(
         ApiEndpoints.register,
         data: {
           'nom': d.nom,
           'prenom': d.prenom,
           'telephone': d.telephone,
           if (d.email != null) 'email': d.email,
-          'motDePasse': d.password,
+          'password': d.password,
           if (d.communeId != null) 'communeId': d.communeId,
         },
       ),
     );
-    await _saveTokens(res.data);
+    await login(identifiant: d.telephone, password: d.password);
   }
 
   @override
@@ -78,12 +75,13 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> resetPassword({
+    required String identifiant,
     required String code,
     required String newPassword,
   }) => guardDio(
     () => _dio.post<void>(
       ApiEndpoints.resetPassword,
-      data: {'code': code, 'motDePasse': newPassword},
+      data: {'identifiant': identifiant, 'code': code, 'motDePasse': newPassword},
     ),
   );
 

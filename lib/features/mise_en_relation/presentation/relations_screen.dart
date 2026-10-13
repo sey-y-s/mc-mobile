@@ -62,7 +62,7 @@ class _RelationList extends ConsumerWidget {
               ? acceptedName!
               : 'Profil anonymisé';
           return AppCard(
-            onTap: () => context.push('/relations/' + relation.id),
+            onTap: () => context.push('/relations/${relation.id}'),
             child: Row(
               children: [
                 CircleAvatar(

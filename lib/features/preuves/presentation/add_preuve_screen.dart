@@ -14,7 +14,7 @@ import 'package:mlc_mobile/features/competences/presentation/competences_provide
 import 'package:mlc_mobile/features/preuves/domain/preuve_models.dart';
 import 'package:mlc_mobile/features/preuves/presentation/preuve_providers.dart';
 
-/// Route : /preuves/ajouter?competenceId=<id d'une CitoyenCompetence> (paramètre facultatif).
+/// Route : `/preuves/ajouter?competenceId=<id d'une CitoyenCompetence>` (facultatif).
 /// Trois choix : compétence, type de preuve, fichier (photo ou document).
 class AddPreuveScreen extends ConsumerStatefulWidget {
   const AddPreuveScreen({super.key, this.competenceId});
@@ -34,7 +34,9 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
   Future<void> _submit() async {
     setState(() => _showErrors = true);
     if (_competenceId == null || _type == null || _media == null) return;
-    final ok = await ref.read(addPreuveControllerProvider.notifier).submit(
+    final ok = await ref
+        .read(addPreuveControllerProvider.notifier)
+        .submit(
           citoyenCompetenceId: _competenceId!,
           type: _type!,
           media: _media!,
@@ -45,7 +47,9 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
   }
 
   Widget _shell(Widget body) => Scaffold(
-      appBar: AppBar(title: const Text('Ajouter une preuve')), body: body);
+    appBar: AppBar(title: const Text('Ajouter une preuve')),
+    body: body,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -58,17 +62,19 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
     return comps.when(
       skipLoadingOnReload: true,
       loading: () => _shell(const LoadingView()),
-      error: (e, _) => _shell(ErrorView(
-          error: e, onRetry: () => ref.invalidate(competencesProvider))),
+      error: (e, _) => _shell(
+        ErrorView(error: e, onRetry: () => ref.invalidate(competencesProvider)),
+      ),
       data: (items) {
         if (items.isEmpty) {
-          return _shell(EmptyView(
-            message:
-                "Ajoutez d'abord une compétence pour pouvoir lui associer une preuve.",
-            icon: Icons.workspace_premium_outlined,
-            actionLabel: 'Ajouter une compétence',
-            onAction: () => context.push('/competences/ajouter'),
-          ));
+          return _shell(
+            EmptyView(
+              message: "Ajoutez d'abord une compétence pour pouvoir lui associer une preuve.",
+              icon: Icons.workspace_premium_outlined,
+              actionLabel: 'Ajouter une compétence',
+              onAction: () => context.push('/competences/ajouter'),
+            ),
+          );
         }
         final selected = items.where((c) => c.id == _competenceId).firstOrNull;
         return FormScaffold(
@@ -91,23 +97,30 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
                   : null,
               onChanged: (c) => setState(() => _competenceId = c.id),
             ),
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('Type de preuve',
-                  style: text.bodySmall?.copyWith(color: AppColors.muted)),
-              const SizedBox(height: 8),
-              for (final t in PreuveType.addable) ...[
-                SelectableOptionCard(
-                  title: t.label,
-                  description: t.description,
-                  selected: _type == t,
-                  onTap: busy ? null : () => setState(() => _type = t),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Type de preuve',
+                  style: text.bodySmall?.copyWith(color: AppColors.muted),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
+                for (final t in PreuveType.addable) ...[
+                  SelectableOptionCard(
+                    title: t.label,
+                    description: t.description,
+                    selected: _type == t,
+                    onTap: busy ? null : () => setState(() => _type = t),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (_showErrors && _type == null)
+                  Text(
+                    'Choisissez le type de preuve',
+                    style: text.bodySmall?.copyWith(color: AppColors.error),
+                  ),
               ],
-              if (_showErrors && _type == null)
-                Text('Choisissez le type de preuve',
-                    style: text.bodySmall?.copyWith(color: AppColors.error)),
-            ]),
+            ),
             FilePickerField(
               label: 'Ajouter le fichier de la preuve',
               allowed: const {MediaKind.image, MediaKind.document},

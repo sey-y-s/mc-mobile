@@ -8,7 +8,10 @@ import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
 import 'package:mlc_mobile/features/auth/presentation/auth_providers.dart';
-import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
+<<<<<<< HEAD
+import 'package:mlc_mobile/features/evaluateur/presentation/evaluateur_providers.dart';
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -17,7 +20,11 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentRoleProvider).value;
     final isAdmin = role == 'ADMIN' || role == 'SUPER_ADMIN';
-    final profile = ref.watch(passportProvider);
+<<<<<<< HEAD
+    final isCentreAdmin = role == 'CENTRE_ADMIN';
+    final isEvaluator = ref.watch(evaluatorCentresProvider).value?.isNotEmpty == true;
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
     return Scaffold(
       appBar: AppBar(title: const Text('Paramètres')),
@@ -30,13 +37,6 @@ class SettingsScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _ProfileCard(
-                    name: profile.valueOrNull?.nomComplet,
-                    photoUrl: profile.valueOrNull?.photoUrl,
-                    role: role,
-                    onTap: () => context.push('/passeport/profil'),
-                  ),
-                  const SizedBox(height: 28),
                   const _SectionHeading(
                     title: 'Votre espace',
                     subtitle: 'Gérez votre profil et vos informations de contact.',
@@ -58,6 +58,43 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+<<<<<<< HEAD
+                  if (isEvaluator) ...[
+                    const SizedBox(height: 24),
+                    const _SectionHeading(
+                      title: 'Évaluation des compétences',
+                      subtitle: 'Votre agrément de centre est actif.',
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsGroup(items: [
+                      _SettingsItemData(
+                        icon: Icons.fact_check_outlined,
+                        title: 'Espace évaluateur',
+                        subtitle: 'Consulter les demandes et valider les compétences de votre centre',
+                        onTap: () => context.push('/evaluateur'),
+                        iconColor: AppColors.green,
+                      ),
+                    ]),
+                  ],
+                  if (isCentreAdmin) ...[
+                    const SizedBox(height: 24),
+                    const _SectionHeading(
+                      title: 'Administration du centre',
+                      subtitle: 'Désignez les citoyens évaluateurs et gérez leurs agréments.',
+                    ),
+                    const SizedBox(height: 12),
+                    _SettingsGroup(items: [
+                      _SettingsItemData(
+                        icon: Icons.school_outlined,
+                        title: 'Gérer les évaluateurs',
+                        subtitle: 'Désignation, spécialités et suspension des agréments',
+                        onTap: () => context.push('/centre-admin/evaluateurs'),
+                        iconColor: AppColors.green,
+                      ),
+                    ]),
+                  ],
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
                   const SizedBox(height: 24),
                   const _SectionHeading(
                     title: 'Application',
@@ -148,108 +185,6 @@ class SettingsScreen extends ConsumerWidget {
           ..showSnackBar(SnackBar(content: Text(failureMessage(error))));
       }
     }
-  }
-}
-
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({
-    required this.name,
-    required this.photoUrl,
-    required this.role,
-    required this.onTap,
-  });
-
-  final String? name;
-  final String? photoUrl;
-  final String? role;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final displayName = name ?? 'Mon profil';
-    final roleLabel = switch (role) {
-      'SUPER_ADMIN' => 'Super administrateur',
-      'ADMIN' => 'Administrateur',
-      'ORGANISATION' => 'Organisation',
-      'CITOYEN' => 'Citoyen',
-      _ => 'Compte actif',
-    };
-
-    return Material(
-      color: AppColors.green,
-      borderRadius: BorderRadius.circular(22),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.gold, width: 2),
-                ),
-                child: CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  foregroundImage:
-                      photoUrl == null ? null : NetworkImage(photoUrl!),
-                  onForegroundImageError:
-                      photoUrl == null ? null : (_, __) {},
-                  child: Icon(
-                    AppIcons.person,
-                    size: 30,
-                    color: AppColors.green,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'BONJOUR',
-                      style: text.labelSmall?.copyWith(
-                        color: Colors.white70,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: text.titleLarge?.copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: 7),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color.fromRGBO(255, 255, 255, 0.13),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        roleLabel,
-                        style: text.labelSmall?.copyWith(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(AppIcons.chevron, color: Colors.white70),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

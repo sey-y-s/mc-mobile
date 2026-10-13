@@ -7,7 +7,11 @@ class ExperienceCompetence {
   final String nom;
 
   factory ExperienceCompetence.fromJson(Map<String, dynamic> j) =>
-      ExperienceCompetence(citoyenCompetenceId: j['citoyenCompetenceId'] as String, nom: j['competenceNom'] as String);
+      ExperienceCompetence(
+        citoyenCompetenceId:
+            (j['citoyenCompetenceId'] ?? j['id'] ?? '').toString(),
+        nom: (j['competenceNom'] ?? j['nom'] ?? '').toString(),
+      );
 }
 
 /// Contrat JSON provisoire (DTO plat) : voir fromJson.
@@ -36,19 +40,42 @@ class Experience {
   final bool reconversion;
   final List<ExperienceCompetence> competences;
 
-  factory Experience.fromJson(Map<String, dynamic> j) => Experience(
-        id: j['id'] as String,
-        titre: j['titre'] as String,
-        entreprise: j['entreprise'] as String?,
-        description: j['description'] as String?,
-        dateDebut: DateTime.parse(j['dateDebut'] as String),
-        dateFin: j['dateFin'] == null ? null : DateTime.parse(j['dateFin'] as String),
-        enCours: j['enCours'] as bool? ?? false,
-        reconversion: j['reconversion'] as bool? ?? false,
-        competences: ((j['competences'] as List<dynamic>?) ?? const [])
-            .map((e) => ExperienceCompetence.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+  factory Experience.fromJson(Map<String, dynamic> j) {
+    final rawCompetences = j['competences'];
+    final rawCompetenceIds = j['citoyenCompetenceIds'];
+    final competences = rawCompetences is List
+        ? rawCompetences
+            .whereType<Map>()
+            .map(
+              (e) => ExperienceCompetence.fromJson(
+                Map<String, dynamic>.from(e),
+              ),
+            )
+            .toList()
+        : rawCompetenceIds is List
+        ? rawCompetenceIds
+              .map(
+                (id) => ExperienceCompetence(
+                  citoyenCompetenceId: id.toString(),
+                  nom: '',
+                ),
+              )
+              .toList()
+        : const <ExperienceCompetence>[];
+    return Experience(
+      id: j['id'] as String,
+      titre: j['titre'] as String,
+      entreprise: j['entreprise'] as String?,
+      description: j['description'] as String?,
+      dateDebut: DateTime.parse(j['dateDebut'] as String),
+      dateFin: j['dateFin'] == null
+          ? null
+          : DateTime.parse(j['dateFin'] as String),
+      enCours: j['enCours'] as bool? ?? false,
+      reconversion: j['reconversion'] as bool? ?? false,
+      competences: competences,
+    );
+  }
 }
 
 /// Données envoyées pour créer ou modifier une expérience.

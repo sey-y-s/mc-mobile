@@ -184,7 +184,7 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
         if (mounted) setState(() => _progress[i] = 1);
       }
       ref.read(portfolioRevisionProvider.notifier).state++;
-      if (mounted) context.go('/portfolio/' + saved.id);
+      if (mounted) context.go('/portfolio/${saved.id}');
     } catch (e) {
       if (mounted) {
         setState(() => _error = e is AppFailure ? e : const UnknownFailure());

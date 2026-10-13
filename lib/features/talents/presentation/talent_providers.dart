@@ -30,7 +30,7 @@ final talentSearchRequestedProvider = StateProvider.autoDispose<bool>(
 final talentRegionsProvider = FutureProvider.autoDispose<List<TalentRegion>>((
   ref,
 ) async {
-  if (AppConfig.useMocks)
+  if (AppConfig.useMocks) {
     return const [
       TalentRegion('region-bamako', 'Bamako'),
       TalentRegion('region-kayes', 'Kayes'),
@@ -41,6 +41,7 @@ final talentRegionsProvider = FutureProvider.autoDispose<List<TalentRegion>>((
       TalentRegion('region-tombouctou', 'Tombouctou'),
       TalentRegion('region-kidal', 'Kidal'),
     ];
+  }
   final response = await guardDio(
     () => ref.watch(dioProvider).get<dynamic>(ApiEndpoints.regions),
   );

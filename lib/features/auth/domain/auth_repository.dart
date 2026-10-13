@@ -24,5 +24,10 @@ abstract interface class AuthRepository {
 
   Future<void> logout();
   Future<void> requestPasswordReset(String identifiant);
-  Future<void> resetPassword({required String code, required String newPassword});
+  /// [identifiant] = téléphone ou email saisi à l'étape « mot de passe oublié » (le serveur en a besoin pour retrouver le compte).
+  Future<void> resetPassword({
+    required String identifiant,
+    required String code,
+    required String newPassword,
+  });
 }

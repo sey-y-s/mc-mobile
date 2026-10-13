@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/config/app_config.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
+import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/features/competences/data/api_competences_repository.dart';
 import 'package:mlc_mobile/features/competences/data/mock_competences_repository.dart';
 import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
@@ -11,7 +12,10 @@ import 'package:mlc_mobile/features/competences/domain/competences_repository.da
 final competencesRepositoryProvider = Provider<CompetencesRepository>((ref) {
   return AppConfig.useMocks
       ? const MockCompetencesRepository()
-      : ApiCompetencesRepository(ref.watch(dioProvider));
+      : ApiCompetencesRepository(
+          ref.watch(dioProvider),
+          ref.watch(tokenStorageProvider),
+        );
 });
 
 // Première page seulement pour l'instant. TODO(PISTE A): AsyncNotifier paginé (scroll) quand les listes dépassent 20.

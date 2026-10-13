@@ -32,7 +32,7 @@ class TestsListScreen extends ConsumerWidget {
                 .read(testNumeriqueRepositoryProvider)
                 .list(page: page, size: size),
             itemBuilder: (context, item) => AppCard(
-              onTap: () => context.push('/tests/' + item.id),
+              onTap: () => context.push('/tests/${item.id}'),
               child: Row(
                 children: [
                   const Icon(AppIcons.tests, color: AppColors.green, size: 26),
@@ -57,9 +57,7 @@ class TestsListScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           StatusBadge(
                             label:
-                                'Dernier score : ' +
-                                item.lastResult!.score.toStringAsFixed(0) +
-                                '%',
+                                'Dernier score : ${item.lastResult!.score.toStringAsFixed(0)}%',
                             tone: item.lastResult!.passed
                                 ? BadgeTone.success
                                 : BadgeTone.neutral,
@@ -69,7 +67,7 @@ class TestsListScreen extends ConsumerWidget {
                     ),
                   ),
                   if (item.durationMinutes != null)
-                    Text(item.durationMinutes.toString() + ' min'),
+                    Text('${item.durationMinutes} min'),
                   const Icon(AppIcons.chevron, color: AppColors.muted),
                 ],
               ),

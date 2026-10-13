@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
-import 'package:mlc_mobile/core/errors/app_failure.dart';
-import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
-import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
@@ -151,18 +148,6 @@ class _AdminValidationsScreenState
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-              PopupMenuButton<String>(
-                tooltip: 'Enregistrer une décision',
-                onSelected: (status) => _decide(item, status),
-                itemBuilder: (context) => [
-                  for (final entry in _statuses.entries)
-                    PopupMenuItem(
-                      value: entry.key,
-                      enabled: entry.key != item.status,
-                      child: Text(entry.value),
-                    ),
-                ],
-              ),
             ],
           ),
           Text(
@@ -172,64 +157,6 @@ class _AdminValidationsScreenState
         ],
       ),
     );
-  }
-
-  Future<void> _decide(AdminValidation item, String status) async {
-    String? comment;
-    if (status == 'REJETEE') {
-      final controller = TextEditingController();
-      comment = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Motif du rejet'),
-          content: TextField(
-            controller: controller,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Commentaire à transmettre',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Continuer'),
-            ),
-          ],
-        ),
-      );
-      controller.dispose();
-      if (comment == null || !mounted) return;
-      if (comment.trim().isEmpty) {
-        showError(context, 'Indiquez le motif du rejet.');
-        return;
-      }
-    } else {
-      final accepted = await confirmDialog(
-        context,
-        title: 'Confirmer la décision ?',
-        message:
-            'La demande « ${item.label} » passera au statut ${_statuses[status]}.',
-        confirmLabel: 'Confirmer',
-      );
-      if (!accepted || !mounted) return;
-    }
-    try {
-      await ref
-          .read(apiAdminRepositoryProvider)
-          .updateValidationStatus(item.id, status: status, comment: comment);
-      ref.invalidate(adminValidationsProvider);
-      ref.invalidate(adminDashboardProvider);
-      if (mounted) {
-        showSuccess(context, 'Décision enregistrée');
-      }
-    } catch (error) {
-      if (mounted) showError(context, failureMessage(error));
-    }
   }
 
   static String _typeLabel(String type) => switch (type) {

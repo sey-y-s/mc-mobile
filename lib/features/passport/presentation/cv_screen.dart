@@ -26,7 +26,7 @@ class _CvScreenState extends ConsumerState<CvScreen> {
         );
       }
       final bytes = await ref.read(cvRepositoryProvider).download();
-      final path = await FilePicker.platform.saveFile(
+      final path = await FilePicker.saveFile(
         dialogTitle: 'Enregistrer mon CV',
         fileName: 'mon-cv.pdf',
         type: FileType.custom,

@@ -5,7 +5,6 @@ import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
-import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
@@ -19,14 +18,6 @@ class AdminOpportunitiesScreen extends ConsumerWidget {
     final opportunities = ref.watch(adminOpportunitiesProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Gestion des opportunités')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push('/admin/opportunites/nouvelle');
-          ref.invalidate(adminOpportunitiesProvider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Ajouter'),
-      ),
       body: opportunities.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
@@ -38,7 +29,7 @@ class AdminOpportunitiesScreen extends ConsumerWidget {
           child: items.isEmpty
               ? const EmptyView(message: 'Aucune opportunité enregistrée.')
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+                  padding: const EdgeInsets.all(16),
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
@@ -47,40 +38,9 @@ class AdminOpportunitiesScreen extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  opportunity.title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (action) async {
-                                  if (action == 'edit') {
-                                    await context.push(
-                                      '/admin/opportunites/${opportunity.id}/modifier',
-                                      extra: opportunity,
-                                    );
-                                    ref.invalidate(adminOpportunitiesProvider);
-                                  } else {
-                                    await _delete(context, ref, opportunity);
-                                  }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Modifier'),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Supprimer'),
-                                  ),
-                                ],
-                              ),
-                            ],
+                          Text(
+                            opportunity.title,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           Text(
                             '${opportunity.type.label} · ${_statusLabel(opportunity.status)}',
@@ -102,29 +62,6 @@ class AdminOpportunitiesScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    AdminOpportunityDraft item,
-  ) async {
-    final confirmed = await confirmDialog(
-      context,
-      title: 'Supprimer l’opportunité ?',
-      message: '« ${item.title} » sera supprimée de la plateforme.',
-      confirmLabel: 'Supprimer',
-      destructive: true,
-    );
-    if (!confirmed || !context.mounted || item.id == null) return;
-    try {
-      await ref.read(apiAdminRepositoryProvider).deleteOpportunity(item.id!);
-      ref.invalidate(adminOpportunitiesProvider);
-      ref.invalidate(adminDashboardProvider);
-      showSuccess(context, 'Opportunité supprimée');
-    } catch (error) {
-      if (context.mounted) showError(context, failureMessage(error));
-    }
   }
 
   static String _statusLabel(OpportuniteStatus status) => switch (status) {
@@ -237,7 +174,7 @@ class _AdminOpportunityEditorScreenState
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: items.any((item) => item.id == _categoryId)
+                      initialValue: items.any((item) => item.id == _categoryId)
                           ? _categoryId
                           : null,
                       decoration: const InputDecoration(
@@ -281,7 +218,7 @@ class _AdminOpportunityEditorScreenState
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<OpportuniteType>(
-                      value: _type,
+                      initialValue: _type,
                       decoration: const InputDecoration(labelText: 'Type'),
                       items: [
                         for (final type in OpportuniteType.values)
@@ -298,7 +235,7 @@ class _AdminOpportunityEditorScreenState
                     ),
                     const SizedBox(height: 14),
                     DropdownButtonFormField<OpportuniteStatus>(
-                      value: _status,
+                      initialValue: _status,
                       decoration: const InputDecoration(labelText: 'Statut'),
                       items: const [
                         DropdownMenuItem(

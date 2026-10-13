@@ -242,7 +242,7 @@ class _Thumbnail extends StatelessWidget {
         height: 52,
         fit: BoxFit.cover,
         cacheWidth: 160,
-        errorBuilder: (_, __, ___) => fallback,
+        errorBuilder: (_, _, _) => fallback,
       ),
     );
   }

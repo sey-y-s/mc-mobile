@@ -37,8 +37,9 @@ class MockSettingsRepository implements SettingsRepository {
   @override
   Future<UserAccount> updateAccount(AccountChanges changes) async {
     await _wait();
-    if (changes.telephone.trim().isEmpty)
+    if (changes.telephone.trim().isEmpty) {
       throw ValidationFailure('Le téléphone est obligatoire.');
+    }
     _account = UserAccount(
       id: _account.id,
       telephone: changes.telephone.trim(),
@@ -53,12 +54,14 @@ class MockSettingsRepository implements SettingsRepository {
     required String newPassword,
   }) async {
     await _wait();
-    if (currentPassword != _password)
+    if (currentPassword != _password) {
       throw ValidationFailure('Le mot de passe actuel est incorrect.');
-    if (newPassword.length < 8)
+    }
+    if (newPassword.length < 8) {
       throw ValidationFailure(
         'Le nouveau mot de passe doit contenir au moins 8 caractères.',
       );
+    }
     _password = newPassword;
   }
 

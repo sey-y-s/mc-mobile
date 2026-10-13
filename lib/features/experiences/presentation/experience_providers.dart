@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:mlc_mobile/app/config/app_config.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
+import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/features/experiences/data/api_experience_repository.dart';
 import 'package:mlc_mobile/features/experiences/data/mock_experience_repository.dart';
 import 'package:mlc_mobile/features/experiences/domain/experience_models.dart';
 import 'package:mlc_mobile/features/experiences/domain/experience_repository.dart';
 
 final experienceRepositoryProvider = Provider<ExperienceRepository>((ref) {
-  return AppConfig.useMocks ? const MockExperienceRepository() : ApiExperienceRepository(ref.watch(dioProvider));
+  return AppConfig.useMocks
+      ? const MockExperienceRepository()
+      : ApiExperienceRepository(
+          ref.watch(dioProvider),
+          ref.watch(tokenStorageProvider),
+        );
 });
 
 /// Compteur incrémenté à chaque création, modification ou suppression : listes et blocs se rechargent.

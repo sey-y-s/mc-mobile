@@ -31,7 +31,11 @@ class MockAuthRepository implements AuthRepository {
   Future<void> requestPasswordReset(String identifiant) => _latency();
 
   @override
-  Future<void> resetPassword({required String code, required String newPassword}) async {
+  Future<void> resetPassword({
+    required String identifiant,
+    required String code,
+    required String newPassword,
+  }) async {
     await _latency();
     if (code != testResetCode) throw ValidationFailure('Code incorrect ou expiré.');
   }

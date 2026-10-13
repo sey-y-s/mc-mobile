@@ -75,13 +75,15 @@ class _SecuritySettingsScreenState
       _current.clear();
       _next.clear();
       _confirm.clear();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Mot de passe modifié.')));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = e is AppFailure ? e : const UnknownFailure());
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

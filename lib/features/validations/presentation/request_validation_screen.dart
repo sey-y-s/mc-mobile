@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
+<<<<<<< HEAD
+import 'package:mlc_mobile/core/network/dio_provider.dart';
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_button.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
@@ -32,6 +36,40 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
   late String? _competenceId = widget.competenceId;
   late String? _preuveId = widget.preuveId;
   bool _showErrors = false;
+<<<<<<< HEAD
+  String? _centreId;
+  bool _loadingCentres = false;
+  List<Map<String, dynamic>> _centres = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCentres();
+  }
+
+  Future<void> _loadCentres() async {
+    setState(() => _loadingCentres = true);
+    try {
+      final response = await ref.read(dioProvider).get('/api/v1/evaluateur/centres-disponibles');
+      final data = response.data;
+      if (data is List) {
+        _centres = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {
+      // Les erreurs de chargement seront signalées par le formulaire si aucun centre n'est disponible.
+    } finally {
+      if (mounted) setState(() => _loadingCentres = false);
+    }
+  }
+
+  Future<void> _submit() async {
+    setState(() => _showErrors = true);
+    if (_competenceId == null || _preuveId == null || _centreId == null) return;
+    final ok = await ref.read(requestValidationControllerProvider.notifier).submit(
+          citoyenCompetenceId: _competenceId!,
+          preuveId: _preuveId!,
+          centreId: _centreId,
+=======
 
   Future<void> _submit() async {
     setState(() => _showErrors = true);
@@ -39,6 +77,7 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
     final ok = await ref.read(requestValidationControllerProvider.notifier).submit(
           citoyenCompetenceId: _competenceId!,
           preuveId: _preuveId!,
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
         );
     if (!ok || !mounted) return;
     showSuccess(context, 'Demande envoyée');
@@ -83,6 +122,27 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
               'Un évaluateur ou un centre examinera votre preuve et confirmera votre compétence.',
               style: text.bodyMedium?.copyWith(color: AppColors.muted),
             ),
+<<<<<<< HEAD
+            if (_loadingCentres)
+              const LinearProgressIndicator()
+            else if (_centres.isEmpty)
+              const Text('Aucun centre disponible. La demande ne peut pas être envoyée sans sélectionner un centre évaluateur.')
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _centreId,
+                decoration: InputDecoration(
+                  labelText: 'Centre d’évaluation',
+                  errorText: _showErrors && _centreId == null ? 'Choisissez un centre' : null,
+                ),
+                items: _centres.map((c) => DropdownMenuItem<String>(
+                  value: c['id']?.toString(),
+                  child: Text(c['nom']?.toString() ?? 'Centre', overflow: TextOverflow.ellipsis),
+                )).where((item) => item.value != null).toList(),
+                onChanged: busy ? null : (value) => setState(() => _centreId = value),
+              ),
+            const SizedBox(height: 12),
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
             ChoiceSheetField<CitoyenCompetence>(
               label: 'Compétence',
               placeholder: 'Choisir la compétence',

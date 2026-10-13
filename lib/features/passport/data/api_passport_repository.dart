@@ -14,40 +14,76 @@ class ApiPassportRepository implements PassportRepository {
 
   String get _me => ApiEndpoints.citoyen(ApiEndpoints.me);
 
-  Citoyen _citoyen(Response<Map<String, dynamic>> res) =>
-      Citoyen.fromJson(res.data!);
+  Future<Citoyen> _citoyen(Response<Map<String, dynamic>> res) async {
+    final data = res.data!;
+    final communeId = (data['communeId'] ?? '').toString();
+    if (communeId.isEmpty || data['commune'] is Map) {
+      return Citoyen.fromJson(data);
+    }
+    final communeResponse = await guardDio(
+      () => _dio.get<Map<String, dynamic>>(ApiEndpoints.commune(communeId)),
+    );
+    return Citoyen.fromJson({...data, 'commune': communeResponse.data});
+  }
 
   @override
-  Future<Citoyen> getMine() async =>
-      _citoyen(await guardDio(() => _dio.get<Map<String, dynamic>>(_me)));
+  Future<Citoyen> getMine() async => _citoyen(
+    await guardDio(() => _dio.get<Map<String, dynamic>>(_me)),
+  );
 
   @override
-  Future<Citoyen> updateProfile(
-          {required String nom, required String prenom, Sexe? sexe}) async =>
-      _citoyen(await guardDio(() => _dio.put<Map<String, dynamic>>(_me,
-          data: {'nom': nom, 'prenom': prenom, 'sexe': sexe?.apiCode})));
+  Future<Citoyen> updateProfile({
+    required String nom,
+    required String prenom,
+    Sexe? sexe,
+  }) async => _updateMine(nom: nom, prenom: prenom, sexe: sexe);
 
   @override
-  Future<Citoyen> updateCommune(String communeId) async =>
-      _citoyen(await guardDio(() => _dio.put<Map<String, dynamic>>(
-          ApiEndpoints.citoyenCommune(ApiEndpoints.me),
-          data: {'communeId': communeId})));
+  Future<Citoyen> updateCommune(String communeId) =>
+      _updateMine(communeId: communeId);
 
   @override
-  Future<Citoyen> updateAvailability(Disponibilite value) async =>
-      _citoyen(await guardDio(() => _dio.put<Map<String, dynamic>>(
-          ApiEndpoints.citoyenDisponibilite(ApiEndpoints.me),
-          data: {'disponibilite': value.apiCode})));
+  Future<Citoyen> updateAvailability(Disponibilite value) =>
+      _updateMine(disponibilite: value);
+
+  Future<Citoyen> _updateMine({
+    String? nom,
+    String? prenom,
+    Sexe? sexe,
+    String? communeId,
+    Disponibilite? disponibilite,
+  }) async {
+    final current = await getMine();
+    final res = await guardDio(
+      () => _dio.put<Map<String, dynamic>>(
+        _me,
+        data: {
+          'nom': nom ?? current.nom,
+          'prenom': prenom ?? current.prenom,
+          'sexe': (sexe ?? current.sexe)?.apiCode,
+          'photoUrl': current.photoUrl,
+          'disponibilite': (disponibilite ?? current.disponibilite).apiCode,
+          'communeId': communeId ?? current.commune?.id,
+        },
+      ),
+    );
+    return _citoyen(res);
+  }
 
   @override
-  Future<Citoyen> updatePhoto(PickedMedia media,
-          {void Function(double progress)? onProgress}) async =>
-      _citoyen(await guardDio(() => uploadMultipart<Map<String, dynamic>>(
-            _dio,
-            ApiEndpoints.citoyenPhoto(ApiEndpoints.me),
-            file: media,
-            onProgress: onProgress,
-          )));
+  Future<Citoyen> updatePhoto(
+    PickedMedia media, {
+    void Function(double progress)? onProgress,
+  }) async => _citoyen(
+    await guardDio(
+      () => uploadMultipart<Map<String, dynamic>>(
+        _dio,
+        ApiEndpoints.citoyenPhoto(ApiEndpoints.me),
+        file: media,
+        onProgress: onProgress,
+      ),
+    ),
+  );
 
   @override
   Future<List<Region>> listRegions() async {
@@ -59,8 +95,9 @@ class ApiPassportRepository implements PassportRepository {
 
   @override
   Future<List<Commune>> listCommunes(String regionId) async {
-    final res = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.communes,
-        queryParameters: {'regionId': regionId}));
+    final res = await guardDio(
+      () => _dio.get<dynamic>(ApiEndpoints.citoyenRegionCommunes(regionId)),
+    );
     return pageItems(res.data)
         .map((e) => Commune.fromJson(e as Map<String, dynamic>))
         .toList();

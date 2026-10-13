@@ -12,6 +12,8 @@ import 'package:mlc_mobile/core/widgets/info_row.dart';
 import 'package:mlc_mobile/core/widgets/section_header.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/core/widgets/status_badge.dart';
+import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
+import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
 import 'package:mlc_mobile/features/experiences/domain/experience_models.dart';
 import 'package:mlc_mobile/features/experiences/presentation/experience_labels.dart';
 import 'package:mlc_mobile/features/experiences/presentation/experience_providers.dart';
@@ -66,6 +68,7 @@ class _Content extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final busy = ref.watch(experienceActionsProvider).isLoading;
+    final competenceOptions = ref.watch(competencesProvider);
     final e = experience;
     return ListView(padding: const EdgeInsets.all(20), children: [
       Text(e.titre, style: text.headlineSmall),
@@ -97,7 +100,11 @@ class _Content extends ConsumerWidget {
       else
         Wrap(spacing: 8, runSpacing: 8, children: [
           for (final c in e.competences)
-            ActionChip(label: Text(c.nom), onPressed: () => context.push('/competences/${c.citoyenCompetenceId}')),
+            ActionChip(
+              label: Text(_competenceLabel(c, competenceOptions)),
+              onPressed: () =>
+                  context.push('/competences/${c.citoyenCompetenceId}'),
+            ),
         ]),
       const SizedBox(height: 32),
       AppButton(
@@ -113,4 +120,14 @@ class _Content extends ConsumerWidget {
       ),
     ]);
   }
+}
+
+String _competenceLabel(
+  ExperienceCompetence link,
+  AsyncValue<List<CitoyenCompetence>> options,
+) {
+  for (final option in options.asData?.value ?? const <CitoyenCompetence>[]) {
+    if (option.id == link.citoyenCompetenceId) return option.competenceNom;
+  }
+  return link.nom.isEmpty ? 'Compétence liée' : link.nom;
 }

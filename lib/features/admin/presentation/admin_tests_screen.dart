@@ -5,7 +5,6 @@ import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
-import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
@@ -18,14 +17,6 @@ class AdminTestsScreen extends ConsumerWidget {
     final tests = ref.watch(adminTestsProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Tests numériques')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await context.push('/admin/tests/nouveau');
-          ref.invalidate(adminTestsProvider);
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Nouveau test'),
-      ),
       body: tests.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
@@ -35,9 +26,9 @@ class AdminTestsScreen extends ConsumerWidget {
         data: (items) => RefreshIndicator(
           onRefresh: () => ref.refresh(adminTestsProvider.future),
           child: items.isEmpty
-              ? const EmptyView(message: 'Aucun test numérique. Créez le premier QCM.')
+              ? const EmptyView(message: 'Aucun test numérique.')
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
+                  padding: const EdgeInsets.all(16),
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
@@ -61,29 +52,6 @@ class AdminTestsScreen extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              PopupMenuButton<String>(
-                                onSelected: (action) async {
-                                  if (action == 'edit') {
-                                    await context.push(
-                                      '/admin/tests/${test.id}/modifier',
-                                      extra: test,
-                                    );
-                                    ref.invalidate(adminTestsProvider);
-                                  } else {
-                                    await _delete(context, ref, test);
-                                  }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('Modifier'),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('Supprimer / archiver'),
-                                  ),
-                                ],
-                              ),
                             ],
                           ),
                           Text(
@@ -104,29 +72,6 @@ class AdminTestsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    AdminQcmTest test,
-  ) async {
-    final confirmed = await confirmDialog(
-      context,
-      title: 'Archiver ce test ?',
-      message:
-          '« ${test.title} » ne sera plus proposé aux citoyens. Les résultats existants sont conservés.',
-      confirmLabel: 'Archiver',
-      destructive: true,
-    );
-    if (!confirmed || !context.mounted) return;
-    try {
-      await ref.read(apiAdminRepositoryProvider).deleteTest(test.id);
-      ref.invalidate(adminTestsProvider);
-      ref.invalidate(adminDashboardProvider);
-      showSuccess(context, 'Test archivé');
-    } catch (error) {
-      if (context.mounted) showError(context, failureMessage(error));
-    }
-  }
 }
 
 class AdminTestEditorScreen extends ConsumerStatefulWidget {
@@ -250,7 +195,7 @@ class _AdminTestEditorScreenState extends ConsumerState<AdminTestEditorScreen> {
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
-                      value: options.any((item) => item.id == _competenceId)
+                      initialValue: options.any((item) => item.id == _competenceId)
                           ? _competenceId
                           : null,
                       decoration: const InputDecoration(

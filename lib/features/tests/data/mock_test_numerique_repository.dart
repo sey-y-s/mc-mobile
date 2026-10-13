@@ -1,4 +1,5 @@
 import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/features/preuves/data/mock_preuve_repository.dart';
 import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 import 'package:mlc_mobile/features/tests/domain/test_numerique_repository.dart';
 
@@ -144,17 +145,26 @@ class MockTestNumeriqueRepository implements TestNumeriqueRepository {
       scored++;
       final actual =
           answers.byQuestion[question.id]?.optionIds.toSet() ?? <String>{};
-      if (actual.length == expected.length && actual.containsAll(expected))
+      if (actual.length == expected.length && actual.containsAll(expected)) {
         correct++;
+      }
     }
     final score = scored == 0 ? 0.0 : correct * 100 / scored;
+    final now = DateTime.now();
+    final proofId = 'proof-test-${now.microsecondsSinceEpoch}';
     final result = ResultatTest(
-      id: 'result-${DateTime.now().microsecondsSinceEpoch}',
+      id: 'result-${now.microsecondsSinceEpoch}',
       testId: testId,
       score: score,
       passed: score >= 60,
-      date: DateTime.now(),
-      proofId: 'proof-test-${DateTime.now().microsecondsSinceEpoch}',
+      date: now,
+      proofId: proofId,
+    );
+    MockPreuveRepository.addTestResult(
+      preuveId: proofId,
+      competenceId: test.competenceId,
+      competenceName: test.competenceName,
+      date: now,
     );
     _results.add(result);
     return result;

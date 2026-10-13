@@ -108,7 +108,7 @@ class _PortfolioMediaPreviewState extends ConsumerState<PortfolioMediaPreview> {
     height: widget.height,
     fit: widget.fit,
     cacheWidth: widget.cacheWidth,
-    errorBuilder: (_, __, ___) => _placeholder(),
+    errorBuilder: (_, _, _) => _placeholder(),
   );
 
   @override
@@ -143,7 +143,7 @@ class _PortfolioMediaPreviewState extends ConsumerState<PortfolioMediaPreview> {
         height: widget.height,
         fit: widget.fit,
         cacheWidth: widget.cacheWidth,
-        errorBuilder: (_, __, ___) => _placeholder(),
+        errorBuilder: (_, _, _) => _placeholder(),
       );
     }
     return _placeholder();

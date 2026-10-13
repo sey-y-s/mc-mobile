@@ -76,7 +76,7 @@ final class FileFailure extends AppFailure {
 }
 
 final class FeatureUnavailableFailure extends AppFailure {
-  const FeatureUnavailableFailure(String message) : super(message);
+  const FeatureUnavailableFailure(super.message);
 }
 
 final class UnknownFailure extends AppFailure {

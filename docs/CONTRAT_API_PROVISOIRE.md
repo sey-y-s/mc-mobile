@@ -1,3 +1,11 @@
+> **Mise à jour (octobre 2026)** — État réel du backend, vérifié dans le code :
+> - Disponibles : `POST /api/v1/auth/{register,login,logout,forgot-password,reset-password}`, `PUT /api/v1/auth/mot-de-passe`,
+>   `GET /api/talents/recherche`, `GET /api/talents/{id}`, `/api/utilisateurs/{id}/contact`, `/api/utilisateurs/me/preferences`.
+> - Publics (sans jeton) : `GET /api/v1/regions`, `GET /api/v1/communes`, `GET /api/opportunites`, `GET /api/categories-opportunites`.
+> - Validations du citoyen connecté : `GET /api/citoyens/me/validations` ; preuves : `/api/preuves/{id}`, `/api/citoyens/me/preuves` (sans `/v1`).
+> - Absent : renouvellement de jeton (`/refresh`). Un 401 ferme la session côté mobile.
+> - Mot de passe oublié : le code (6 chiffres, valable 15 min, 5 essais) est écrit dans la console du backend tant qu'aucune passerelle SMS/email n'est branchée (`CodeSender`).
+
 # Contrat API mobile — écarts à confirmer
 
 Ce document distingue les routes réellement présentes dans le backend au moment de l’intégration des routes provisoires utilisées par l’application. Les adresses restent centralisées dans `lib/core/network/api_endpoints.dart`. Les réponses d’erreur passent par `AppFailure`.
@@ -73,7 +81,7 @@ Le login mobile est aligné sur `POST /api/v1/auth/login` avec `{identifiant, pa
 
 Par défaut, l’application utilise les repositories API (`USE_MOCKS=false`). Pour tester l’interface hors ligne avec des données fictives, lancer `flutter run --dart-define=USE_MOCKS=true`.
 
-Sur l’émulateur Android, l’URL par défaut est `http://10.0.2.2:8080`. Sur un téléphone physique, passer l’adresse de la machine qui héberge le backend avec `--dart-define=API_BASE_URL=http://<adresse-du-backend>:8080`.
+Dans le navigateur et sur les appareils de bureau, l’URL par défaut est `http://localhost:8080`. Sur l’émulateur Android, l’URL par défaut est `http://10.0.2.2:8080`. Sur un téléphone physique, passer l’adresse de la machine qui héberge le backend avec `--dart-define=API_BASE_URL=http://<adresse-du-backend>:8080`.
 
 Les routes signalées comme provisoires ci-dessus doivent être ajoutées au backend avant que leurs actions puissent fonctionner avec des données serveur. Les listes et détails affichent leur état d’erreur avec une action Réessayer si une route est indisponible. Les formulaires affichent l’échec de l’action lorsque le serveur ne fournit pas encore la route. En production, `APP_ENV=prod` force toujours le mode API.
 

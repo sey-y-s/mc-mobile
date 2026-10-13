@@ -21,8 +21,9 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
   @override
   Widget build(BuildContext context) {
     final id = widget.id;
-    if (id == null || id.isEmpty)
+    if (id == null || id.isEmpty) {
       return const Scaffold(body: ErrorView(error: NotFoundFailure()));
+    }
     final async = ref.watch(testDetailProvider(id));
     final run = ref.watch(testRunProvider(id));
     return Scaffold(
@@ -31,11 +32,12 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
         value: async,
         onRetry: () => ref.invalidate(testDetailProvider(id)),
         data: (test) {
-          if (test.questions.isEmpty)
+          if (test.questions.isEmpty) {
             return const EmptyView(
               message: 'Ce test ne contient aucune question.',
             );
-          if (run == null)
+          }
+          if (run == null) {
             return Center(
               child: AppButton(
                 label: 'Démarrer le test',
@@ -46,6 +48,7 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                 },
               ),
             );
+          }
           final index = run.index.clamp(0, test.questions.length - 1).toInt();
           final question = test.questions[index];
           final answer = run.answers[question.id] ?? const TestAnswer();
@@ -63,9 +66,7 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    (index + 1).toString() +
-                        ' / ' +
-                        test.questions.length.toString(),
+                    '${index + 1} / ${test.questions.length}',
                   ),
                 ],
               ),
@@ -100,16 +101,17 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                 AppCard(
                   child: Column(
                     children: [
-                      for (final option in question.options)
-                        if (question.type == QuestionType.choixMultiple)
+                      if (question.type == QuestionType.choixMultiple)
+                        for (final option in question.options)
                           CheckboxListTile(
                             value: answer.optionIds.contains(option.id),
                             title: Text(option.label),
                             controlAffinity: ListTileControlAffinity.leading,
                             onChanged: (checked) {
                               final ids = [...answer.optionIds];
-                              if (checked == true && !ids.contains(option.id))
+                              if (checked == true && !ids.contains(option.id)) {
                                 ids.add(option.id);
+                              }
                               if (checked != true) ids.remove(option.id);
                               _save(
                                 id,
@@ -120,12 +122,10 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                             },
                           )
                         else
-                          RadioListTile<String>(
-                            value: option.id,
+                          RadioGroup<String>(
                             groupValue: answer.optionIds.isEmpty
                                 ? null
                                 : answer.optionIds.first,
-                            title: Text(option.label),
                             onChanged: (value) => _save(
                               id,
                               run,
@@ -133,6 +133,15 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                               TestAnswer(
                                 optionIds: value == null ? [] : [value],
                               ),
+                            ),
+                            child: Column(
+                              children: [
+                                for (final option in question.options)
+                                  RadioListTile<String>(
+                                    value: option.id,
+                                    title: Text(option.label),
+                                  ),
+                              ],
                             ),
                           ),
                     ],
@@ -197,16 +206,19 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
     if (_sending) return;
     setState(() => _sending = true);
     try {
-      await ref
+      final result = await ref
           .read(testNumeriqueRepositoryProvider)
           .submit(id, TestAnswers(run.answers));
       ref.read(testsRevisionProvider.notifier).state++;
       ref.read(testRunProvider(id).notifier).state = null;
-      if (context.mounted) context.go('/tests/' + id + '/resultat');
+      if (context.mounted) {
+        context.go('/tests/$id/resultat', extra: result);
+      }
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(failureMessage(e))));
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }

@@ -7,14 +7,14 @@ import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/features.dart';
-import 'package:mlc_mobile/features/admin/domain/admin_models.dart';
+import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 
 /// Routes protégées : le `redirect` ci-dessous bloque tout accès sans session authentifiée.
 /// Les écrans « onglets » sont dans le ShellRoute (barre de navigation) ; les autres sont plein écran.
 /// Ordre important : les routes statiques (/x/ajouter) doivent précéder les routes à paramètre (/x/:id).
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
-  ref.listen<SessionStatus>(sessionProvider, (_, __) => refresh.value++);
+  ref.listen<SessionStatus>(sessionProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
@@ -52,6 +52,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
+<<<<<<< HEAD
+          GoRoute(path: '/evaluateur', builder: (c, s) => const EvaluateurScreen()),
+          GoRoute(path: '/centre-admin/evaluateurs', builder: (c, s) => const CentreAdminEvaluateursScreen()),
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
           GoRoute(
             path: '/passeport',
             builder: (c, s) => const PassportScreen(),
@@ -76,7 +81,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/reset-password',
-        builder: (c, s) => const ResetPasswordScreen(),
+        builder: (c, s) => ResetPasswordScreen(
+          identifiant: s.extra is String ? s.extra as String : null,
+        ),
       ),
       GoRoute(
         path: '/passeport/profil',
@@ -175,7 +182,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/tests/:id/resultat',
-        builder: (c, s) => TestResultScreen(id: s.pathParameters['id']),
+        builder: (c, s) => TestResultScreen(
+          id: s.pathParameters['id'],
+          result: s.extra as ResultatTest?,
+        ),
       ),
       GoRoute(
         path: '/admin',
@@ -188,34 +198,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/admin/opportunites/nouvelle',
-        builder: (c, s) => AdminRouteGuard(
-          child: const AdminOpportunityEditorScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/opportunites/:id/modifier',
-        builder: (c, s) => AdminRouteGuard(
-          child: AdminOpportunityEditorScreen(
-            opportunity: s.extra as AdminOpportunityDraft?,
-          ),
-        ),
-      ),
-      GoRoute(
         path: '/admin/tests',
         builder: (c, s) => AdminRouteGuard(child: const AdminTestsScreen()),
-      ),
-      GoRoute(
-        path: '/admin/tests/nouveau',
-        builder: (c, s) => AdminRouteGuard(
-          child: const AdminTestEditorScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/admin/tests/:id/modifier',
-        builder: (c, s) => AdminRouteGuard(
-          child: AdminTestEditorScreen(test: s.extra as AdminQcmTest?),
-        ),
       ),
       GoRoute(
         path: '/admin/validations',
