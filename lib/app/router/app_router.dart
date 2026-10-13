@@ -52,8 +52,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
+<<<<<<< HEAD
           GoRoute(path: '/evaluateur', builder: (c, s) => const EvaluateurScreen()),
           GoRoute(path: '/centre-admin/evaluateurs', builder: (c, s) => const CentreAdminEvaluateursScreen()),
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
           GoRoute(
             path: '/passeport',
             builder: (c, s) => const PassportScreen(),

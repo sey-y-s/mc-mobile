@@ -14,5 +14,9 @@ abstract interface class ValidationRepository {
   /// Demande la validation d'une compétence à partir d'une de ses preuves. Statut initial : EN_ATTENTE.
   /// Lève ValidationFailure si : compétence déjà validée, preuve d'une autre compétence,
   /// demande déjà en cours ou preuve déjà validée.
+<<<<<<< HEAD
   Future<Validation> request({required String citoyenCompetenceId, required String preuveId, String? centreId});
+=======
+  Future<Validation> request({required String citoyenCompetenceId, required String preuveId});
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 }

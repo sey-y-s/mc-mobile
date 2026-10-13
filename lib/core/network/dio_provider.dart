@@ -37,6 +37,7 @@ class AuthInterceptor extends Interceptor {
 
   bool _isAuthCall(RequestOptions o) => o.path.startsWith(ApiEndpoints.auth);
 
+<<<<<<< HEAD
   // Ces données doivent être disponibles avant la création d'un compte.
   // Ne pas envoyer un ancien jeton stocké par le navigateur sur ces appels publics.
   bool _isPublicTerritoryRead(RequestOptions o) {
@@ -47,12 +48,18 @@ class AuthInterceptor extends Interceptor {
         path.startsWith('${ApiEndpoints.communes}/region/');
   }
 
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
   @override
   Future<void> onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+<<<<<<< HEAD
     if (!_isAuthCall(options) && !_isPublicTerritoryRead(options)) {
+=======
+    if (!_isAuthCall(options)) {
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
       final token = await _storage.readAccess();
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
@@ -69,9 +76,13 @@ class AuthInterceptor extends Interceptor {
     // TODO: si le backend expose le renouvellement de session, utiliser ApiEndpoints.refresh.
     // (verrou pour éviter les refresh concurrents), rejouer la requête une fois, et n'appeler
     // _onUnauthorized() qu'en cas d'échec. Tant que le backend ne le propose pas : logout direct.
+<<<<<<< HEAD
     if (err.response?.statusCode == 401 &&
         !_isAuthCall(err.requestOptions) &&
         !_isPublicTerritoryRead(err.requestOptions)) {
+=======
+    if (err.response?.statusCode == 401 && !_isAuthCall(err.requestOptions)) {
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
       await _onUnauthorized();
     }
     handler.next(err);

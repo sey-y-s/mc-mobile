@@ -97,7 +97,11 @@ class MockValidationRepository implements ValidationRepository {
   }
 
   @override
+<<<<<<< HEAD
   Future<Validation> request({required String citoyenCompetenceId, required String preuveId, String? centreId}) async {
+=======
+  Future<Validation> request({required String citoyenCompetenceId, required String preuveId}) async {
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
     await _latency();
     final competence = await const MockCompetencesRepository().get(citoyenCompetenceId); // NotFoundFailure si inconnue
     if (competence.etat == EtatCompetence.validee) throw ValidationFailure('Cette compétence est déjà validée.');

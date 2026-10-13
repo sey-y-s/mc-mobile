@@ -52,8 +52,11 @@ export 'validations/presentation/validations_history_screen.dart';
 export 'validations/presentation/validations_list_screen.dart';
 
 export 'validations/presentation/request_validation_screen.dart';
+<<<<<<< HEAD
 
 export 'evaluateur/presentation/evaluateur_screen.dart';
 
 export 'centre_admin/presentation/centre_admin_evaluateurs_screen.dart';
 export 'evaluateur/presentation/evaluateur_providers.dart';
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38

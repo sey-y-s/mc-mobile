@@ -8,7 +8,10 @@ import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
 import 'package:mlc_mobile/features/auth/presentation/auth_providers.dart';
+<<<<<<< HEAD
 import 'package:mlc_mobile/features/evaluateur/presentation/evaluateur_providers.dart';
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -17,8 +20,11 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentRoleProvider).value;
     final isAdmin = role == 'ADMIN' || role == 'SUPER_ADMIN';
+<<<<<<< HEAD
     final isCentreAdmin = role == 'CENTRE_ADMIN';
     final isEvaluator = ref.watch(evaluatorCentresProvider).value?.isNotEmpty == true;
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
     return Scaffold(
       appBar: AppBar(title: const Text('Paramètres')),
@@ -52,6 +58,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
+<<<<<<< HEAD
                   if (isEvaluator) ...[
                     const SizedBox(height: 24),
                     const _SectionHeading(
@@ -86,6 +93,8 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ]),
                   ],
+=======
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
                   const SizedBox(height: 24),
                   const _SectionHeading(
                     title: 'Application',

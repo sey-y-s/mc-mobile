@@ -32,10 +32,17 @@ class RequestValidationController extends AsyncNotifier<void> {
   FutureOr<void> build() {}
 
   /// Retourne true si la demande est envoyée. Le statut de la preuve change : on recharge aussi les preuves.
+<<<<<<< HEAD
   Future<bool> submit({required String citoyenCompetenceId, required String preuveId, String? centreId}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard<void>(() async {
       await ref.read(validationRepositoryProvider).request(citoyenCompetenceId: citoyenCompetenceId, preuveId: preuveId, centreId: centreId);
+=======
+  Future<bool> submit({required String citoyenCompetenceId, required String preuveId}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard<void>(() async {
+      await ref.read(validationRepositoryProvider).request(citoyenCompetenceId: citoyenCompetenceId, preuveId: preuveId);
+>>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
     });
     if (state.hasError) return false;
     ref.read(validationsRevisionProvider.notifier).state++;
