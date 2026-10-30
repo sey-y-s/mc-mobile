@@ -18,9 +18,10 @@ final competencesRepositoryProvider = Provider<CompetencesRepository>((ref) {
         );
 });
 
-// Première page seulement pour l'instant. TODO(PISTE A): AsyncNotifier paginé (scroll) quand les listes dépassent 20.
+// Toutes les compétences du citoyen (jusqu'à 100) : la liste sert aussi aux choix des preuves
+// et des validations, qui ne doivent jamais en oublier.
 final competencesProvider = FutureProvider.autoDispose<List<CitoyenCompetence>>(
-  (ref) => ref.watch(competencesRepositoryProvider).list(),
+  (ref) => ref.watch(competencesRepositoryProvider).list(size: 100),
 );
 
 final competenceDetailProvider =
@@ -42,21 +43,42 @@ class AddCompetenceController extends AsyncNotifier<void> {
   @override
   FutureOr<void> build() {}
 
-  /// Retourne true si l'ajout a réussi (la liste est alors rechargée).
-  Future<bool> submit(
-      {required CompetenceRef competence, required Niveau niveau}) async {
+  /// Retourne la compétence créée (null en cas d'échec ; la liste est alors rechargée).
+  Future<CitoyenCompetence?> submit(
+      {required CompetenceRef competence, required Niveau niveau, required Parcours parcours}) async {
     state = const AsyncLoading();
+    CitoyenCompetence? created;
     state = await AsyncValue.guard<void>(() async {
-      await ref
+      created = await ref
           .read(competencesRepositoryProvider)
-          .add(competenceId: competence.id, niveau: niveau);
+          .add(competenceId: competence.id, niveau: niveau, parcours: parcours);
     });
-    if (state.hasError) return false;
+    if (state.hasError) return null;
     ref.invalidate(competencesProvider);
-    return true;
+    return created;
   }
 }
 
 final addCompetenceControllerProvider =
     AsyncNotifierProvider.autoDispose<AddCompetenceController, void>(
         AddCompetenceController.new);
+
+/// Précise le secteur (formel / informel) d'une compétence existante.
+class ParcoursController extends AsyncNotifier<void> {
+  @override
+  FutureOr<void> build() {}
+
+  Future<bool> submit(String citoyenCompetenceId, Parcours parcours) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard<void>(() async {
+      await ref.read(competencesRepositoryProvider).setParcours(citoyenCompetenceId, parcours);
+    });
+    if (state.hasError) return false;
+    ref.invalidate(competencesProvider);
+    ref.invalidate(competenceDetailProvider(citoyenCompetenceId));
+    return true;
+  }
+}
+
+final parcoursControllerProvider =
+    AsyncNotifierProvider.autoDispose<ParcoursController, void>(ParcoursController.new);

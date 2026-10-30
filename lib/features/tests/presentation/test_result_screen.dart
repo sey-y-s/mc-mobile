@@ -90,9 +90,12 @@ class _ResultContent extends StatelessWidget {
           children: [
             Text('Date : ${formatDateFr(result.date)}'),
             const SizedBox(height: 8),
-            const Text(
-              'Ce résultat est une preuve de parcours, pas une certification officielle.',
-              style: TextStyle(color: AppColors.muted),
+            Text(
+              result.passed
+                  ? 'Bravo ! Ce test réussi a été ajouté comme preuve à votre compétence. Ce n’est pas une certification officielle.'
+                  : 'Il faut au moins 60 % pour obtenir une preuve. Aucune preuve n’a été ajoutée : vous pouvez retenter le test.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.muted),
             ),
           ],
         ),
@@ -105,6 +108,12 @@ class _ResultContent extends StatelessWidget {
           onPressed: () => context.push('/preuves/${result.proofId!}'),
         ),
       ],
+      const SizedBox(height: 12),
+      AppButton(
+        label: 'Voir mes compétences',
+        variant: AppButtonVariant.secondary,
+        onPressed: () => context.go('/competences'),
+      ),
       const SizedBox(height: 12),
       AppButton(
         label: 'Retour aux tests',

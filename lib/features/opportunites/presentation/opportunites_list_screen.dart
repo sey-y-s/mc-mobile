@@ -90,6 +90,7 @@ class OpportunitesListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedType = ref.watch(opportuniteTypeFilterProvider);
+    final presDeChezMoi = ref.watch(opportunitePresDeChezMoiProvider);
     final selectedCategory = _categories.firstWhere(
       (category) => category.type == selectedType,
       orElse: () => _categories.first,
@@ -223,7 +224,22 @@ class OpportunitesListScreen extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 2),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FilterChip(
+                avatar: const Icon(AppIcons.location, size: 18, color: AppColors.green),
+                label: const Text('Près de chez moi'),
+                selected: presDeChezMoi,
+                showCheckmark: false,
+                selectedColor: AppColors.greenSoft,
+                side: BorderSide(color: presDeChezMoi ? AppColors.green : AppColors.border),
+                onSelected: (v) => ref.read(opportunitePresDeChezMoiProvider.notifier).state = v,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 2),
             child: Row(
               children: [
                 const Expanded(
@@ -247,12 +263,14 @@ class OpportunitesListScreen extends ConsumerWidget {
           ),
           Expanded(
             child: PaginatedListView<Opportunite>(
-              key: ValueKey(selectedType),
+              key: ValueKey('$selectedType-$presDeChezMoi'),
               pageSize: 20,
-              emptyMessage: 'Aucune opportunité disponible dans cette catégorie pour le moment.',
+              emptyMessage: presDeChezMoi
+                  ? 'Aucune opportunité dans votre commune ou votre région pour le moment.'
+                  : 'Aucune opportunité disponible dans cette catégorie pour le moment.',
               fetchPage: (page, size) => ref
                   .read(opportuniteRepositoryProvider)
-                  .list(type: selectedType, page: page, size: size),
+                  .list(type: selectedType, presDeChezMoi: presDeChezMoi, page: page, size: size),
               itemBuilder: (context, item) {
                 final isUrgent =
                     item.expirationDate != null &&
@@ -285,6 +303,10 @@ class OpportunitesListScreen extends ConsumerWidget {
                           ],
                         ],
                       ),
+                      if (item.proximite?.estLocale ?? false) ...[
+                        const SizedBox(height: 8),
+                        StatusBadge(label: item.proximite!.label, tone: BadgeTone.success),
+                      ],
                       const SizedBox(height: 10),
                       Text(
                         item.title,
@@ -305,6 +327,21 @@ class OpportunitesListScreen extends ConsumerWidget {
                           height: 1.3,
                         ),
                       ),
+                      if (item.localite != null) ...[
+                        const SizedBox(height: 8),
+                        Row(children: [
+                          const Icon(AppIcons.location, size: 15, color: AppColors.muted),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(item.localite!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+                          ),
+                          if (item.dejaPostule)
+                            const StatusBadge(label: 'Candidature envoyée', tone: BadgeTone.accent),
+                        ]),
+                      ],
                       const SizedBox(height: 12),
                       Row(
                         children: [

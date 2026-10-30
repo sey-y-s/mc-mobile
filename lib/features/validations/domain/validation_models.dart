@@ -6,6 +6,8 @@ enum ValidationType {
   validationPratique('VALIDATION_PRATIQUE', 'Évaluation pratique'),
   testNumerique('TEST_NUMERIQUE', 'Test numérique'),
   vae('VAE', 'Validation des acquis (VAE)'),
+  portfolioMedia('PORTFOLIO_MEDIA', 'Évaluation sur portfolio'),
+  maitreArtisan('MAITRE_ARTISAN', 'Évaluation par un maître artisan'),
 
   /// Repli côté mobile pour une valeur inconnue du serveur (ne fait pas partie du contrat).
   autre('AUTRE', 'Validation');

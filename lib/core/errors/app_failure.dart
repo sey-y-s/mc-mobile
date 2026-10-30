@@ -15,7 +15,14 @@ sealed class AppFailure implements Exception {
       case DioExceptionType.badResponse:
         final code = e.response?.statusCode ?? 0;
         if (code == 401) return const UnauthorizedFailure();
-        if (code == 403) return const ForbiddenFailure();
+        if (code == 403) {
+          // Mot de passe correct mais téléphone/email pas encore vérifié : l'app ouvre l'écran du code.
+          final data = e.response?.data;
+          if (data is Map && data['code'] == 'COMPTE_NON_VERIFIE') {
+            return const AccountNotVerifiedFailure();
+          }
+          return const ForbiddenFailure();
+        }
         if (code == 404) return const NotFoundFailure();
         if (code == 400 || code == 409 || code == 422) {
           return ValidationFailure(_serverMessage(e));
@@ -64,6 +71,11 @@ final class NotFoundFailure extends AppFailure {
 final class ValidationFailure extends AppFailure {
   ValidationFailure([String? serverMessage])
     : super(serverMessage ?? 'Certaines informations sont invalides.');
+}
+
+final class AccountNotVerifiedFailure extends AppFailure {
+  const AccountNotVerifiedFailure()
+    : super("Votre compte n'est pas encore vérifié. Saisissez le code reçu.");
 }
 
 final class InvalidCredentialsFailure extends AppFailure {

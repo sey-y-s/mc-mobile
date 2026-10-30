@@ -44,6 +44,7 @@ class ApiCompetencesRepository implements CompetencesRepository {
   Future<CitoyenCompetence> add({
     required String competenceId,
     required Niveau niveau,
+    Parcours? parcours,
   }) async {
     final base = ApiEndpoints.citoyenCompetences(await _citoyenId);
     final res = await guardDio(
@@ -52,7 +53,19 @@ class ApiCompetencesRepository implements CompetencesRepository {
         data: {
           'competenceId': competenceId,
           'niveau': niveau.name.toUpperCase(),
+          if (parcours != null) 'parcours': parcours.apiCode,
         },
+      ),
+    );
+    return CitoyenCompetence.fromJson(res.data!);
+  }
+
+  @override
+  Future<CitoyenCompetence> setParcours(String id, Parcours parcours) async {
+    final res = await guardDio(
+      () => _dio.patch<Map<String, dynamic>>(
+        ApiEndpoints.citoyenCompetenceParcours(id),
+        data: {'parcours': parcours.apiCode},
       ),
     );
     return CitoyenCompetence.fromJson(res.data!);

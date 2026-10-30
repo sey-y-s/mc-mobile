@@ -58,7 +58,7 @@ class AppShell extends ConsumerWidget {
     final path = GoRouterState.of(context).uri.path;
     final index = tabs.indexWhere((t) => path.startsWith(t.$2));
     return Scaffold(
-      body: child,
+      body: _FonduOnglet(index: index, child: child),
       bottomNavigationBar: AppNavBar(
         items: [for (final t in tabs) t.$1],
         currentIndex: index < 0 ? 0 : index,
@@ -66,4 +66,42 @@ class AppShell extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Changement d'onglet : le contenu réapparaît en fondu (le navigateur de l'onglet est conservé).
+class _FonduOnglet extends StatefulWidget {
+  const _FonduOnglet({required this.index, required this.child});
+  final int index;
+  final Widget child;
+
+  @override
+  State<_FonduOnglet> createState() => _FonduOngletState();
+}
+
+class _FonduOngletState extends State<_FonduOnglet> with SingleTickerProviderStateMixin {
+  late final _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 260), value: 1);
+  late final _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+
+  @override
+  void didUpdateWidget(covariant _FonduOnglet old) {
+    super.didUpdateWidget(old);
+    if (old.index != widget.index && !(MediaQuery.maybeOf(context)?.disableAnimations ?? false)) {
+      _ctrl.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: _anim,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(0, .015), end: Offset.zero).animate(_anim),
+          child: widget.child,
+        ),
+      );
 }

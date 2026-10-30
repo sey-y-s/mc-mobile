@@ -14,6 +14,10 @@ class _UnusedTestRepository implements TestNumeriqueRepository {
   Future<TestNumerique> get(String id) => throw UnimplementedError();
 
   @override
+  Future<List<TestNumerique>> listForCompetence(String competenceId) =>
+      throw UnimplementedError();
+
+  @override
   Future<List<ResultatTest>> listResults() => throw StateError(
     'The submitted result should be used directly.',
   );
@@ -75,5 +79,27 @@ void main() {
     final proof = await const MockPreuveRepository().get(result.proofId!);
     expect(proof.id, result.proofId);
     expect(proof.type, PreuveType.testNumerique);
+  });
+
+  test('a failed mock test gives no proof', () async {
+    MockTestNumeriqueRepository.resetForTests();
+    MockPreuveRepository.resetForTests();
+
+    final result = await const MockTestNumeriqueRepository().submit(
+      'test-solaire-01',
+      const TestAnswers({
+        'sol-q1': TestAnswer(optionIds: ['sol-q1-a']),
+      }),
+    );
+
+    expect(result.passed, isFalse);
+    expect(result.proofId, isNull);
+  });
+
+  test('tests are listed for their competence', () async {
+    MockTestNumeriqueRepository.resetForTests();
+    final tests = await const MockTestNumeriqueRepository().listForCompetence('c-2');
+    expect(tests.map((t) => t.id), contains('test-couture-02'));
+    expect(tests.every((t) => t.competenceId == 'c-2'), isTrue);
   });
 }

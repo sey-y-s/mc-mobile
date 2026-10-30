@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mlc_mobile/core/media/secure_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
@@ -61,11 +62,26 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     if (media == null) return;
     final ok =
         await ref.read(passportActionsProvider.notifier).updatePhoto(media);
+    if (ok && mounted) {
+      showSuccess(context, 'Photo enregistrée : elle apparaît sur votre passeport.');
+    }
     if (!ok && mounted) {
       final error = ref.read(passportActionsProvider).error;
       showError(
           context, error == null ? 'Envoi impossible.' : failureMessage(error));
       setState(() => _photo = null);
+    }
+  }
+
+  Future<void> _retirerPhoto() async {
+    final ok = await ref.read(passportActionsProvider.notifier).removePhoto();
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _photo = null);
+      showSuccess(context, 'Photo retirée de votre passeport.');
+    } else {
+      final error = ref.read(passportActionsProvider).error;
+      showError(context, error == null ? 'Suppression impossible.' : failureMessage(error));
     }
   }
 
@@ -86,6 +102,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final actions = ref.watch(passportActionsProvider);
     final progress = ref.watch(photoProgressProvider);
     final busy = actions.isLoading;
+    final photoActuelle = widget.citoyen.photoUrl == null ? null : imageDepuisUrl(ref, widget.citoyen.photoUrl);
     return FormScaffold(
       title: 'Mon profil',
       formKey: _formKey,
@@ -94,6 +111,16 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       isLoading: busy,
       error: actions.hasError ? actions.error : null,
       children: [
+        if (widget.citoyen.photoUrl != null && _photo == null)
+          Center(
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: AppColors.greenSoft,
+              foregroundImage: photoActuelle,
+              onForegroundImageError: photoActuelle == null ? null : (_, _) {},
+              child: const Icon(Icons.person_outline, color: AppColors.green, size: 40),
+            ),
+          ),
         FilePickerField(
           label: widget.citoyen.photoUrl == null
               ? 'Ajouter une photo'
@@ -103,6 +130,15 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           uploadProgress: _photo == null ? null : progress,
           onChanged: _onPhoto,
         ),
+        if (widget.citoyen.photoUrl != null && _photo == null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: busy ? null : _retirerPhoto,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Retirer ma photo'),
+            ),
+          ),
         AppTextField(
             label: 'Nom',
             controller: _nom,

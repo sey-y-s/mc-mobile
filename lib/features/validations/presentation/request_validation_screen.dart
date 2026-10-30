@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
+import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
-<<<<<<< HEAD
 import 'package:mlc_mobile/core/network/dio_provider.dart';
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/widgets/app_button.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
@@ -17,15 +15,19 @@ import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
 import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
 import 'package:mlc_mobile/features/preuves/presentation/preuve_providers.dart';
+import 'package:mlc_mobile/features/preuves/domain/preuve_models.dart';
 import 'package:mlc_mobile/features/validations/domain/validation_statut.dart';
 import 'package:mlc_mobile/features/validations/presentation/validation_providers.dart';
 
 /// Route : /validations/demander?competenceId=&preuveId= (paramètres facultatifs).
 /// Deux choix : la compétence (pas déjà validée), puis l'une de ses preuves.
+/// Secteur informel sans certificat : le citoyen peut demander un test de validation au centre, sans preuve
+/// (`&test=1` présélectionne cette option).
 class RequestValidationScreen extends ConsumerStatefulWidget {
-  const RequestValidationScreen({super.key, this.competenceId, this.preuveId});
+  const RequestValidationScreen({super.key, this.competenceId, this.preuveId, this.testCentre = false});
   final String? competenceId;
   final String? preuveId;
+  final bool testCentre;
 
   @override
   ConsumerState<RequestValidationScreen> createState() => _RequestValidationScreenState();
@@ -35,8 +37,8 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
   final _formKey = GlobalKey<FormState>();
   late String? _competenceId = widget.competenceId;
   late String? _preuveId = widget.preuveId;
+  late bool _testSansPreuve = widget.testCentre && widget.preuveId == null;
   bool _showErrors = false;
-<<<<<<< HEAD
   String? _centreId;
   bool _loadingCentres = false;
   List<Map<String, dynamic>> _centres = [];
@@ -44,16 +46,27 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
   @override
   void initState() {
     super.initState();
-    _loadCentres();
+    final id = widget.competenceId;
+    if (id != null) WidgetsBinding.instance.addPostFrameCallback((_) => _loadCentres(id));
   }
 
-  Future<void> _loadCentres() async {
-    setState(() => _loadingCentres = true);
+  /// Centres actifs, agréés pour la compétence et disposant d'un évaluateur habilité.
+  Future<void> _loadCentres(String citoyenCompetenceId) async {
+    setState(() {
+      _loadingCentres = true;
+      _centreId = null;
+      _centres = [];
+    });
     try {
-      final response = await ref.read(dioProvider).get('/api/v1/evaluateur/centres-disponibles');
+      final response = await ref.read(dioProvider).get(
+            '/api/v1/evaluateur/centres-disponibles',
+            queryParameters: {'citoyenCompetenceId': citoyenCompetenceId},
+          );
       final data = response.data;
       if (data is List) {
         _centres = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        // Un seul centre possible : il est choisi d'office.
+        if (_centres.length == 1) _centreId = _centres.first['id']?.toString();
       }
     } catch (_) {
       // Les erreurs de chargement seront signalées par le formulaire si aucun centre n'est disponible.
@@ -64,23 +77,34 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
 
   Future<void> _submit() async {
     setState(() => _showErrors = true);
-    if (_competenceId == null || _preuveId == null || _centreId == null) return;
+    final comps = ref.read(competencesProvider).value ?? const <CitoyenCompetence>[];
+    final competence = comps.where((c) => c.id == _competenceId).firstOrNull;
+    final sansPreuve = _testSansPreuve && competence?.parcours == Parcours.informel;
+    final manquant = _competenceId == null
+        ? 'Choisissez la compétence à faire valider.'
+        : _centreId == null
+            ? (_centres.isEmpty ? "Aucun centre d'évaluation n'est disponible pour le moment." : "Choisissez le centre d'évaluation.")
+            : (_preuveId == null && !sansPreuve)
+                ? (competence?.parcours == Parcours.informel
+                    ? 'Choisissez un certificat, ou « passer un test au centre ».'
+                    : 'Choisissez la preuve à soumettre.')
+                : null;
+    if (manquant != null) {
+      showError(context, manquant);
+      return;
+    }
     final ok = await ref.read(requestValidationControllerProvider.notifier).submit(
           citoyenCompetenceId: _competenceId!,
-          preuveId: _preuveId!,
+          preuveId: sansPreuve ? null : _preuveId,
           centreId: _centreId,
-=======
-
-  Future<void> _submit() async {
-    setState(() => _showErrors = true);
-    if (_competenceId == null || _preuveId == null) return;
-    final ok = await ref.read(requestValidationControllerProvider.notifier).submit(
-          citoyenCompetenceId: _competenceId!,
-          preuveId: _preuveId!,
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
         );
-    if (!ok || !mounted) return;
-    showSuccess(context, 'Demande envoyée');
+    if (!mounted) return;
+    if (!ok) {
+      final error = ref.read(requestValidationControllerProvider).error;
+      showError(context, error == null ? "L'envoi de la demande a échoué. Réessayez." : failureMessage(error));
+      return;
+    }
+    showSuccess(context, sansPreuve ? 'Demande envoyée : le centre vous contactera pour le test.' : 'Demande envoyée');
     Navigator.of(context).maybePop();
   }
 
@@ -109,7 +133,15 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
             onAction: items.isEmpty ? () => context.push('/competences/ajouter') : null,
           ));
         }
+        if (_competenceId == null && eligible.length == 1) {
+          final seule = eligible.first.id;
+          _competenceId = seule;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _loadCentres(seule);
+          });
+        }
         final selected = eligible.where((c) => c.id == _competenceId).firstOrNull;
+        final informel = selected?.parcours == Parcours.informel;
         return FormScaffold(
           title: 'Demander une validation',
           formKey: _formKey,
@@ -119,30 +151,11 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
           error: request.hasError ? request.error : null,
           children: [
             Text(
-              'Un évaluateur ou un centre examinera votre preuve et confirmera votre compétence.',
+              informel && _testSansPreuve
+                  ? 'Un évaluateur du centre choisi vous fera passer un test pratique pour confirmer votre compétence.'
+                  : 'Un évaluateur ou un centre examinera votre preuve et confirmera votre compétence.',
               style: text.bodyMedium?.copyWith(color: AppColors.muted),
             ),
-<<<<<<< HEAD
-            if (_loadingCentres)
-              const LinearProgressIndicator()
-            else if (_centres.isEmpty)
-              const Text('Aucun centre disponible. La demande ne peut pas être envoyée sans sélectionner un centre évaluateur.')
-            else
-              DropdownButtonFormField<String>(
-                initialValue: _centreId,
-                decoration: InputDecoration(
-                  labelText: 'Centre d’évaluation',
-                  errorText: _showErrors && _centreId == null ? 'Choisissez un centre' : null,
-                ),
-                items: _centres.map((c) => DropdownMenuItem<String>(
-                  value: c['id']?.toString(),
-                  child: Text(c['nom']?.toString() ?? 'Centre', overflow: TextOverflow.ellipsis),
-                )).where((item) => item.value != null).toList(),
-                onChanged: busy ? null : (value) => setState(() => _centreId = value),
-              ),
-            const SizedBox(height: 12),
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
             ChoiceSheetField<CitoyenCompetence>(
               label: 'Compétence',
               placeholder: 'Choisir la compétence',
@@ -152,10 +165,37 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
               enabled: !busy,
               errorText: _showErrors && selected == null ? 'Choisissez la compétence à faire valider' : null,
               onChanged: (c) => setState(() {
-                if (c.id != _competenceId) _preuveId = null; // la preuve dépend de la compétence
+                if (c.id != _competenceId) {
+                  _preuveId = null; // la preuve dépend de la compétence
+                  if (c.parcours != Parcours.informel) _testSansPreuve = false;
+                }
+                final change = c.id != _competenceId;
                 _competenceId = c.id;
+                if (change) _loadCentres(c.id);
               }),
             ),
+            // Centres proposés APRÈS le choix de la compétence : seulement ceux qui sont actifs,
+            // agréés pour cette compétence et qui ont un évaluateur habilité.
+            if (selected != null) ...[
+              if (_loadingCentres)
+                const LinearProgressIndicator()
+              else if (_centres.isEmpty)
+                const Text('Aucun centre agréé n’évalue encore cette compétence. Revenez plus tard ou choisissez une autre compétence.')
+              else
+                DropdownButtonFormField<String>(
+                  key: ValueKey('centres-${selected.id}-${_centres.length}'),
+                  initialValue: _centreId,
+                  decoration: InputDecoration(
+                    labelText: 'Centre d’évaluation',
+                    errorText: _showErrors && _centreId == null ? 'Choisissez un centre' : null,
+                  ),
+                  items: _centres.map((c) => DropdownMenuItem<String>(
+                    value: c['id']?.toString(),
+                    child: Text(c['nom']?.toString() ?? 'Centre', overflow: TextOverflow.ellipsis),
+                  )).where((item) => item.value != null).toList(),
+                  onChanged: busy ? null : (value) => setState(() => _centreId = value),
+                ),
+            ],
             if (selected == null)
               Text("Choisissez d'abord la compétence.", style: text.bodySmall?.copyWith(color: AppColors.muted))
             else
@@ -163,8 +203,21 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
                 competenceId: selected.id,
                 selectedId: _preuveId,
                 busy: busy,
-                showError: _showErrors && _preuveId == null,
-                onSelect: (id) => setState(() => _preuveId = id),
+                informel: informel,
+                testSansPreuve: informel && _testSansPreuve,
+                showError: _showErrors && _preuveId == null && !(informel && _testSansPreuve),
+                onSelect: (id) => setState(() {
+                  _preuveId = id;
+                  _testSansPreuve = false;
+                }),
+                onTestSansPreuve: () => setState(() {
+                  _preuveId = null;
+                  _testSansPreuve = true;
+                }),
+                onReset: () => setState(() {
+                  _preuveId = null;
+                  _testSansPreuve = false;
+                }),
               ),
           ],
         );
@@ -174,12 +227,36 @@ class _RequestValidationScreenState extends ConsumerState<RequestValidationScree
 }
 
 class _ProofsPicker extends ConsumerWidget {
-  const _ProofsPicker({required this.competenceId, required this.selectedId, required this.busy, required this.showError, required this.onSelect});
+  const _ProofsPicker({
+    required this.competenceId,
+    required this.selectedId,
+    required this.busy,
+    required this.showError,
+    required this.onSelect,
+    this.informel = false,
+    this.testSansPreuve = false,
+    this.onTestSansPreuve,
+    this.onReset,
+  });
   final String competenceId;
   final String? selectedId;
   final bool busy;
   final bool showError;
   final ValueChanged<String> onSelect;
+  final bool informel;
+  final bool testSansPreuve;
+  final VoidCallback? onTestSansPreuve;
+
+  /// Revenir à la liste complète des choix (lien « Changer »).
+  final VoidCallback? onReset;
+
+  /// Secteur informel : test de validation au centre, sans certificat.
+  Widget _testOption() => SelectableOptionCard(
+        title: 'Je n’ai pas de certificat : passer un test au centre',
+        description: 'Vous maîtrisez le métier ? Un évaluateur du centre vous fera passer un test de validation.',
+        selected: testSansPreuve,
+        onTap: busy ? null : onTestSansPreuve,
+      );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -191,8 +268,11 @@ class _ProofsPicker extends ConsumerWidget {
       data: (proofs) {
         if (proofs.isEmpty) {
           return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (informel) ...[_testOption(), const SizedBox(height: 12)],
             Text(
-              "Cette compétence n'a pas encore de preuve. Ajoutez-en une pour demander une validation.",
+              informel
+                  ? 'Ou ajoutez le certificat délivré par un centre professionnel.'
+                  : "Cette compétence n'a pas encore de preuve. Ajoutez-en une pour demander une validation.",
               style: text.bodyMedium?.copyWith(color: AppColors.muted),
             ),
             const SizedBox(height: 12),
@@ -203,10 +283,20 @@ class _ProofsPicker extends ConsumerWidget {
             ),
           ]);
         }
-        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Quelle preuve soumettre ?', style: text.bodySmall?.copyWith(color: AppColors.muted)),
-          const SizedBox(height: 8),
-          for (final p in proofs) ...[
+        // Choix progressif : une fois l'option retenue, les autres disparaissent.
+        final choixFait = testSansPreuve || proofs.any((p) => p.id == selectedId);
+        final visibles = testSansPreuve ? const <Preuve>[] : proofs.where((p) => !choixFait || p.id == selectedId).toList();
+        return AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (informel && (!choixFait || testSansPreuve)) ...[_testOption(), const SizedBox(height: 10)],
+          if (!choixFait) ...[
+            Text(informel ? 'Ou soumettre un certificat :' : 'Quelle preuve soumettre ?', style: text.bodySmall?.copyWith(color: AppColors.muted)),
+            const SizedBox(height: 8),
+          ],
+          for (final p in visibles) ...[
             Builder(builder: (_) {
               final available = p.statut == null || p.statut == ValidationStatut.rejetee;
               return Opacity(
@@ -223,8 +313,18 @@ class _ProofsPicker extends ConsumerWidget {
             }),
             const SizedBox(height: 10),
           ],
+          if (choixFait && (proofs.length > 1 || informel))
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: busy ? null : onReset,
+                icon: const Icon(Icons.swap_horiz, size: 18),
+                label: const Text('Changer'),
+              ),
+            ),
           if (showError) Text('Choisissez la preuve à soumettre', style: text.bodySmall?.copyWith(color: AppColors.error)),
-        ]);
+        ]),
+        );
       },
     );
   }

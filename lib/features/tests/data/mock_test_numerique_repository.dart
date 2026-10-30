@@ -1,4 +1,5 @@
 import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/features/competences/data/mock_competences_repository.dart';
 import 'package:mlc_mobile/features/preuves/data/mock_preuve_repository.dart';
 import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 import 'package:mlc_mobile/features/tests/domain/test_numerique_repository.dart';
@@ -59,7 +60,7 @@ class MockTestNumeriqueRepository implements TestNumeriqueRepository {
       title: 'Couture et finitions',
       description:
           'Un court questionnaire sur les outils et les finitions textiles.',
-      competenceId: 'comp-couture',
+      competenceId: 'c-2',
       competenceName: 'Couture professionnelle',
       durationMinutes: 8,
       questions: [
@@ -120,6 +121,12 @@ class MockTestNumeriqueRepository implements TestNumeriqueRepository {
   }
 
   @override
+  Future<List<TestNumerique>> listForCompetence(String competenceId) async {
+    final all = await list(size: 100);
+    return all.where((t) => t.competenceId == competenceId).toList();
+  }
+
+  @override
   Future<TestNumerique> get(String id) async {
     await _wait();
     if (id == 'network-error') throw const NetworkFailure();
@@ -151,21 +158,28 @@ class MockTestNumeriqueRepository implements TestNumeriqueRepository {
     }
     final score = scored == 0 ? 0.0 : correct * 100 / scored;
     final now = DateTime.now();
-    final proofId = 'proof-test-${now.microsecondsSinceEpoch}';
+    final passed = score >= 60;
+    // Règle serveur : seul un test réussi devient une preuve jointe à la compétence du citoyen.
+    final proofId = passed ? 'proof-test-${now.microsecondsSinceEpoch}' : null;
     final result = ResultatTest(
       id: 'result-${now.microsecondsSinceEpoch}',
       testId: testId,
       score: score,
-      passed: score >= 60,
+      passed: passed,
       date: now,
       proofId: proofId,
     );
-    MockPreuveRepository.addTestResult(
-      preuveId: proofId,
-      competenceId: test.competenceId,
-      competenceName: test.competenceName,
-      date: now,
-    );
+    if (proofId != null) {
+      final citoyenCompetenceId =
+          MockCompetencesRepository.citoyenCompetenceIdFor(test.competenceId) ?? test.competenceId;
+      MockPreuveRepository.addTestResult(
+        preuveId: proofId,
+        competenceId: citoyenCompetenceId,
+        competenceName: test.competenceName,
+        date: now,
+      );
+      MockCompetencesRepository.markAttested(citoyenCompetenceId);
+    }
     _results.add(result);
     return result;
   }

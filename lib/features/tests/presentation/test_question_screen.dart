@@ -8,6 +8,8 @@ import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 import 'package:mlc_mobile/features/tests/presentation/test_numerique_providers.dart';
+import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
+import 'package:mlc_mobile/features/preuves/presentation/preuve_providers.dart';
 
 class TestQuestionScreen extends ConsumerStatefulWidget {
   const TestQuestionScreen({super.key, this.id});
@@ -210,6 +212,9 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
           .read(testNumeriqueRepositoryProvider)
           .submit(id, TestAnswers(run.answers));
       ref.read(testsRevisionProvider.notifier).state++;
+      // Un test réussi ajoute une preuve à la compétence : on recharge compétences et preuves.
+      ref.read(preuvesRevisionProvider.notifier).state++;
+      ref.invalidate(competencesProvider);
       ref.read(testRunProvider(id).notifier).state = null;
       if (context.mounted) {
         context.go('/tests/$id/resultat', extra: result);

@@ -37,6 +37,20 @@ class _EvaluateurScreenState extends ConsumerState<EvaluateurScreen> {
   List<Map<String, dynamic>> _maps(dynamic data) =>
       data is List ? data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : [];
 
+  /// Libellé lisible d'une valeur technique renvoyée par l'API (DEBUTANT → Débutant).
+  static String _libelle(Object? v) {
+    const connus = {
+      'DEBUTANT': 'Débutant', 'INTERMEDIAIRE': 'Intermédiaire', 'AVANCE': 'Avancé', 'EXPERT': 'Expert',
+      'VALIDATION_PRATIQUE': 'Validation pratique', 'VALIDATION_DOCUMENTAIRE': 'Validation documentaire',
+    };
+    final t = v?.toString() ?? '';
+    if (t.isEmpty) return 'Non renseigné';
+    final c = connus[t.toUpperCase()];
+    if (c != null) return c;
+    final m = t.replaceAll('_', ' ').toLowerCase();
+    return m[0].toUpperCase() + m.substring(1);
+  }
+
   Future<void> _decide(Map<String, dynamic> item, String status) async {
     final id = item['id']?.toString();
     if (id == null) return;
@@ -53,10 +67,11 @@ class _EvaluateurScreenState extends ConsumerState<EvaluateurScreen> {
         ],
       ),
     );
+    final note = commentaire.text.trim();
     if (ok != true || !mounted) return;
     try {
       await ref.read(dioProvider).patch('/api/v1/evaluateur/demandes/$id/decision',
-        data: {'statut': status, 'commentaire': commentaire.text.trim()});
+        data: {'statut': status, 'commentaire': note});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
         status == 'APPROUVEE' ? 'Compétence validée.' : 'Demande rejetée.')));
@@ -108,14 +123,17 @@ class _EvaluateurScreenState extends ConsumerState<EvaluateurScreen> {
                   const SizedBox(height: 4),
                   Text('Compétence : ${d['competenceNom'] ?? 'Non renseignée'}'),
                   if (d['niveauCompetence'] != null)
-                    Text('Niveau déclaré : ${d['niveauCompetence']}'),
+                    Text('Niveau déclaré : ${_libelle(d['niveauCompetence'])}'),
                   if (d['centreNom'] != null)
                     Text('Centre : ${d['centreNom']}'),
                   const SizedBox(height: 6),
-                  Text('Type : ${d['type']?.toString().replaceAll('_', ' ') ?? 'VALIDATION PRATIQUE'}'),
+                  Text('Type : ${_libelle(d['type'] ?? 'VALIDATION_PRATIQUE')}'),
                   if (d['preuveTitre'] != null) ...[
                     const SizedBox(height: 4),
                     Text('Preuve : ${d['preuveTitre']}'),
+                  ] else ...[
+                    const SizedBox(height: 4),
+                    const Text('Sans certificat (secteur informel) : test pratique à faire passer au centre.'),
                   ],
                   if (d['preuveDescription'] != null && d['preuveDescription'].toString().trim().isNotEmpty) ...[
                     const SizedBox(height: 4),

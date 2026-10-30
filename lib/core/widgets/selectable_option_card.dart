@@ -23,8 +23,14 @@ class SelectableOptionCard extends StatelessWidget {
       onTap: onTap,
       accentColor: selected ? AppColors.green : null,
       child: Row(children: [
-        Icon(selected ? AppIcons.selected : AppIcons.unselected,
-            color: selected ? AppColors.green : AppColors.muted),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          transitionBuilder: (child, anim) => ScaleTransition(
+              scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack), child: child),
+          child: Icon(selected ? AppIcons.selected : AppIcons.unselected,
+              key: ValueKey(selected),
+              color: selected ? AppColors.green : AppColors.muted),
+        ),
         const SizedBox(width: 14),
         Expanded(
           child:

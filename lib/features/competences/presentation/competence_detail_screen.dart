@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/core/utils/snackbars.dart';
+import 'package:mlc_mobile/core/widgets/app_button.dart';
+import 'package:mlc_mobile/core/widgets/progressive_choice.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_progress_bar.dart';
@@ -19,6 +22,9 @@ import 'package:mlc_mobile/shared/widgets/preuve_tile.dart';
 import 'package:mlc_mobile/features/validations/presentation/validation_labels.dart';
 import 'package:mlc_mobile/features/validations/presentation/validation_providers.dart';
 import 'package:mlc_mobile/shared/widgets/validation_tile.dart';
+import 'package:mlc_mobile/core/widgets/app_icons.dart';
+import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
+import 'package:mlc_mobile/features/tests/presentation/test_numerique_providers.dart';
 
 /// Route : /competences/:id
 class CompetenceDetailScreen extends ConsumerWidget {
@@ -75,7 +81,8 @@ class _Content extends StatelessWidget {
       const SizedBox(height: 12),
       Wrap(spacing: 8, runSpacing: 6, children: [
         StatusBadge(label: item.niveau.label),
-        EtatBadge(item.etat)
+        EtatBadge(item.etat),
+        if (item.parcours != null) StatusBadge(label: item.parcours!.label),
       ]),
       const SizedBox(height: 24),
       AppCard(
@@ -89,6 +96,23 @@ class _Content extends StatelessWidget {
               style: text.bodySmall?.copyWith(color: AppColors.muted)),
         ]),
       ),
+      if (item.etat != EtatCompetence.validee) ...[
+        const SizedBox(height: 12),
+        AppCard(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Text('Comment valider cette compétence ?', style: text.titleMedium),
+            const SizedBox(height: 6),
+            Text(
+                'Nous vous proposons le parcours le plus adapté, sans test inutile.',
+                style: text.bodySmall?.copyWith(color: AppColors.muted)),
+            const SizedBox(height: 12),
+            AppButton(
+              label: 'Voir mon parcours de validation',
+              onPressed: () => context.push('/competences/${item.id}/parcours'),
+            ),
+          ]),
+        ),
+      ],
       const SizedBox(height: 12),
       AppCard(
           child: InfoRow(
@@ -96,11 +120,21 @@ class _Content extends StatelessWidget {
       const SizedBox(height: 28),
       SectionHeader(
         title: 'Preuves',
-        actionLabel: 'Ajouter',
-        onAction: () =>
-            context.push('/preuves/ajouter?competenceId=${item.id}'),
+        actionLabel: item.parcours == null ? null : 'Ajouter',
+        onAction: item.parcours == null
+            ? null
+            : () => context.push('/preuves/ajouter?competenceId=${item.id}'),
       ),
-      _ProofsBlock(competenceId: item.id),
+      if (item.parcours == null)
+        _ParcoursChooser(item: item)
+      else ...[
+        _ProofsGuide(item: item),
+        const SizedBox(height: 12),
+        _ProofsBlock(competenceId: item.id),
+      ],
+      const SizedBox(height: 20),
+      const SectionHeader(title: 'Test numérique'),
+      _TestsBlock(competenceId: item.competenceId),
       const SizedBox(height: 20),
 
       SectionHeader(
@@ -130,8 +164,7 @@ class _ProofsBlock extends ConsumerWidget {
               onRetry: () =>
                   ref.invalidate(preuvesForCompetenceProvider(competenceId)))),
       data: (items) => items.isEmpty
-          ? const _PendingBlock(
-              'Aucune preuve pour cette compétence. Ajoutez un diplôme, un certificat ou une attestation.')
+          ? const _PendingBlock('Aucune preuve jointe pour le moment.')
           : Column(children: [
               for (final p in items) ...[
                 PreuveTile(
@@ -181,6 +214,147 @@ class _ValidationsBlock extends ConsumerWidget {
                   dateLabel: validationDateLabel(v),
                   validateurLabel: v.validateurLabel,
                   onTap: () => context.push('/validations/${v.id}'),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ]),
+    );
+  }
+}
+/// Rappel des preuves attendues selon le secteur, avec les actions possibles.
+class _ProofsGuide extends StatelessWidget {
+  const _ProofsGuide({required this.item});
+  final CitoyenCompetence item;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final informel = item.parcours == Parcours.informel;
+    final validee = item.etat == EtatCompetence.validee;
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(item.parcours!.label, style: text.titleSmall),
+        const SizedBox(height: 4),
+        Text(
+          informel
+              ? "Joignez le certificat délivré par un centre professionnel. Vous n'avez pas de certificat mais vous maîtrisez le métier ? Passez un test de validation dans un centre."
+              : 'Joignez votre diplôme, certificat, attestation ou attestation de stage.',
+          style: text.bodySmall?.copyWith(color: AppColors.muted),
+        ),
+        if (!validee) ...[
+          const SizedBox(height: 12),
+          AppButton(
+            label: informel ? 'Ajouter un certificat de centre' : 'Ajouter une preuve',
+            onPressed: () => context.push('/preuves/ajouter?competenceId=${item.id}'),
+          ),
+          if (informel) ...[
+            const SizedBox(height: 8),
+            AppButton(
+              label: 'Sans certificat : passer un test au centre',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => context.push('/validations/demander?competenceId=${item.id}&test=1'),
+            ),
+          ],
+        ],
+      ]),
+    );
+  }
+}
+
+/// Compétence déclarée avant l'arrivée des secteurs : le citoyen indique d'abord comment il a appris.
+class _ParcoursChooser extends ConsumerStatefulWidget {
+  const _ParcoursChooser({required this.item});
+  final CitoyenCompetence item;
+
+  @override
+  ConsumerState<_ParcoursChooser> createState() => _ParcoursChooserState();
+}
+
+class _ParcoursChooserState extends ConsumerState<_ParcoursChooser> {
+  late Parcours? _choice =
+      widget.item.parcoursPossibles.length == 1 ? widget.item.parcoursPossibles.first : null;
+
+  Future<void> _save() async {
+    final ok = await ref.read(parcoursControllerProvider.notifier).submit(widget.item.id, _choice!);
+    if (ok && mounted) showSuccess(context, 'Secteur enregistré');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(parcoursControllerProvider);
+    final busy = state.isLoading;
+    final possibles = widget.item.parcoursPossibles;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const _PendingBlock('Pour joindre vos preuves, indiquez d\'abord comment vous avez appris cette compétence.'),
+      const SizedBox(height: 12),
+      ProgressiveChoice<Parcours>(
+        options: possibles,
+        selected: _choice,
+        enabled: !busy,
+        singleNote: Parcours.noteUnique(possibles),
+        titleOf: (p) => p.label,
+        descriptionOf: (p) => p.description,
+        detailsOf: (p) => Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: _PendingBlock('Preuves acceptées : ${p.preuves.map((t) => t.label.toLowerCase()).join(', ')}.'),
+        ),
+        onChanged: (p) => setState(() => _choice = p),
+      ),
+      if (state.hasError) ...[
+        Text(failureMessage(state.error!), style: const TextStyle(color: AppColors.error)),
+        const SizedBox(height: 8),
+      ],
+      AnimatedOpacity(
+        opacity: _choice == null ? .5 : 1,
+        duration: const Duration(milliseconds: 250),
+        child: AppButton(label: 'Enregistrer', onPressed: _choice == null ? null : _save, isLoading: busy),
+      ),
+    ]);
+  }
+}
+
+/// Tests numériques proposés pour cette compétence : un test réussi (60 % ou plus) devient une preuve.
+class _TestsBlock extends ConsumerWidget {
+  const _TestsBlock({required this.competenceId});
+  final String competenceId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(testsForCompetenceProvider(competenceId));
+    final text = Theme.of(context).textTheme;
+    return value.when(
+      loading: () => const SizedBox(height: 80, child: LoadingView()),
+      error: (e, _) => SizedBox(
+          height: 160,
+          child: ErrorView(error: e, onRetry: () => ref.invalidate(testsForCompetenceProvider(competenceId)))),
+      data: (tests) => tests.isEmpty
+          ? const _PendingBlock("Aucun test numérique n'est encore proposé pour cette compétence.")
+          : Column(children: [
+              for (final TestNumerique t in tests) ...[
+                AppCard(
+                  onTap: () => context.push('/tests/${t.id}'),
+                  child: Row(children: [
+                    const Icon(AppIcons.tests, color: AppColors.green, size: 26),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(t.title, style: text.titleSmall),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.lastResult == null
+                              ? 'Réussi à 60 % ou plus, il devient une preuve de cette compétence.'
+                              : t.lastResult!.passed
+                                  ? 'Réussi (${t.lastResult!.score.toStringAsFixed(0)} %) : preuve ajoutée.'
+                                  : 'Dernier score : ${t.lastResult!.score.toStringAsFixed(0)} %. Vous pouvez retenter.',
+                          style: text.bodySmall?.copyWith(color: AppColors.muted),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(t.lastResult == null ? 'Passer' : 'Retenter',
+                        style: text.labelLarge?.copyWith(color: AppColors.green)),
+                    const Icon(AppIcons.chevron, color: AppColors.muted),
+                  ]),
                 ),
                 const SizedBox(height: 12),
               ],

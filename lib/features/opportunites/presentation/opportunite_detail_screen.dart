@@ -15,7 +15,7 @@ import 'package:mlc_mobile/core/widgets/status_badge.dart';
 import 'package:mlc_mobile/features/opportunites/domain/opportunite_models.dart';
 import 'package:mlc_mobile/features/opportunites/presentation/opportunite_providers.dart';
 
-/// Détail d'une opportunité en lecture seule.
+/// Détail d'une opportunité : localité concernée, proximité avec le citoyen et candidature.
 class OpportuniteDetailScreen extends ConsumerWidget {
   const OpportuniteDetailScreen({super.key, this.id});
   final String? id;
@@ -118,6 +118,11 @@ class OpportuniteDetailScreen extends ConsumerWidget {
                         label: 'Date d\'expiration',
                         value: formatDateFr(opp.expirationDate!),
                       ),
+                    InfoRow(
+                      icon: AppIcons.location,
+                      label: 'Localité concernée',
+                      value: opp.localite ?? 'Tout le Mali',
+                    ),
                   ],
                 ),
               ),
@@ -152,10 +157,50 @@ class OpportuniteDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ],
-              if (opp.externalUrl != null && opp.externalUrl!.isNotEmpty) ...[
-                const SizedBox(height: 28),
+              if (opp.proximite?.estLocale ?? false) ...[
+                const SizedBox(height: 16),
+                AppCard(
+                  child: Row(children: [
+                    const Icon(AppIcons.location, color: AppColors.green),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        '${opp.proximite!.label} : en tant qu’habitant de la localité, votre candidature est présentée en priorité.',
+                        style: const TextStyle(fontSize: 13, color: AppColors.anthracite),
+                      ),
+                    ),
+                  ]),
+                ),
+              ],
+              const SizedBox(height: 28),
+              if (opp.dejaPostule)
+                AppCard(
+                  child: Row(children: [
+                    const Icon(AppIcons.check, color: AppColors.green),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        switch (opp.statutCandidature) {
+                          'RETENUE' => 'Votre candidature a été retenue. Vous serez contacté prochainement.',
+                          'NON_RETENUE' => 'Votre candidature n’a pas été retenue cette fois-ci.',
+                          _ => 'Candidature envoyée. Vous serez prévenu de la suite par notification.',
+                        },
+                        style: const TextStyle(fontSize: 13, color: AppColors.anthracite),
+                      ),
+                    ),
+                  ]),
+                )
+              else
                 AppButton(
-                  label: 'Copier le lien pour postuler',
+                  label: 'Postuler',
+                  icon: AppIcons.arrowRight,
+                  onPressed: () => _postuler(context, ref, opp),
+                ),
+              if (opp.externalUrl != null && opp.externalUrl!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                AppButton(
+                  label: 'Copier le lien de l’annonce',
+                  variant: AppButtonVariant.secondary,
                   icon: AppIcons.copy,
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: opp.externalUrl!));
@@ -171,5 +216,52 @@ class OpportuniteDetailScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _postuler(BuildContext context, WidgetRef ref, Opportunite opp) async {
+    final message = TextEditingController();
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheet) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(sheet).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Postuler', style: Theme.of(sheet).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text(opp.title, style: const TextStyle(color: AppColors.muted)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: message,
+              maxLines: 4,
+              maxLength: 2000,
+              decoration: const InputDecoration(
+                labelText: 'Message (facultatif)',
+                hintText: 'Présentez-vous en quelques mots : expérience, disponibilité…',
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Votre profil (compétences et localité) est transmis avec la candidature.',
+              style: TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
+            const SizedBox(height: 16),
+            AppButton(label: 'Envoyer ma candidature', onPressed: () => Navigator.of(sheet).pop(true)),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      await ref.read(opportuniteRepositoryProvider).postuler(opp.id, message: message.text);
+      ref.invalidate(opportuniteDetailProvider(opp.id));
+      if (context.mounted) showSuccess(context, 'Candidature envoyée.');
+    } catch (e) {
+      if (context.mounted) showError(context, failureMessage(e));
+    }
   }
 }

@@ -10,16 +10,27 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
   const ApiOpportuniteRepository(this._dio);
   final Dio _dio;
 
+  bool _affichable(Opportunite item) => item.isVisible && item.type != OpportuniteType.insertion;
+
+  /// Liste « pour moi » (citoyen) : déjà triée par proximité. Repli sur la liste publique sinon.
   Future<List<Opportunite>> _all() async {
-    final response = await guardDio(
-      () => _dio.get<dynamic>(ApiEndpoints.mobileOpportunities),
-    );
+    try {
+      final response = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.mobileOpportunitiesForMe));
+      return pageItems(response.data)
+          .whereType<Map>()
+          .map((item) => Opportunite.fromPourMoi(Map<String, dynamic>.from(item)))
+          .where(_affichable)
+          .toList();
+    } on ForbiddenFailure {
+      // Compte non citoyen (administration) : liste publique.
+    } on NotFoundFailure {
+      // Serveur sans la route « pour moi ».
+    }
+    final response = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.mobileOpportunities));
     return pageItems(response.data)
         .whereType<Map>()
         .map((item) => Opportunite.fromJson(Map<String, dynamic>.from(item)))
-        .where(
-          (item) => item.isVisible && item.type != OpportuniteType.insertion,
-        )
+        .where(_affichable)
         .toList()
       ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
   }
@@ -35,6 +46,7 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
   Future<List<Opportunite>> list({
     OpportuniteType? type,
     String? categoryId,
+    bool presDeChezMoi = false,
     int page = 0,
     int size = 20,
   }) async {
@@ -42,7 +54,8 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
         .where(
           (item) =>
               (type == null || item.type == type) &&
-              (categoryId == null || item.categoryId == categoryId),
+              (categoryId == null || item.categoryId == categoryId) &&
+              (!presDeChezMoi || (item.proximite?.estLocale ?? false)),
         )
         .toList();
     return _page(filtered, page, size);
@@ -50,13 +63,25 @@ class ApiOpportuniteRepository implements OpportuniteRepository {
 
   @override
   Future<Opportunite> get(String id) async {
+    // La liste « pour moi » apporte la proximité et l'état de la candidature.
+    for (final item in await _all()) {
+      if (item.id == id) return item;
+    }
     final response = await guardDio(
       () => _dio.get<Map<String, dynamic>>(ApiEndpoints.mobileOpportunity(id)),
     );
     final item = Opportunite.fromJson(response.data!);
-    if (!item.isVisible || item.type == OpportuniteType.insertion) {
-      throw const NotFoundFailure();
-    }
+    if (!_affichable(item)) throw const NotFoundFailure();
     return item;
+  }
+
+  @override
+  Future<void> postuler(String id, {String? message}) async {
+    await guardDio(
+      () => _dio.post<dynamic>(
+        ApiEndpoints.mobileOpportunityApply(id),
+        data: {if (message != null && message.trim().isNotEmpty) 'message': message.trim()},
+      ),
+    );
   }
 }

@@ -66,7 +66,8 @@ class MockValidationRepository implements ValidationRepository {
 
   /// Simule la règle serveur qui déduit le type de validation à partir de la preuve.
   static ValidationType _typeFor(PreuveType t) => switch (t) {
-        PreuveType.diplome || PreuveType.certificat => ValidationType.diplomeVerifie,
+        PreuveType.diplome || PreuveType.certificat || PreuveType.attestation || PreuveType.attestationStage => ValidationType.diplomeVerifie,
+        PreuveType.certificatCentre => ValidationType.partenaireAtteste,
         PreuveType.attestationEmployeur => ValidationType.partenaireAtteste,
         PreuveType.testNumerique => ValidationType.testNumerique,
         PreuveType.dossierVae => ValidationType.vae,
@@ -97,14 +98,24 @@ class MockValidationRepository implements ValidationRepository {
   }
 
   @override
-<<<<<<< HEAD
-  Future<Validation> request({required String citoyenCompetenceId, required String preuveId, String? centreId}) async {
-=======
-  Future<Validation> request({required String citoyenCompetenceId, required String preuveId}) async {
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
+  Future<Validation> request({required String citoyenCompetenceId, String? preuveId, String? centreId}) async {
     await _latency();
     final competence = await const MockCompetencesRepository().get(citoyenCompetenceId); // NotFoundFailure si inconnue
     if (competence.etat == EtatCompetence.validee) throw ValidationFailure('Cette compétence est déjà validée.');
+    if (preuveId == null) {
+      // Test de validation au centre, sans certificat : réservé au secteur informel.
+      if (competence.parcours != Parcours.informel) throw ValidationFailure('Une preuve est obligatoire pour demander la validation.');
+      final created = Validation(
+        id: 'v-${_items.length + 1}',
+        type: ValidationType.validationPratique,
+        statut: ValidationStatut.enAttente,
+        citoyenCompetenceId: citoyenCompetenceId,
+        competenceNom: competence.competenceNom,
+        dateDemande: DateTime.now(),
+      );
+      _items.add(created);
+      return created;
+    }
     final preuve = await const MockPreuveRepository().get(preuveId); // NotFoundFailure si inconnue
     if (preuve.citoyenCompetenceId != citoyenCompetenceId) throw ValidationFailure('Cette preuve ne correspond pas à la compétence.');
     if (preuve.statut == ValidationStatut.enAttente) throw ValidationFailure('Une demande est déjà en cours pour cette preuve.');

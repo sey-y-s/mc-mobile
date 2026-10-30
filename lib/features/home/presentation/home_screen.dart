@@ -15,6 +15,7 @@ import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
 import 'package:mlc_mobile/features/home/presentation/blocks/opportunites_block.dart';
+import 'package:mlc_mobile/features/parametres/presentation/suggestion_commune_card.dart';
 
 /// Dashboard citoyen : en-tête (résumé + progression), carte « Mon passeport », accès rapide,
 /// puis les blocs notifications et opportunités (voir features/home/presentation/blocks/).
@@ -51,6 +52,8 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Proposition de commune (détection ponctuelle, jamais appliquée sans accord).
+                  const SuggestionCommuneBandeau(),
                   const _PassportCard(),
                   const SizedBox(height: 28),
                   const SectionHeader(title: 'Accès rapide'),
@@ -155,7 +158,7 @@ class _Header extends StatelessWidget {
                                 value: n(EtatCompetence.declaree),
                               ),
                               _Stat(
-                                label: 'attestées',
+                                label: 'preuve reçue',
                                 value: n(EtatCompetence.attestee),
                               ),
                               _Stat(

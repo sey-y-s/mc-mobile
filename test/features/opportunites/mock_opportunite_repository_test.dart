@@ -46,5 +46,25 @@ void main() {
         throwsA(isA<NetworkFailure>()),
       );
     });
+  
+    test('les opportunités de la commune du citoyen passent en premier', () async {
+      final items = await repository.list();
+      expect(items.first.proximite, Proximite.commune);
+      expect(items.first.localite, isNotNull);
+    });
+
+    test('« Près de chez moi » ne garde que la commune ou la région', () async {
+      final items = await repository.list(presDeChezMoi: true);
+      expect(items, isNotEmpty);
+      expect(items.every((o) => o.proximite?.estLocale ?? false), isTrue);
+    });
+
+    test('postuler une seule fois, ouvert à tous', () async {
+      await repository.postuler('opp-3', message: 'Disponible dès lundi');
+      final opp = await repository.get('opp-3');
+      expect(opp.dejaPostule, isTrue);
+      expect(opp.proximite, Proximite.autre);
+      await expectLater(repository.postuler('opp-3'), throwsA(isA<ValidationFailure>()));
+    });
   });
 }

@@ -21,6 +21,12 @@ final testsProvider = FutureProvider.autoDispose<List<TestNumerique>>((ref) {
   ref.watch(testsRevisionProvider);
   return ref.watch(testNumeriqueRepositoryProvider).list(size: 20);
 });
+/// Tests proposés pour une compétence (affichés dans la fiche compétence).
+final testsForCompetenceProvider = FutureProvider.autoDispose
+    .family<List<TestNumerique>, String>((ref, competenceId) {
+  ref.watch(testsRevisionProvider);
+  return ref.watch(testNumeriqueRepositoryProvider).listForCompetence(competenceId);
+});
 final testDetailProvider = FutureProvider.autoDispose
     .family<TestNumerique, String>(
       (ref, id) => ref.watch(testNumeriqueRepositoryProvider).get(id),

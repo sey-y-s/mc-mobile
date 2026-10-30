@@ -8,10 +8,7 @@ import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
 import 'package:mlc_mobile/features/auth/presentation/auth_providers.dart';
-<<<<<<< HEAD
 import 'package:mlc_mobile/features/evaluateur/presentation/evaluateur_providers.dart';
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -20,11 +17,8 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final role = ref.watch(currentRoleProvider).value;
     final isAdmin = role == 'ADMIN' || role == 'SUPER_ADMIN';
-<<<<<<< HEAD
     final isCentreAdmin = role == 'CENTRE_ADMIN';
     final isEvaluator = ref.watch(evaluatorCentresProvider).value?.isNotEmpty == true;
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
 
     return Scaffold(
       appBar: AppBar(title: const Text('Paramètres')),
@@ -50,6 +44,20 @@ class SettingsScreen extends ConsumerWidget {
                         subtitle: 'Téléphone, adresse e-mail et coordonnées',
                         onTap: () => context.push('/parametres/compte'),
                       ),
+                      if (role == 'CITOYEN')
+                        _SettingsItemData(
+                          icon: Icons.location_on_outlined,
+                          title: 'Ma commune',
+                          subtitle: 'Votre commune de référence ; aucune position n’est enregistrée',
+                          onTap: () => context.push('/parametres/localisation'),
+                        ),
+                      if (role == 'CITOYEN')
+                        _SettingsItemData(
+                          icon: Icons.rate_review_outlined,
+                          title: 'Contester ou corriger',
+                          subtitle: 'Une décision ou une information de votre profil',
+                          onTap: () => context.push('/parametres/corrections'),
+                        ),
                       _SettingsItemData(
                         icon: AppIcons.lock,
                         title: 'Sécurité',
@@ -58,7 +66,6 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-<<<<<<< HEAD
                   if (isEvaluator) ...[
                     const SizedBox(height: 24),
                     const _SectionHeading(
@@ -93,8 +100,6 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ]),
                   ],
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
                   const SizedBox(height: 24),
                   const _SectionHeading(
                     title: 'Application',

@@ -127,7 +127,7 @@ class ApiPreuveRepository implements PreuveRepository {
     final res = await guardDio(
       () => uploadMultipart<Map<String, dynamic>>(
         _dio,
-        ApiEndpoints.preuves(citoyenCompetenceId),
+        ApiEndpoints.preuveFichier(citoyenCompetenceId),
         file: fichier,
         fields: {'type': type.apiCode},
         onProgress: onProgress,

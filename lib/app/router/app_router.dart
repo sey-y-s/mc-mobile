@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/router/app_shell.dart';
 import 'package:mlc_mobile/app/router/routes.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/core/security/jwt_utils.dart';
 import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/features.dart';
@@ -12,6 +13,13 @@ import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 /// Routes protégées : le `redirect` ci-dessous bloque tout accès sans session authentifiée.
 /// Les écrans « onglets » sont dans le ShellRoute (barre de navigation) ; les autres sont plein écran.
 /// Ordre important : les routes statiques (/x/ajouter) doivent précéder les routes à paramètre (/x/:id).
+/// Rôles autorisés pour une adresse réservée, ou null si elle est ouverte à tout compte connecté.
+Set<String>? _rolesRequis(String loc) {
+  if (loc == '/admin' || loc.startsWith('/admin/')) return const {'ADMIN', 'SUPER_ADMIN'};
+  if (loc == '/centre-admin' || loc.startsWith('/centre-admin/')) return const {'CENTRE_ADMIN'};
+  return null;
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier<int>(0);
   ref.listen<SessionStatus>(sessionProvider, (_, _) => refresh.value++);
@@ -20,7 +28,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: refresh,
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final status = ref.read(sessionProvider);
       final loc = state.matchedLocation;
       if (status == SessionStatus.unknown) {
@@ -31,6 +39,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isPublic ? null : AppRoutes.login;
       }
       if (isPublic || loc == AppRoutes.splash) return AppRoutes.home;
+      // Pages réservées : un lien direct ne doit pas ouvrir l'espace d'un autre rôle
+      // (le serveur refuse de toute façon ; ici on évite l'écran d'erreur).
+      final roles = _rolesRequis(loc);
+      if (roles != null) {
+        final role = JwtUtils.role(await ref.read(tokenStorageProvider).readAccess());
+        if (role == null || !roles.contains(role)) return AppRoutes.home;
+      }
       return null;
     },
     errorBuilder: (context, state) => Scaffold(
@@ -40,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (c, s) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (c, s) => const LoginScreen()),
+      GoRoute(path: AppRoutes.verify, builder: (c, s) => const VerifyOtpScreen()),
       GoRoute(
         path: AppRoutes.register,
         builder: (c, s) => const RegisterScreen(),
@@ -52,11 +68,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
-<<<<<<< HEAD
           GoRoute(path: '/evaluateur', builder: (c, s) => const EvaluateurScreen()),
           GoRoute(path: '/centre-admin/evaluateurs', builder: (c, s) => const CentreAdminEvaluateursScreen()),
-=======
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
           GoRoute(
             path: '/passeport',
             builder: (c, s) => const PassportScreen(),
@@ -90,8 +103,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const ProfileEditScreen(),
       ),
       GoRoute(
+        // Une seule page pour la commune de référence (choix manuel ou détection ponctuelle).
         path: '/passeport/localisation',
-        builder: (c, s) => const LocationScreen(),
+        builder: (c, s) => const LocationSettingsScreen(),
       ),
       GoRoute(
         path: '/passeport/disponibilite',
@@ -108,6 +122,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/competences/:id',
         builder: (c, s) => CompetenceDetailScreen(id: s.pathParameters['id']),
+      ),
+      GoRoute(
+        path: '/competences/:id/parcours',
+        builder: (c, s) => ParcoursValidationScreen(id: s.pathParameters['id']),
       ),
       GoRoute(
         path: '/experiences',
@@ -165,6 +183,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => RequestValidationScreen(
           competenceId: s.uri.queryParameters['competenceId'],
           preuveId: s.uri.queryParameters['preuveId'],
+          testCentre: s.uri.queryParameters['test'] == '1',
         ),
       ),
       GoRoute(
@@ -244,6 +263,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/parametres/compte',
         builder: (c, s) => const AccountSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/parametres/localisation',
+        builder: (c, s) => const LocationSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/parametres/corrections',
+        builder: (c, s) => const CorrectionsScreen(),
       ),
       GoRoute(
         path: '/parametres/securite',

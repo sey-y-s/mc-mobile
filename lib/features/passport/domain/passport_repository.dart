@@ -16,6 +16,13 @@ abstract interface class PassportRepository {
   Future<Citoyen> updatePhoto(PickedMedia media,
       {void Function(double progress)? onProgress});
 
+  /// Retire la photo de profil (le passeport retrouve l'avatar par défaut).
+  Future<Citoyen> removePhoto();
+
   Future<List<Region>> listRegions();
   Future<List<Commune>> listCommunes(String regionId);
+
+  /// Commune de référence la plus proche d'une position, ou null si aucune n'est assez proche.
+  /// Utilisé à l'inscription pour pré-remplir le formulaire ; la position n'est pas conservée.
+  Future<Commune?> detecterCommune(double latitude, double longitude);
 }

@@ -32,9 +32,9 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> register(RegisterData d) async {
-    await guardDio(
-      () => _dio.post<void>(
+  Future<List<CanalVerification>> register(RegisterData d) async {
+    final res = await guardDio(
+      () => _dio.post<Map<String, dynamic>>(
         ApiEndpoints.register,
         data: {
           'nom': d.nom,
@@ -43,18 +43,57 @@ class ApiAuthRepository implements AuthRepository {
           if (d.email != null) 'email': d.email,
           'password': d.password,
           if (d.communeId != null) 'communeId': d.communeId,
+          if (d.sexe != null) 'sexe': d.sexe,
+          'conditionsAcceptees': d.conditionsAcceptees,
         },
       ),
     );
-    await login(identifiant: d.telephone, password: d.password);
+    final canaux = (res.data?['canaux'] as List?)
+            ?.map(CanalVerification.fromApi)
+            .whereType<CanalVerification>()
+            .toList() ??
+        const <CanalVerification>[];
+    return canaux.isEmpty ? [CanalVerification.telephone] : canaux;
   }
+
+  @override
+  Future<void> verifyOtp({
+    required String identifiant,
+    required CanalVerification canal,
+    required String code,
+  }) async {
+    final res = await guardDio(
+      () => _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.verifyOtp,
+        data: {'identifiant': identifiant, 'canal': canal.api, 'code': code},
+      ),
+    );
+    await _saveTokens(res.data);
+  }
+
+  @override
+  Future<void> resendOtp({required String identifiant, required CanalVerification canal}) =>
+      guardDio(
+        () => _dio.post<void>(
+          ApiEndpoints.resendOtp,
+          data: {'identifiant': identifiant, 'canal': canal.api},
+        ),
+      );
 
   @override
   Future<void> logout() async {
     // La déconnexion locale ne doit pas dépendre de la disponibilité du serveur.
     try {
+      // Les appels /auth n'envoient pas le jeton automatiquement : on le joint ici pour que le
+      // serveur révoque l'accès, et on envoie le jeton de renouvellement pour couper toute la chaîne.
+      final access = await _storage.readAccess();
+      final refresh = await _storage.readRefresh();
       await _dio
-          .post<void>(ApiEndpoints.logout)
+          .post<void>(
+            ApiEndpoints.logout,
+            data: refresh == null ? null : {'refreshToken': refresh},
+            options: Options(headers: {if (access != null) 'Authorization': 'Bearer $access'}),
+          )
           .timeout(const Duration(seconds: 3));
     } on DioException {
       // Ignoré : les jetons locaux sont supprimés même si le serveur est injoignable.

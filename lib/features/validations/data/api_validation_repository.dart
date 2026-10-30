@@ -7,10 +7,10 @@ import 'package:mlc_mobile/features/validations/domain/validation_repository.dar
 import 'package:mlc_mobile/features/validations/domain/validation_statut.dart';
 
 /// Contrat provisoire :
-///  GET  /api/citoyens/me/validations?statut=&page&size
-///  GET  /api/citoyen-competences/{id}/validations
-///  GET  /api/validations/{id}
-///  POST /api/citoyen-competences/{id}/validations {preuveId}  (400/409/422 si la demande est refusée)
+///  GET  /api/v1/citoyens/me/validations?statut=&page&size
+///  GET  /api/v1/citoyens/me/citoyen-competences/{id}/validations
+///  GET  /api/v1/validations/{id}
+///  POST /api/v1/citoyen-competences/{id}/validations {preuveId}  (400/409/422 si la demande est refusée)
 class ApiValidationRepository implements ValidationRepository {
   ApiValidationRepository(this._dio);
   final Dio _dio;
@@ -28,7 +28,7 @@ class ApiValidationRepository implements ValidationRepository {
 
   @override
   Future<List<Validation>> listForCompetence(String citoyenCompetenceId) async {
-    final res = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.validations(citoyenCompetenceId)));
+    final res = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.citoyenCompetenceValidations(citoyenCompetenceId)));
     return _list(res.data);
   }
 
@@ -39,17 +39,10 @@ class ApiValidationRepository implements ValidationRepository {
   }
 
   @override
-<<<<<<< HEAD
-  Future<Validation> request({required String citoyenCompetenceId, required String preuveId, String? centreId}) async {
+  Future<Validation> request({required String citoyenCompetenceId, String? preuveId, String? centreId}) async {
     final res = await guardDio(() => _dio.post<Map<String, dynamic>>(
           '/api/v1/evaluateur/demandes',
-          data: {'citoyenCompetenceId': citoyenCompetenceId, 'preuveId': preuveId, 'type': 'VALIDATION_PRATIQUE', if (centreId != null) 'centreId': centreId},
-=======
-  Future<Validation> request({required String citoyenCompetenceId, required String preuveId}) async {
-    final res = await guardDio(() => _dio.post<Map<String, dynamic>>(
-          ApiEndpoints.validations(citoyenCompetenceId),
-          data: {'preuveId': preuveId},
->>>>>>> 0eccd7f5eaed728fddc52bd56526974af3c8be38
+          data: {'citoyenCompetenceId': citoyenCompetenceId, 'preuveId': ?preuveId, 'type': 'VALIDATION_PRATIQUE', 'centreId': ?centreId},
         ));
     return Validation.fromJson(res.data!);
   }

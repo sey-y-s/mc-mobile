@@ -15,6 +15,7 @@ import 'package:mlc_mobile/features/validations/domain/validation_statut.dart';
 import 'package:mlc_mobile/features/validations/presentation/validation_labels.dart';
 import 'package:mlc_mobile/features/validations/presentation/validation_providers.dart';
 import 'package:mlc_mobile/shared/widgets/validation_status_badge.dart';
+import 'package:mlc_mobile/features/contestations/presentation/contester_sheet.dart';
 
 /// Route : /validations/:id. Lecture seule, avec un raccourci pour refaire une demande après un refus.
 class ValidationDetailScreen extends ConsumerWidget {
@@ -90,8 +91,19 @@ class _Content extends StatelessWidget {
           const Icon(AppIcons.chevron, color: AppColors.muted),
         ]),
       ),
-      if (v.statut == ValidationStatut.rejetee) ...[
+      if (v.statut != ValidationStatut.enAttente) ...[
         const SizedBox(height: 24),
+        // Une décision n'est jamais modifiée : la contester demande un réexamen et, si elle est acceptée,
+        // une nouvelle décision est enregistrée.
+        AppButton(
+          label: 'Contester cette décision',
+          icon: Icons.rate_review_outlined,
+          variant: AppButtonVariant.secondary,
+          onPressed: () => ouvrirContestation(context, validationId: v.id, competenceNom: v.competenceNom),
+        ),
+      ],
+      if (v.statut == ValidationStatut.rejetee) ...[
+        const SizedBox(height: 12),
         AppButton(
           label: 'Demander une nouvelle validation',
           onPressed: () => context.push(

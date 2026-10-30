@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/app/router/routes.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/validators.dart';
@@ -33,7 +34,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     // La navigation est faite par le routeur dès que la session passe à "authenticated".
-    await ref.read(authControllerProvider.notifier).login(_id.text.trim(), _pwd.text);
+    final ok = await ref.read(authControllerProvider.notifier).login(_id.text.trim(), _pwd.text);
+    // Compte pas encore vérifié : on ouvre l'écran du code au lieu d'afficher une erreur.
+    if (!ok && mounted && ref.read(verificationProvider) != null) context.go(AppRoutes.verify);
   }
 
   @override

@@ -70,4 +70,4 @@ app.*.map.json
 *.pyc
 *.swp
 .widget_preview/
-migrate_working_dir/
+migrate_working_dir/scripts/.dernier-telephone.txt

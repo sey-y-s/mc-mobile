@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:mlc_mobile/features/portfolio/presentation/portfolio_media_preview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/core/media/ouvrir_fichier.dart';
+import 'package:mlc_mobile/core/utils/snackbars.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
 import 'package:mlc_mobile/core/widgets/app_button.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
@@ -17,7 +20,7 @@ import 'package:mlc_mobile/shared/widgets/validation_status_badge.dart';
 
 
 /// Route : /preuves/:id
-/// TODO(PISTE A): ouvrir un document (PDF/Word) avec url_launcher — dépendance à annoncer avant ajout.
+/// Un document (PDF, Word…) s'ouvre avec l'application de l'appareil ; une image s'affiche directement.
 
 class PreuveDetailScreen extends ConsumerWidget {
   const PreuveDetailScreen({super.key, this.id});
@@ -87,19 +90,18 @@ class _Content extends StatelessWidget {
         const SizedBox(height: 12),
         ClipRRect(
           borderRadius: BorderRadius.circular(14),
-          child: Image.network(
-            preuve.fichierUrl!,
+          // Fichier privé : chargé avec le jeton de connexion (une NetworkImage échouerait).
+          child: PortfolioMediaPreview(
+            url: preuve.fichierUrl!,
             height: 220,
-            fit: BoxFit.cover,
+            width: double.infinity,
             cacheWidth: 800, // jamais l'image pleine résolution en mémoire
-            errorBuilder: (_, _, _) => const SizedBox(
-              height: 120,
-              child: Center(
-                  child:
-                      Icon(AppIcons.gallery, size: 40, color: AppColors.muted)),
-            ),
           ),
         ),
+      ],
+      if (!preuve.isImage && preuve.fichierUrl != null) ...[
+        const SizedBox(height: 12),
+        _BoutonOuvrir(url: preuve.fichierUrl!, nom: preuve.fichierNom),
       ],
       const SizedBox(height: 28),
       const SectionHeader(title: 'Validation'),
@@ -124,4 +126,39 @@ class _Content extends StatelessWidget {
     
     ]);
   }
+}
+
+
+/// Télécharge puis ouvre le document de la preuve.
+class _BoutonOuvrir extends ConsumerStatefulWidget {
+  const _BoutonOuvrir({required this.url, this.nom});
+  final String url;
+  final String? nom;
+
+  @override
+  ConsumerState<_BoutonOuvrir> createState() => _BoutonOuvrirState();
+}
+
+class _BoutonOuvrirState extends ConsumerState<_BoutonOuvrir> {
+  bool _enCours = false;
+
+  Future<void> _ouvrir() async {
+    setState(() => _enCours = true);
+    try {
+      await ouvrirFichierProtege(ref, widget.url, nom: widget.nom);
+    } catch (e) {
+      if (mounted) showError(context, failureMessage(e));
+    } finally {
+      if (mounted) setState(() => _enCours = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AppButton(
+        label: 'Ouvrir le document',
+        icon: Icons.open_in_new,
+        variant: AppButtonVariant.secondary,
+        isLoading: _enCours,
+        onPressed: _ouvrir,
+      );
 }

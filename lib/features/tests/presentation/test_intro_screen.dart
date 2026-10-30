@@ -98,7 +98,7 @@ class _Info extends StatelessWidget {
       children: [
         Icon(icon, size: 17, color: AppColors.green),
         const SizedBox(width: 8),
-        Text(text),
+        Expanded(child: Text(text)),
       ],
     ),
   );

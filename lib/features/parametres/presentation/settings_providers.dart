@@ -5,6 +5,7 @@ import 'package:mlc_mobile/core/network/dio_provider.dart';
 import 'package:mlc_mobile/core/security/session.dart';
 import 'package:mlc_mobile/features/parametres/data/api_settings_repository.dart';
 import 'package:mlc_mobile/features/parametres/data/mock_settings_repository.dart';
+import 'package:mlc_mobile/features/parametres/data/localisation_repository.dart';
 import 'package:mlc_mobile/features/parametres/domain/settings_repository.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>(
@@ -23,3 +24,14 @@ final accountProvider = FutureProvider.autoDispose((ref) {
 final preferencesProvider = FutureProvider.autoDispose(
   (ref) => ref.watch(settingsRepositoryProvider).loadPreferences(),
 );
+
+// ----- Commune de référence du citoyen (aucune position GPS n'est conservée) -----
+final localisationRepositoryProvider = Provider<LocalisationRepository>(
+  (ref) => AppConfig.useMocks
+      ? MockLocalisationRepository()
+      : ApiLocalisationRepository(ref.watch(dioProvider)),
+);
+final maLocalisationProvider = FutureProvider.autoDispose<MaLocalisation>(
+  (ref) => ref.watch(localisationRepositoryProvider).lire(),
+);
+

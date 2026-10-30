@@ -163,6 +163,8 @@ class _AdminValidationsScreenState
     'DIPLOME_VERIFIE' => 'Diplôme vérifié',
     'PARTENAIRE_ATTESTE' => 'Attestation de partenaire',
     'VALIDATION_PRATIQUE' => 'Évaluation pratique',
+    'PORTFOLIO_MEDIA' => 'Évaluation sur portfolio',
+    'MAITRE_ARTISAN' => 'Évaluation par un maître artisan',
     'TEST_NUMERIQUE' => 'Test numérique',
     'VAE' => 'Validation des acquis',
     _ => type,

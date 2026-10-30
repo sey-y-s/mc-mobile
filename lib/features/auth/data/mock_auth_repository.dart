@@ -19,10 +19,27 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> register(RegisterData data) async {
+  Future<List<CanalVerification>> register(RegisterData data) async {
     await _latency();
+    return [
+      CanalVerification.telephone,
+      if (data.email != null) CanalVerification.email,
+    ];
+  }
+
+  @override
+  Future<void> verifyOtp({
+    required String identifiant,
+    required CanalVerification canal,
+    required String code,
+  }) async {
+    await _latency();
+    if (code != testResetCode) throw ValidationFailure('Code incorrect ou expiré.');
     await _storage.save(access: 'mock-access-token');
   }
+
+  @override
+  Future<void> resendOtp({required String identifiant, required CanalVerification canal}) => _latency();
 
   @override
   Future<void> logout() => _storage.clear();

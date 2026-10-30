@@ -86,6 +86,15 @@ class ApiPassportRepository implements PassportRepository {
   );
 
   @override
+  Future<Citoyen> removePhoto() async => _citoyen(
+    await guardDio(
+      () => _dio.delete<Map<String, dynamic>>(
+        ApiEndpoints.citoyenPhoto(ApiEndpoints.me),
+      ),
+    ),
+  );
+
+  @override
   Future<List<Region>> listRegions() async {
     final res = await guardDio(() => _dio.get<dynamic>(ApiEndpoints.regions));
     return pageItems(res.data)
@@ -101,5 +110,23 @@ class ApiPassportRepository implements PassportRepository {
     return pageItems(res.data)
         .map((e) => Commune.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<Commune?> detecterCommune(double latitude, double longitude) async {
+    final res = await guardDio(
+      () => _dio.post<Map<String, dynamic>>(
+        ApiEndpoints.detectionTerritoire,
+        data: {'latitude': latitude, 'longitude': longitude},
+      ),
+    );
+    final d = res.data;
+    if (d == null || d['trouvee'] != true) return null;
+    return Commune(
+      id: d['communeId'] as String,
+      nom: d['communeNom'] as String,
+      regionId: d['regionId'] as String,
+      regionNom: d['regionNom'] as String,
+    );
   }
 }

@@ -21,6 +21,10 @@ class MockOpportuniteRepository implements OpportuniteRepository {
         expirationDate: now.add(const Duration(days: 20)),
         categoryId: 'cat-formation',
         categoryName: 'Formation',
+        localite: 'Bamako · Commune IV',
+        regionNom: 'Bamako',
+        communeNom: 'Commune IV',
+        proximite: Proximite.commune,
       ),
       Opportunite(
         id: 'opp-2',
@@ -32,6 +36,8 @@ class MockOpportuniteRepository implements OpportuniteRepository {
         expirationDate: now.add(const Duration(days: 30)),
         categoryId: 'cat-bourse',
         categoryName: 'Bourse',
+        localite: 'Tout le Mali',
+        proximite: Proximite.nationale,
       ),
       Opportunite(
         id: 'opp-3',
@@ -43,6 +49,9 @@ class MockOpportuniteRepository implements OpportuniteRepository {
         expirationDate: now.add(const Duration(days: 15)),
         categoryId: 'cat-programme',
         categoryName: 'Accompagnement',
+        localite: 'Région de Ségou',
+        regionNom: 'Ségou',
+        proximite: Proximite.autre,
       ),
       Opportunite(
         id: 'opp-4',
@@ -68,12 +77,25 @@ class MockOpportuniteRepository implements OpportuniteRepository {
     ];
   }
 
+  static final Set<String> _candidatures = {};
+
   static void resetForTests() {
     _items
       ..clear()
       ..addAll(_seed());
+    _candidatures.clear();
     simulateError = false;
   }
+
+  Opportunite _avecCandidature(Opportunite o) =>
+      _candidatures.contains(o.id) ? o.copyWith(dejaPostule: true, statutCandidature: 'ENVOYEE') : o;
+
+  static int _rang(Opportunite o) => switch (o.proximite) {
+        Proximite.commune => 0,
+        Proximite.region => 1,
+        Proximite.nationale => 2,
+        _ => 3,
+      };
 
   Future<void> _wait() async {
     await Future<void>.delayed(const Duration(milliseconds: 420));
@@ -91,6 +113,7 @@ class MockOpportuniteRepository implements OpportuniteRepository {
   Future<List<Opportunite>> list({
     OpportuniteType? type,
     String? categoryId,
+    bool presDeChezMoi = false,
     int page = 0,
     int size = 20,
   }) async {
@@ -102,10 +125,15 @@ class MockOpportuniteRepository implements OpportuniteRepository {
                   e.isVisible &&
                   e.type != OpportuniteType.insertion &&
                   (type == null || e.type == type) &&
-                  (categoryId == null || e.categoryId == categoryId),
+                  (categoryId == null || e.categoryId == categoryId) &&
+                  (!presDeChezMoi || (e.proximite?.estLocale ?? false)),
             )
+            .map(_avecCandidature)
             .toList()
-          ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+          ..sort((a, b) {
+            final r = _rang(a).compareTo(_rang(b));
+            return r != 0 ? r : b.publishedAt.compareTo(a.publishedAt);
+          });
     return _page(visible, page, size);
   }
 
@@ -113,9 +141,18 @@ class MockOpportuniteRepository implements OpportuniteRepository {
   Future<Opportunite> get(String id) async {
     await _wait();
     if (id == 'network-error') throw const NetworkFailure();
-    return _items.firstWhere(
+    return _avecCandidature(_items.firstWhere(
       (e) => e.id == id && e.isVisible && e.type != OpportuniteType.insertion,
       orElse: () => throw const NotFoundFailure(),
-    );
+    ));
+  }
+
+  @override
+  Future<void> postuler(String id, {String? message}) async {
+    await _wait();
+    await get(id);
+    if (!_candidatures.add(id)) {
+      throw ValidationFailure('Vous avez déjà postulé à cette opportunité.');
+    }
   }
 }

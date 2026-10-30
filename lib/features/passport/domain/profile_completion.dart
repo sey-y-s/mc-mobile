@@ -43,7 +43,7 @@ class ProfileCompletion {
             done: c.photoUrl != null,
             route: '/passeport/profil'),
         CompletionStep(
-            title: 'Localisation',
+            title: 'Commune',
             hint: 'Indiquez votre commune',
             done: c.commune != null,
             route: '/passeport/localisation'),

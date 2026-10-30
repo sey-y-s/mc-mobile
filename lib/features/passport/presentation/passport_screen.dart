@@ -72,9 +72,11 @@ class _Content extends ConsumerWidget {
       children: [
         ProfileHeader(
           title: citoyen.nomComplet,
-          subtitle: citoyen.commune?.fullLabel ?? 'Localisation à renseigner',
+          subtitle: citoyen.commune?.fullLabel ?? 'Choisir ma commune',
           codePasseport: citoyen.codePasseport,
           avatarUrl: citoyen.photoUrl,
+          onAvatarTap: () => context.push('/passeport/profil'),
+          onSubtitleTap: () => context.push('/passeport/localisation'),
         ),
         const SizedBox(height: 16),
         AppCard(
@@ -139,7 +141,7 @@ class _Content extends ConsumerWidget {
         const SizedBox(height: 16),
 
         SectionHeader(
-            title: 'Localisation',
+            title: 'Ma commune',
             actionLabel: 'Modifier',
             onAction: () => context.push('/passeport/localisation')),
         AppCard(
@@ -176,7 +178,7 @@ class _CompletionCard extends ConsumerWidget {
           const SizedBox(height: 12),
           if (c.isComplete)
             Text(
-                'Votre passeport est complet. Continuez à l\'enrichir avec de nouvelles compétences.',
+                "Votre passeport est complet. Continuez à l'enrichir avec de nouvelles compétences.",
                 style: text.bodySmall?.copyWith(color: AppColors.muted))
           else
             for (final s in c.steps) _StepRow(step: s),

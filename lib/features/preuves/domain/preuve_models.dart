@@ -2,8 +2,13 @@ import 'package:mlc_mobile/features/validations/domain/validation_statut.dart';
 
 enum PreuveType {
   diplome('DIPLOME', 'Diplôme', 'Diplôme obtenu après une formation.'),
-  certificat(
-      'CERTIFICAT', 'Certificat', 'Certificat de formation ou de stage.'),
+  certificat('CERTIFICAT', 'Certificat', 'Certificat de fin de formation.'),
+  attestation('ATTESTATION', 'Attestation',
+      "Attestation de formation ou de réussite délivrée par l'établissement."),
+  attestationStage('ATTESTATION_STAGE', 'Attestation de stage',
+      "Attestation de l'entreprise où vous avez fait votre stage."),
+  certificatCentre('CERTIFICAT_CENTRE', "Certificat d'un centre professionnel",
+      'Certificat délivré par un centre de formation professionnelle qui a évalué votre savoir-faire.'),
   attestationEmployeur('ATTESTATION_EMPLOYEUR', "Attestation d'employeur",
       "Document d'un employeur ou d'un client qui confirme votre travail."),
   portfolio('PORTFOLIO', 'Portfolio',
@@ -22,8 +27,9 @@ enum PreuveType {
   final String label;
   final String description;
 
-  /// Types que le citoyen peut ajouter lui-même. Les autres sont produits par la plateforme ou un centre.
-  static const addable = [diplome, certificat, attestationEmployeur, autre];
+  /// Types que le citoyen peut ajouter lui-même pour une compétence sans secteur précisé (anciennes compétences).
+  /// Les autres sont produits par la plateforme ou un centre.
+  static const addable = [diplome, certificat, attestation, attestationStage, certificatCentre, attestationEmployeur, autre];
 
   static PreuveType fromApi(String v) => PreuveType.values
       .firstWhere((t) => t.apiCode == v, orElse: () => PreuveType.autre);

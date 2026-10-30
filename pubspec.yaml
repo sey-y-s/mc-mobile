@@ -24,6 +24,9 @@ dependencies:
   flutter_svg: ^2.0.10+1
   image_picker: ^1.1.2   # photo/vidéo
   file_picker: ^13.1.0  # documents PDF/Word
+  geolocator: ^14.0.2   # géolocalisation du citoyen
+  path_provider: ^2.1.5 # dossier temporaire pour ouvrir un document de preuve
+  open_filex: ^4.7.0    # ouvrir un PDF / Word avec l'application de l'appareil
 
   cupertino_icons: ^1.0.8
 

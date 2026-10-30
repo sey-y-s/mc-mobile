@@ -71,6 +71,7 @@ class MockPassportRepository implements PassportRepository {
           Sexe? sexe,
           bool setSexe = false,
           String? photoUrl,
+          bool clearPhoto = false,
           Disponibilite? dispo,
           Commune? commune}) =>
       _me = Citoyen(
@@ -78,7 +79,7 @@ class MockPassportRepository implements PassportRepository {
         nom: nom ?? _me.nom,
         prenom: prenom ?? _me.prenom,
         sexe: setSexe ? sexe : _me.sexe,
-        photoUrl: photoUrl ?? _me.photoUrl,
+        photoUrl: clearPhoto ? null : (photoUrl ?? _me.photoUrl),
         codePasseport: _me.codePasseport,
         disponibilite: dispo ?? _me.disponibilite,
         commune: commune ?? _me.commune,
@@ -131,8 +132,18 @@ class MockPassportRepository implements PassportRepository {
       {void Function(double progress)? onProgress}) async {
     await simulateUpload(
         onProgress: onProgress, stepDelay: const Duration(milliseconds: 100));
-    // URL factice : l'image ne se charge pas (l'avatar affiche son icône), mais l'étape « Photo » est validée.
-    return _with(photoUrl: 'https://example.invalid/mock-photo.jpg');
+    // Mode démo : la photo choisie est gardée en mémoire et s'affiche aussitôt dans le passeport.
+    final bytes = media.bytes;
+    return _with(
+        photoUrl: bytes == null
+            ? 'https://example.invalid/mock-photo.jpg'
+            : UriData.fromBytes(bytes, mimeType: 'image/jpeg').toString());
+  }
+
+  @override
+  Future<Citoyen> removePhoto() async {
+    await _latency();
+    return _with(clearPhoto: true);
   }
 
   @override
@@ -155,5 +166,16 @@ class MockPassportRepository implements PassportRepository {
             regionId: region.id,
             regionNom: region.nom),
     ];
+  }
+
+  @override
+  Future<Commune?> detecterCommune(double latitude, double longitude) async {
+    await _latency(400);
+    // Démonstration : Bamako, Commune III.
+    return const Commune(
+        id: 'r-bko-3',
+        nom: 'Commune III',
+        regionId: 'r-bko',
+        regionNom: 'District de Bamako');
   }
 }

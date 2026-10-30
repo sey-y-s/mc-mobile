@@ -21,7 +21,7 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(AppRadius.card);
     final content = Padding(padding: padding, child: child);
-    return Material(
+    final card = Material(
       color: AppColors.card,
       borderRadius: radius,
       clipBehavior: Clip.antiAlias,
@@ -45,6 +45,18 @@ class AppCard extends StatelessWidget {
                 ),
         ),
       ),
+    );
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return card;
+    // Apparition douce de chaque carte à son arrivée à l'écran.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, c) => Opacity(
+        opacity: t,
+        child: Transform.translate(offset: Offset(0, 10 * (1 - t)), child: c),
+      ),
+      child: card,
     );
   }
 }

@@ -14,7 +14,7 @@ class LocationScreen extends ConsumerWidget {
   const LocationScreen({super.key});
 
   Widget _shell(Widget body) =>
-      Scaffold(appBar: AppBar(title: const Text('Localisation')), body: body);
+      Scaffold(appBar: AppBar(title: const Text('Ma commune')), body: body);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,7 +50,7 @@ class _LocationFormState extends ConsumerState<_LocationForm> {
         .read(passportActionsProvider.notifier)
         .updateCommune(_communeId!);
     if (!ok || !mounted) return;
-    showSuccess(context, 'Localisation enregistrée');
+    showSuccess(context, 'Commune enregistrée');
     Navigator.of(context).maybePop();
   }
 
@@ -65,7 +65,7 @@ class _LocationFormState extends ConsumerState<_LocationForm> {
     final commune =
         communes?.asData?.value.where((c) => c.id == _communeId).firstOrNull;
     return FormScaffold(
-      title: 'Localisation',
+      title: 'Ma commune',
       formKey: _formKey,
       submitLabel: 'Enregistrer',
       onSubmit: _submit,

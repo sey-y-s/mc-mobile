@@ -33,6 +33,27 @@ enum OpportuniteStatus {
           orElse: () => OpportuniteStatus.brouillon);
 }
 
+/// Proximité de l'opportunité avec la localité du citoyen connecté.
+enum Proximite {
+  commune('COMMUNE', 'Dans votre commune'),
+  region('REGION', 'Dans votre région'),
+  nationale('NATIONALE', 'Tout le Mali'),
+  autre('AUTRE', 'Autre localité');
+
+  const Proximite(this.apiCode, this.label);
+  final String apiCode;
+  final String label;
+
+  bool get estLocale => this == Proximite.commune || this == Proximite.region;
+
+  static Proximite? fromApi(String? value) {
+    for (final p in Proximite.values) {
+      if (p.apiCode == value?.toUpperCase()) return p;
+    }
+    return null;
+  }
+}
+
 class Opportunite {
   const Opportunite({
     required this.id,
@@ -45,6 +66,12 @@ class Opportunite {
     this.categoryName,
     this.expirationDate,
     this.externalUrl,
+    this.localite,
+    this.regionNom,
+    this.communeNom,
+    this.proximite,
+    this.dejaPostule = false,
+    this.statutCandidature,
   });
   final String id;
   final String title;
@@ -56,6 +83,60 @@ class Opportunite {
   final String? categoryName;
   final DateTime? expirationDate;
   final String? externalUrl;
+
+  /// « Bamako · Commune IV », « Région de Ségou » ou « Tout le Mali ».
+  final String? localite;
+  final String? regionNom;
+  final String? communeNom;
+
+  /// Connue seulement pour un citoyen connecté (liste « pour moi »).
+  final Proximite? proximite;
+  final bool dejaPostule;
+
+  /// ENVOYEE, RETENUE ou NON_RETENUE.
+  final String? statutCandidature;
+
+  Opportunite copyWith({bool? dejaPostule, String? statutCandidature}) => Opportunite(
+        id: id,
+        title: title,
+        description: description,
+        type: type,
+        status: status,
+        publishedAt: publishedAt,
+        categoryId: categoryId,
+        categoryName: categoryName,
+        expirationDate: expirationDate,
+        externalUrl: externalUrl,
+        localite: localite,
+        regionNom: regionNom,
+        communeNom: communeNom,
+        proximite: proximite,
+        dejaPostule: dejaPostule ?? this.dejaPostule,
+        statutCandidature: statutCandidature ?? this.statutCandidature,
+      );
+
+  /// Réponse « pour moi » : { opportunite: {...}, proximite, dejaPostule, statutCandidature }.
+  factory Opportunite.fromPourMoi(Map<String, dynamic> json) {
+    final base = Opportunite.fromJson(Map<String, dynamic>.from(json['opportunite'] as Map));
+    return Opportunite(
+      id: base.id,
+      title: base.title,
+      description: base.description,
+      type: base.type,
+      status: base.status,
+      publishedAt: base.publishedAt,
+      categoryId: base.categoryId,
+      categoryName: base.categoryName,
+      expirationDate: base.expirationDate,
+      externalUrl: base.externalUrl,
+      localite: base.localite,
+      regionNom: base.regionNom,
+      communeNom: base.communeNom,
+      proximite: Proximite.fromApi(json['proximite']?.toString()),
+      dejaPostule: json['dejaPostule'] == true,
+      statutCandidature: json['statutCandidature']?.toString(),
+    );
+  }
 
   bool get isVisible {
     final today = DateTime.now();
@@ -80,6 +161,9 @@ class Opportunite {
       categoryName: (json['categorieNom'] ?? (category is Map ? category['nom'] : null))?.toString(),
       expirationDate: date(json['dateExpiration']),
       externalUrl: (json['lienUrl'] ?? json['url'])?.toString(),
+      localite: json['localite']?.toString(),
+      regionNom: json['regionNom']?.toString(),
+      communeNom: json['communeNom']?.toString(),
     );
   }
 }

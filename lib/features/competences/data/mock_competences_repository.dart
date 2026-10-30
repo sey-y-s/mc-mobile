@@ -17,6 +17,8 @@ class MockCompetencesRepository implements CompetencesRepository {
             secteurNom: 'Métallurgie',
             niveau: Niveau.expert,
             etat: EtatCompetence.validee,
+            parcours: Parcours.formel,
+            nombrePreuves: 1,
             dateDeclaration: DateTime(2026, 1, 12)),
         CitoyenCompetence(
             id: 'cc-2',
@@ -25,6 +27,8 @@ class MockCompetencesRepository implements CompetencesRepository {
             secteurNom: 'Textile',
             niveau: Niveau.intermediaire,
             etat: EtatCompetence.attestee,
+            parcours: Parcours.informel,
+            nombrePreuves: 1,
             dateDeclaration: DateTime(2026, 3, 2)),
         CitoyenCompetence(
             id: 'cc-3',
@@ -36,6 +40,14 @@ class MockCompetencesRepository implements CompetencesRepository {
             dateDeclaration: DateTime(2026, 6, 20)),
       ];
 
+  /// Compétence déclarée par le citoyen pour une compétence du référentiel (null si non déclarée).
+  static String? citoyenCompetenceIdFor(String competenceId) {
+    for (final c in _items) {
+      if (c.competenceId == competenceId) return c.id;
+    }
+    return null;
+  }
+
   /// Pour les tests : remet l'état initial.
   static void resetForTests() => _items
     ..clear()
@@ -45,32 +57,14 @@ class MockCompetencesRepository implements CompetencesRepository {
   static void markAttested(String citoyenCompetenceId) {
     final i = _items.indexWhere((c) => c.id == citoyenCompetenceId);
     if (i < 0 || _items[i].etat != EtatCompetence.declaree) return;
-    final c = _items[i];
-    _items[i] = CitoyenCompetence(
-      id: c.id,
-      competenceId: c.competenceId,
-      competenceNom: c.competenceNom,
-      secteurNom: c.secteurNom,
-      niveau: c.niveau,
-      etat: EtatCompetence.attestee,
-      dateDeclaration: c.dateDeclaration,
-    );
+    _items[i] = _items[i].copyWith(etat: EtatCompetence.attestee, nombrePreuves: _items[i].nombrePreuves + 1);
   }
 
   /// Simule la décision d'un évaluateur : la compétence devient « validée ».
   static void markValidated(String citoyenCompetenceId) {
     final i = _items.indexWhere((c) => c.id == citoyenCompetenceId);
     if (i < 0) return;
-    final c = _items[i];
-    _items[i] = CitoyenCompetence(
-      id: c.id,
-      competenceId: c.competenceId,
-      competenceNom: c.competenceNom,
-      secteurNom: c.secteurNom,
-      niveau: c.niveau,
-      etat: EtatCompetence.validee,
-      dateDeclaration: c.dateDeclaration,
-    );
+    _items[i] = _items[i].copyWith(etat: EtatCompetence.validee);
   }
 
   static const _referentiel = [
@@ -94,7 +88,37 @@ class MockCompetencesRepository implements CompetencesRepository {
         id: 'c-11', nom: 'Comptabilité de base', secteurNom: 'Gestion'),
     CompetenceRef(
         id: 'c-12', nom: 'Coiffure', secteurNom: 'Services à la personne'),
+    // Compétences qui supposent une formation : secteur formel uniquement.
+    CompetenceRef(
+        id: 'c-13',
+        nom: 'Science des données',
+        secteurNom: 'Numérique et télécoms',
+        metierNom: 'Data scientist',
+        parcoursPossibles: [Parcours.formel]),
+    CompetenceRef(
+        id: 'c-14',
+        nom: 'Apprentissage automatique',
+        secteurNom: 'Numérique et télécoms',
+        metierNom: 'Data scientist',
+        parcoursPossibles: [Parcours.formel]),
+    CompetenceRef(
+        id: 'c-15',
+        nom: 'Développement JavaScript',
+        secteurNom: 'Numérique et télécoms',
+        metierNom: 'Développeur web',
+        parcoursPossibles: [Parcours.formel]),
   ];
+
+  static List<Parcours> _possibles(String competenceId) => _referentiel
+      .firstWhere((r) => r.id == competenceId, orElse: () => const CompetenceRef(id: '', nom: ''))
+      .parcoursPossibles;
+
+  static void _verifierParcours(String competenceId, Parcours? parcours) {
+    final possibles = _possibles(competenceId);
+    if (parcours != null && !possibles.contains(parcours)) {
+      throw ValidationFailure('Cette compétence ne relève que du ${possibles.first.label.toLowerCase()}.');
+    }
+  }
 
   Future<void> _latency([int ms = 300]) =>
       Future<void>.delayed(Duration(milliseconds: ms));
@@ -114,13 +138,16 @@ class MockCompetencesRepository implements CompetencesRepository {
 
   @override
   Future<CitoyenCompetence> add(
-      {required String competenceId, required Niveau niveau}) async {
+      {required String competenceId, required Niveau niveau, Parcours? parcours}) async {
     await _latency();
     if (_items.any((c) => c.competenceId == competenceId)) {
       throw ValidationFailure('Vous avez déjà déclaré cette compétence.');
     }
     final ref = _referentiel.firstWhere((r) => r.id == competenceId,
         orElse: () => throw const NotFoundFailure());
+    _verifierParcours(competenceId, parcours);
+    // Un seul secteur possible : il s'applique d'office (comme côté serveur).
+    parcours ??= ref.parcoursPossibles.length == 1 ? ref.parcoursPossibles.first : null;
     final created = CitoyenCompetence(
       id: 'cc-${_items.length + 1}',
       competenceId: ref.id,
@@ -128,10 +155,21 @@ class MockCompetencesRepository implements CompetencesRepository {
       secteurNom: ref.secteurNom,
       niveau: niveau,
       etat: EtatCompetence.declaree,
+      parcours: parcours,
+      parcoursPossibles: ref.parcoursPossibles,
       dateDeclaration: DateTime.now(),
     );
     _items.insert(0, created);
     return created;
+  }
+
+  @override
+  Future<CitoyenCompetence> setParcours(String id, Parcours parcours) async {
+    await _latency();
+    final i = _items.indexWhere((c) => c.id == id);
+    if (i < 0) throw const NotFoundFailure();
+    _verifierParcours(_items[i].competenceId, parcours);
+    return _items[i] = _items[i].copyWith(parcours: parcours);
   }
 
   @override

@@ -5,7 +5,8 @@ class AppRoutes {
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
+  static const verify = '/verify';
   static const home = '/home';
 
-  static const publicRoutes = {login, register, forgotPassword, resetPassword};
+  static const publicRoutes = {login, register, forgotPassword, resetPassword, verify};
 }

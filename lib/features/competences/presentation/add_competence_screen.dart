@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/snackbars.dart';
@@ -12,11 +13,13 @@ import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
 import 'package:mlc_mobile/features/competences/domain/competence_ref.dart';
 import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
-import 'package:mlc_mobile/core/widgets/selectable_option_card.dart';
+import 'package:mlc_mobile/core/widgets/progressive_choice.dart';
 
 /// Route : /competences/ajouter
 /// Étape 1 : chercher dans le référentiel.
-/// Étape 2 : choisir son niveau, puis ajouter.
+/// Étape 2 : choisir son niveau, puis son secteur parmi ceux que permet la compétence ;
+/// chaque choix fait disparaître les autres options et révèle l'étape suivante.
+/// Étape 3 : ouverture de la compétence pour y joindre directement ses preuves.
 class AddCompetenceScreen extends ConsumerStatefulWidget {
   const AddCompetenceScreen({super.key});
 
@@ -30,6 +33,7 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
   String _query = '';
   CompetenceRef? _selected;
   Niveau? _niveau;
+  Parcours? _parcours;
 
   @override
   void initState() {
@@ -47,12 +51,13 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
   }
 
   Future<void> _submit() async {
-    final ok = await ref
+    final created = await ref
         .read(addCompetenceControllerProvider.notifier)
-        .submit(competence: _selected!, niveau: _niveau!);
-    if (!ok || !mounted) return;
-    showSuccess(context, 'Compétence ajoutée');
-    Navigator.of(context).maybePop();
+        .submit(competence: _selected!, niveau: _niveau!, parcours: _parcours!);
+    if (created == null || !mounted) return;
+    showSuccess(context, 'Compétence ajoutée. Joignez maintenant vos preuves.');
+    // Les preuves font partie de la compétence : on ouvre directement sa fiche.
+    context.pushReplacement('/competences/${created.id}');
   }
 
   @override
@@ -61,7 +66,17 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Ajouter une compétence')),
       body: SafeArea(
-        child: _selected == null ? _searchStep() : _levelStep(add),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (w, a) => FadeTransition(
+            opacity: a,
+            child: SlideTransition(
+                position: Tween(begin: const Offset(.04, 0), end: Offset.zero).animate(a), child: w),
+          ),
+          child: _selected == null
+              ? KeyedSubtree(key: const ValueKey('recherche'), child: _searchStep())
+              : KeyedSubtree(key: ValueKey(_selected!.id), child: _levelStep(add)),
+        ),
       ),
     );
   }
@@ -86,23 +101,31 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
                     icon: AppIcons.competences)
                 : _Results(
                     query: _query,
-                    onSelect: (c) => setState(() => _selected = c)),
+                    onSelect: _choisirCompetence),
           ),
         ]),
       );
 
+  void _choisirCompetence(CompetenceRef c) => setState(() {
+        _selected = c;
+        _niveau = null;
+        // Un seul secteur possible : il est choisi d'office, sans question inutile.
+        _parcours = c.parcoursPossibles.length == 1 ? c.parcoursPossibles.first : null;
+      });
+
   Widget _levelStep(AsyncValue<void> add) {
     final busy = add.isLoading;
+    final c = _selected!;
     return ListView(padding: const EdgeInsets.all(20), children: [
       AppCard(
+        accentColor: AppColors.green,
         child: Row(children: [
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(_selected!.nom,
-                  style: Theme.of(context).textTheme.titleMedium),
-              if (_selected!.secteurNom != null)
-                Text(_selected!.secteurNom!,
+              Text(c.nom, style: Theme.of(context).textTheme.titleMedium),
+              if (c.secteurNom != null || c.metierNom != null)
+                Text([c.metierNom, c.secteurNom].whereType<String>().join(' · '),
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -115,6 +138,7 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
                 : () => setState(() {
                       _selected = null;
                       _niveau = null;
+                      _parcours = null;
                     }),
             child: const Text('Changer'),
           ),
@@ -122,27 +146,105 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
       ),
       const SizedBox(height: 24),
       const SectionHeader(title: 'Votre niveau'),
-      for (final n in Niveau.values) ...[
-        SelectableOptionCard(
-          title: n.label,
-          description: _levelDescription(n),
-          selected: _niveau == n,
-          onTap: busy ? null : () => setState(() => _niveau = n),
-        ),
-        const SizedBox(height: 12),
-      ],
-      if (add.hasError) ...[
-        const SizedBox(height: 4),
-        Text(failureMessage(add.error!),
-            style: const TextStyle(color: AppColors.error)),
-        const SizedBox(height: 12),
-      ],
-      const SizedBox(height: 8),
-      AppButton(
-          label: 'Ajouter cette compétence',
-          onPressed: _niveau == null ? null : _submit,
-          isLoading: busy),
+      ProgressiveChoice<Niveau>(
+        options: Niveau.values,
+        selected: _niveau,
+        enabled: !busy,
+        titleOf: (n) => n.label,
+        descriptionOf: _levelDescription,
+        onChanged: (n) => setState(() => _niveau = n),
+      ),
+      // Étape suivante : n'apparaît qu'une fois le niveau choisi.
+      _Revelation(
+        visible: _niveau != null,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const SizedBox(height: 12),
+          const SectionHeader(title: 'Comment avez-vous appris ?'),
+          ProgressiveChoice<Parcours>(
+            options: c.parcoursPossibles,
+            selected: _parcours,
+            enabled: !busy,
+            singleNote: Parcours.noteUnique(c.parcoursPossibles),
+            titleOf: (p) => p.label,
+            descriptionOf: (p) => p.description,
+            detailsOf: (p) => _PreuvesAttendues(parcours: p),
+            onChanged: (p) => setState(() => _parcours = p),
+          ),
+        ]),
+      ),
+      _Revelation(
+        visible: _niveau != null && _parcours != null,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (add.hasError) ...[
+            const SizedBox(height: 4),
+            Text(failureMessage(add.error!),
+                style: const TextStyle(color: AppColors.error)),
+            const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 8),
+          AppButton(
+              label: 'Ajouter cette compétence',
+              onPressed: _niveau == null || _parcours == null ? null : _submit,
+              isLoading: busy),
+        ]),
+      ),
     ]);
+  }
+}
+
+/// Fait apparaître (ou disparaître) une étape en douceur.
+class _Revelation extends StatelessWidget {
+  const _Revelation({required this.visible, required this.child});
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduit = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final duree = reduit ? Duration.zero : const Duration(milliseconds: 320);
+    return AnimatedSize(
+      duration: duree,
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: duree,
+        transitionBuilder: (w, a) => FadeTransition(
+          opacity: a,
+          child: SlideTransition(
+              position: Tween(begin: const Offset(0, .06), end: Offset.zero).animate(a), child: w),
+        ),
+        child: visible ? KeyedSubtree(key: const ValueKey(true), child: child) : const SizedBox(key: ValueKey(false), width: double.infinity),
+      ),
+    );
+  }
+}
+
+/// Ce que le secteur choisi implique : les preuves à joindre ensuite.
+class _PreuvesAttendues extends StatelessWidget {
+  const _PreuvesAttendues({required this.parcours});
+  final Parcours parcours;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Preuves que vous pourrez joindre', style: text.titleSmall),
+        const SizedBox(height: 8),
+        for (final t in parcours.preuves)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(children: [
+              const Icon(Icons.task_alt, size: 18, color: AppColors.green),
+              const SizedBox(width: 8),
+              Expanded(child: Text(t.label, style: text.bodyMedium)),
+            ]),
+          ),
+        if (parcours == Parcours.informel)
+          Text("Pas de certificat ? Vous pourrez passer un test de validation dans un centre professionnel.",
+              style: text.bodySmall?.copyWith(color: AppColors.muted)),
+      ]),
+    );
   }
 }
 
@@ -178,6 +280,12 @@ class _Results extends ConsumerWidget {
                               .textTheme
                               .bodySmall
                               ?.copyWith(color: AppColors.muted)),
+                    if (items[i].parcoursPossibles.length == 1)
+                      Text('${items[i].parcoursPossibles.first.label} uniquement',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(color: AppColors.green)),
                   ]),
             ),
             const Icon(AppIcons.chevron, color: AppColors.muted),

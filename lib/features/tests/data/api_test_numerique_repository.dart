@@ -77,6 +77,22 @@ class ApiTestNumeriqueRepository implements TestNumeriqueRepository {
   }
 
   @override
+  Future<List<TestNumerique>> listForCompetence(String competenceId) async {
+    final tests = <TestNumerique>[];
+    for (final row in await _fetchList(ApiEndpoints.mobileTestsForCompetence(competenceId))) {
+      if (row is! Map) continue;
+      final test = TestNumerique.fromJson(Map<String, dynamic>.from(row));
+      if (test.id.isNotEmpty) tests.add(test);
+    }
+    if (tests.isEmpty) return tests;
+    final results = await listResults();
+    return [
+      for (final t in tests)
+        t.copyWith(lastResult: results.where((r) => r.testId == t.id).firstOrNull),
+    ];
+  }
+
+  @override
   Future<TestNumerique> get(String id) async {
     final response = await guardDio(
       () => _dio.get<Map<String, dynamic>>(ApiEndpoints.mobileTest(id)),

@@ -17,6 +17,9 @@ final opportuniteRepositoryProvider = Provider<OpportuniteRepository>((ref) {
 final opportuniteTypeFilterProvider =
     StateProvider.autoDispose<OpportuniteType?>((ref) => null);
 
+/// Filtre « Près de chez moi » (commune ou région du citoyen).
+final opportunitePresDeChezMoiProvider = StateProvider.autoDispose<bool>((ref) => false);
+
 /// 3 opportunités récentes pour le bloc de la page d'accueil
 final recentOpportunitesProvider =
     FutureProvider.autoDispose<List<Opportunite>>((ref) {

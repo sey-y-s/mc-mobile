@@ -11,7 +11,10 @@ abstract interface class CompetencesRepository {
   /// Ajout uniquement depuis le référentiel. État initial : déclarée.
   /// Lève ValidationFailure si la compétence est déjà déclarée.
   Future<CitoyenCompetence> add(
-      {required String competenceId, required Niveau niveau});
+      {required String competenceId, required Niveau niveau, Parcours? parcours});
+
+  /// Indique le secteur (formel / informel) d'une compétence déjà déclarée.
+  Future<CitoyenCompetence> setParcours(String id, Parcours parcours);
 
   /// Recherche dans le référentiel (nom ou secteur), 20 résultats maximum.
   Future<List<CompetenceRef>> searchReferentiel(String query);

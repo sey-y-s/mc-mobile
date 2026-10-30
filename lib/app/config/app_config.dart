@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 
 /// Configuration par environnement, injectée à la compilation :
 /// `flutter run --dart-define-from-file=config/dev.json`
@@ -18,9 +18,10 @@ class AppConfig {
   );
   static String get apiBaseUrl {
     if (_configuredApiBaseUrl.isNotEmpty) return _configuredApiBaseUrl;
-    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android
-        ? 'http://10.0.2.2:8080'
-        : 'http://localhost:8080';
+    return 'http://localhost:8080';
+    // return !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+    //     ? 'http://10.0.2.2:8080'
+    //     : 'http://localhost:8080';
   }
 
   static const bool _useMocksFlag = bool.fromEnvironment(

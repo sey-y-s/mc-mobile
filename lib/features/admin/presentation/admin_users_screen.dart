@@ -80,6 +80,9 @@ class AdminUsersScreen extends ConsumerWidget {
     'EVALUATEUR' => 'Évaluateur',
     'ADMIN' => 'Administrateur',
     'SUPER_ADMIN' => 'Super-administrateur',
+    'CENTRE_ADMIN' => 'Gestionnaire de centre',
+    'INSTITUTION' => 'Institution',
+    'AGENT_TERRAIN' => 'Agent de terrain',
     _ => role,
   };
 }

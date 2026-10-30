@@ -72,6 +72,8 @@ class PassportActions extends AsyncNotifier<void> {
   Future<bool> updateAvailability(Disponibilite value) =>
       _run(() => _repo.updateAvailability(value));
 
+  Future<bool> removePhoto() => _run(() => _repo.removePhoto());
+
   Future<bool> updatePhoto(PickedMedia media) => _run(() async {
         ref.read(photoProgressProvider.notifier).state = 0;
         await _repo.updatePhoto(media,

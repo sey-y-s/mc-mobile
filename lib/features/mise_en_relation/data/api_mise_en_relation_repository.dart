@@ -15,7 +15,8 @@ class ApiMiseEnRelationRepository implements MiseEnRelationRepository {
 
   Future<List<MiseEnRelation>> _all() async {
     final response = await guardDio(
-      () => _dio.get<dynamic>(ApiEndpoints.mobileRelations),
+      // Route réservée à l'utilisateur connecté (la liste complète est réservée à l'administration).
+      () => _dio.get<dynamic>(ApiEndpoints.mobileMyRelations),
     );
     return pageItems(response.data)
         .whereType<Map>()
@@ -91,15 +92,10 @@ class ApiMiseEnRelationRepository implements MiseEnRelationRepository {
       throw ValidationFailure('Cette demande a déjà reçu une réponse.');
     }
     final response = await guardDio(
-      () => _dio.put<Map<String, dynamic>>(
-        ApiEndpoints.mobileRelation(id),
+      () => _dio.patch<Map<String, dynamic>>(
+        ApiEndpoints.mobileRelationAnswer(id),
         data: {
-          'demandeurId': request.senderId,
-          'destinataireId': request.recipientId,
-          'SuiviBesoinTalentId': request.followUpId,
-          'statut': (accept ? RelationStatus.acceptee : RelationStatus.refusee)
-              .apiCode,
-          'message': request.message,
+          'statut': (accept ? RelationStatus.acceptee : RelationStatus.refusee).apiCode,
         },
       ),
     );

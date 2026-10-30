@@ -94,6 +94,14 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         labelStyle: text.labelMedium,
       ),
+      // Transitions entre écrans : fondu + léger glissement (couleurs inchangées).
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: GlissementFonduTransitions(),
+        TargetPlatform.iOS: GlissementFonduTransitions(),
+        TargetPlatform.windows: GlissementFonduTransitions(),
+        TargetPlatform.linux: GlissementFonduTransitions(),
+        TargetPlatform.macOS: GlissementFonduTransitions(),
+      }),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.field)),
@@ -103,6 +111,30 @@ class AppTheme {
         backgroundColor: AppColors.card,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
+      ),
+    );
+  }
+}
+
+/// Nouvel écran : il glisse légèrement depuis la droite en apparaissant ;
+/// l'écran précédent recule un peu. Respecte « réduire les animations ».
+class GlissementFonduTransitions extends PageTransitionsBuilder {
+  const GlissementFonduTransitions();
+
+  @override
+  Widget buildTransitions<T>(PageRoute<T> route, BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation, Widget child) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return child;
+    final entree = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
+    final sortie = CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeOutCubic);
+    return SlideTransition(
+      position: Tween(begin: Offset.zero, end: const Offset(-.06, 0)).animate(sortie),
+      child: FadeTransition(
+        opacity: entree,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(.08, 0), end: Offset.zero).animate(entree),
+          child: child,
+        ),
       ),
     );
   }

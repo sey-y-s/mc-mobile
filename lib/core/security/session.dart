@@ -15,8 +15,13 @@ class SessionNotifier extends Notifier<SessionStatus> {
   }
 
   Future<void> restore() async {
-    final token = await ref.read(tokenStorageProvider).readAccess();
-    state = (token == null || JwtUtils.isExpired(token))
+    final storage = ref.read(tokenStorageProvider);
+    final token = await storage.readAccess();
+    // Un accès expiré n'est pas une fin de session : tant qu'un jeton de renouvellement existe,
+    // le premier appel au serveur obtiendra un nouvel accès automatiquement.
+    final refresh = await storage.readRefresh();
+    final renouvelable = refresh != null && refresh.isNotEmpty;
+    state = (token == null || (JwtUtils.isExpired(token) && !renouvelable))
         ? SessionStatus.unauthenticated
         : SessionStatus.authenticated;
   }
