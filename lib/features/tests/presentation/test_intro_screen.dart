@@ -26,7 +26,7 @@ class TestIntroScreen extends ConsumerWidget {
         value: test,
         onRetry: () => ref.invalidate(testDetailProvider(testId)),
         data: (item) => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           children: [
             Text(item.title, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
@@ -53,8 +53,7 @@ class TestIntroScreen extends ConsumerWidget {
                   if (item.durationMinutes != null)
                     _Info(
                       icon: AppIcons.clock,
-                      text:
-                          'Durée estimée : ${item.durationMinutes} minutes',
+                      text: 'Durée estimée : ${item.durationMinutes} minutes',
                     ),
                   _Info(
                     icon: AppIcons.tests,
@@ -77,7 +76,7 @@ class TestIntroScreen extends ConsumerWidget {
                 ref.read(testRunProvider(testId).notifier).state = TestRun(
                   testId: testId,
                 );
-                context.go('/tests/$testId/question');
+                context.pushReplacement('/tests/$testId/question');
               },
             ),
           ],

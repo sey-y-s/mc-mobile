@@ -34,9 +34,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     // La navigation est faite par le routeur dès que la session passe à "authenticated".
-    final ok = await ref.read(authControllerProvider.notifier).login(_id.text.trim(), _pwd.text);
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .login(_id.text.trim(), _pwd.text);
     // Compte pas encore vérifié : on ouvre l'écran du code au lieu d'afficher une erreur.
-    if (!ok && mounted && ref.read(verificationProvider) != null) context.go(AppRoutes.verify);
+    if (!ok && mounted && ref.read(verificationProvider) != null) {
+      context.go(AppRoutes.verify);
+    }
   }
 
   @override
@@ -47,76 +51,113 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
         body: SingleChildScrollView(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            // Seul moment « décoratif » de l'écran : le motif bogolan.
-            Container(
-              height: 230,
-              decoration: const BoxDecoration(
-                color: AppColors.green,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
-              ),
-              child: Stack(children: [
-                const Positioned.fill(child: BogolanPattern(color: Color(0x2EC09427))),
-                SafeArea(
-                  child: Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      const AppLogo(size: 72),
-                      const SizedBox(height: 12),
-                      Text(S.appName, style: text.headlineSmall?.copyWith(color: Colors.white)),
-                    ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Seul moment « décoratif » de l'écran : le motif bogolan.
+              Container(
+                height: 230,
+                decoration: const BoxDecoration(
+                  color: AppColors.green,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(32),
                   ),
                 ),
-              ]),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-              child: Form(
-                key: _formKey,
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text('Bienvenue', style: text.headlineMedium),
-                  const SizedBox(height: 4),
-                  Text('Connectez-vous à votre passeport de compétences.',
-                      style: text.bodyMedium?.copyWith(color: AppColors.muted)),
-                  const SizedBox(height: 24),
-                  AppTextField(
-                    label: 'Téléphone ou email',
-                    controller: _id,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    enabled: !auth.isLoading,
-                    validator: (v) => Validators.required(v, field: "L'identifiant"),
-                  ),
-                  const SizedBox(height: 16),
-                  AppTextField(
-                    label: 'Mot de passe',
-                    controller: _pwd,
-                    obscure: true,
-                    textInputAction: TextInputAction.done,
-                    enabled: !auth.isLoading,
-                    onSubmitted: (_) => _submit(),
-                    validator: (v) => Validators.required(v, field: 'Le mot de passe'),
-                  ),
-                  if (auth.hasError) ...[
-                    const SizedBox(height: 12),
-                    Text(failureMessage(auth.error!), style: const TextStyle(color: AppColors.error)),
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: BogolanPattern(color: Color(0x2EC09427)),
+                    ),
+                    SafeArea(
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const AppLogo(size: 72),
+                            const SizedBox(height: 12),
+                            Text(
+                              S.appName,
+                              style: text.headlineSmall?.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
-                  const SizedBox(height: 24),
-                  AppButton(label: S.login, onPressed: _submit, isLoading: auth.isLoading),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: auth.isLoading ? null : () => context.push('/forgot-password'),
-                    child: const Text('Mot de passe oublié ?'),
-                  ),
-                  const SizedBox(height: 4),
-                  AppButton(
-                    label: S.register,
-                    variant: AppButtonVariant.secondary,
-                    onPressed: auth.isLoading ? null : () => context.push('/register'),
-                  ),
-                ]),
+                ),
               ),
-            ),
-          ]),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text('Bienvenue', style: text.headlineMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Connectez-vous à votre passeport de compétences.',
+                        style: text.bodyMedium?.copyWith(
+                          color: AppColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      AppTextField(
+                        label: 'Téléphone ou email',
+                        controller: _id,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        enabled: !auth.isLoading,
+                        validator: (v) =>
+                            Validators.required(v, field: "L'identifiant"),
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        label: 'Mot de passe',
+                        controller: _pwd,
+                        obscure: true,
+                        textInputAction: TextInputAction.done,
+                        enabled: !auth.isLoading,
+                        onSubmitted: (_) => _submit(),
+                        validator: (v) =>
+                            Validators.required(v, field: 'Le mot de passe'),
+                      ),
+                      if (auth.hasError) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          failureMessage(auth.error!),
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      AppButton(
+                        label: S.login,
+                        onPressed: _submit,
+                        isLoading: auth.isLoading,
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: auth.isLoading
+                            ? null
+                            : () => context.push('/forgot-password'),
+                        child: const Text('Mot de passe oublié ?'),
+                      ),
+                      const SizedBox(height: 4),
+                      AppButton(
+                        label: S.register,
+                        variant: AppButtonVariant.secondary,
+                        onPressed: auth.isLoading
+                            ? null
+                            : () => context.push('/register'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

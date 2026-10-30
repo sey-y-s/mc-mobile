@@ -1,6 +1,6 @@
 {
-    "name": "mlc_mobile",
-    "short_name": "mlc_mobile",
+    "name": "MaliCompétences",
+    "short_name": "MaliCompétences",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

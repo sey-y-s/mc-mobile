@@ -21,4 +21,27 @@ void main() {
     expect(talent.skills.single.name, 'Soudure');
     expect(talent.availability.name, 'disponible');
   });
+
+  test('un contact établi garde son nom et sa photo, un inconnu non', () {
+    final contact = TalentSummary.fromJson({
+      'id': 'p-1',
+      'enRelation': true,
+      'nomComplet': 'Aminata Traoré',
+      'photoUrl': '/api/v1/portfolio-medias/a.png',
+      'regionNom': 'Bamako',
+    });
+    final inconnu = TalentSummary.fromJson({
+      'id': 'p-2',
+      'enRelation': false,
+      'nomComplet': 'Ne doit pas apparaître',
+      'photoUrl': '/api/v1/portfolio-medias/b.png',
+    });
+
+    expect(contact.relationEtablie, isTrue);
+    expect(contact.fullName, 'Aminata Traoré');
+    expect(contact.photoUrl, isNotNull);
+    expect(inconnu.relationEtablie, isFalse);
+    expect(inconnu.fullName, isNull);
+    expect(inconnu.photoUrl, isNull);
+  });
 }

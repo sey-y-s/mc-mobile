@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
@@ -53,7 +55,7 @@ class OpportuniteDetailScreen extends ConsumerWidget {
               opp.expirationDate!.difference(DateTime.now()).inDays <= 5;
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
               Row(
                 children: [
@@ -160,35 +162,62 @@ class OpportuniteDetailScreen extends ConsumerWidget {
               if (opp.proximite?.estLocale ?? false) ...[
                 const SizedBox(height: 16),
                 AppCard(
-                  child: Row(children: [
-                    const Icon(AppIcons.location, color: AppColors.green),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        '${opp.proximite!.label} : en tant qu’habitant de la localité, votre candidature est présentée en priorité.',
-                        style: const TextStyle(fontSize: 13, color: AppColors.anthracite),
+                  child: Row(
+                    children: [
+                      const Icon(AppIcons.location, color: AppColors.green),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '${opp.proximite!.label} : en tant qu’habitant de la localité, votre candidature est présentée en priorité.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.anthracite,
+                          ),
+                        ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
                 ),
               ],
               const SizedBox(height: 28),
               if (opp.dejaPostule)
                 AppCard(
-                  child: Row(children: [
-                    const Icon(AppIcons.check, color: AppColors.green),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        switch (opp.statutCandidature) {
-                          'RETENUE' => 'Votre candidature a été retenue. Vous serez contacté prochainement.',
-                          'NON_RETENUE' => 'Votre candidature n’a pas été retenue cette fois-ci.',
-                          _ => 'Candidature envoyée. Vous serez prévenu de la suite par notification.',
-                        },
-                        style: const TextStyle(fontSize: 13, color: AppColors.anthracite),
+                  child: Row(
+                    children: [
+                      const Icon(AppIcons.check, color: AppColors.green),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          switch (opp.statutCandidature) {
+                            'RETENUE' => 'Votre candidature a été retenue. Vous serez contacté prochainement.',
+                            'NON_RETENUE' => 'Votre candidature n’a pas été retenue cette fois-ci.',
+                            _ => 'Candidature envoyée. Vous serez prévenu de la suite par notification.',
+                          },
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.anthracite,
+                          ),
+                        ),
                       ),
-                    ),
-                  ]),
+                    ],
+                  ),
+                )
+                            else if (ref.watch(profileCompletionProvider).value?.isComplete == false)
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Complétez votre passeport pour postuler : photo, commune, compétence et première preuve.',
+                      ),
+                      const SizedBox(height: 12),
+                      AppButton(
+                        label: 'Compléter mon passeport',
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => context.go('/passeport'),
+                      ),
+                    ],
+                  ),
                 )
               else
                 AppButton(
@@ -218,15 +247,26 @@ class OpportuniteDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _postuler(BuildContext context, WidgetRef ref, Opportunite opp) async {
+  Future<void> _postuler(
+    BuildContext context,
+    WidgetRef ref,
+    Opportunite opp,
+  ) async {
     final message = TextEditingController();
     final ok = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.card,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheet) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(sheet).viewInsets.bottom),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          20,
+          16,
+          20 + MediaQuery.of(sheet).viewInsets.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -250,14 +290,19 @@ class OpportuniteDetailScreen extends ConsumerWidget {
               style: TextStyle(fontSize: 12, color: AppColors.muted),
             ),
             const SizedBox(height: 16),
-            AppButton(label: 'Envoyer ma candidature', onPressed: () => Navigator.of(sheet).pop(true)),
+            AppButton(
+              label: 'Envoyer ma candidature',
+              onPressed: () => Navigator.of(sheet).pop(true),
+            ),
           ],
         ),
       ),
     );
     if (ok != true || !context.mounted) return;
     try {
-      await ref.read(opportuniteRepositoryProvider).postuler(opp.id, message: message.text);
+      await ref
+          .read(opportuniteRepositoryProvider)
+          .postuler(opp.id, message: message.text);
       ref.invalidate(opportuniteDetailProvider(opp.id));
       if (context.mounted) showSuccess(context, 'Candidature envoyée.');
     } catch (e) {

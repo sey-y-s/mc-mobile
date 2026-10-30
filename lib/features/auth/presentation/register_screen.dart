@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -38,6 +39,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _territoireErreur = false;
   bool _sexeErreur = false;
 
+  /// Lien « conditions d'utilisation » : le texte s'ouvre sans quitter le formulaire.
+  late final TapGestureRecognizer _lienConditions = TapGestureRecognizer()
+    ..onTap = () => context.push(AppRoutes.terms);
+
   // Détection de la position : proposée une fois à l'ouverture, jamais imposée.
   _Detection _detection = _Detection.enAttente;
   String? _detectionMessage;
@@ -55,6 +60,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     for (final c in [_nom, _prenom, _tel, _email, _pwd, _pwd2]) {
       c.dispose();
     }
+    _lienConditions.dispose();
     super.dispose();
   }
 
@@ -65,18 +71,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.place_outlined, size: 32),
-        title: const Text('Trouver votre commune ?'),
+        title: const Text('Trouver votre région ?'),
         content: const Text(
-            'MaliCompétences peut utiliser votre position, une seule fois, pour remplir '
-            'votre région et votre commune à votre place. Votre position n’est pas conservée.\n\n'
-            'Vous pourrez corriger le résultat, ou tout saisir vous-même.'),
+          'MaliCompétences peut utiliser votre position, une seule fois, pour trouver '
+            'votre région. Vous choisirez ensuite votre commune. Votre position n’est pas conservée.\n\n'
+          'Vous pourrez corriger le résultat, ou tout saisir vous-même.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Je saisis moi-même')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Je saisis moi-même'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Utiliser ma position')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Utiliser ma position'),
+          ),
         ],
       ),
     );
@@ -102,24 +111,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (commune == null) {
         setState(() {
           _detection = _Detection.manuelle;
-          _detectionMessage =
-              'Nous n’avons pas reconnu votre commune. Choisissez-la dans la liste.';
+          _detectionMessage = 'Nous n’avons pas reconnu votre région. Choisissez-la dans la liste.';
         });
         return;
       }
+            // Seule la région est proposée : la position approchée tomberait trop facilement dans la mauvaise commune.
       setState(() {
         _regionId = commune.regionId;
-        _communeId = commune.id;
+        _communeId = null;
         _territoireErreur = false;
         _detection = _Detection.trouvee;
-        _detectee = commune;
-        _detectionMessage = '${commune.nom}, ${commune.regionNom}';
+        _detectee = null;
+        _detectionMessage = commune.regionNom;
       });
     } on PositionIndisponible catch (e) {
       if (!mounted) return;
       setState(() {
         _detection = _Detection.manuelle;
-        _detectionMessage = '${e.message} Choisissez votre commune dans la liste.';
+        _detectionMessage =
+            '${e.message} Choisissez votre commune dans la liste.';
         _reglagesProposes = e.ouvrirReglages;
       });
     } on AppFailure catch (e) {
@@ -140,17 +150,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _sexeErreur = _sexe == null;
     });
     if (!formOk || !_conditions || _communeId == null || _sexe == null) return;
-    final ok =
-        await ref.read(authControllerProvider.notifier).register(RegisterData(
-              nom: _nom.text.trim(),
-              prenom: _prenom.text.trim(),
-              telephone: _tel.text.replaceAll(RegExp(r'[\s\-.]'), ''),
-              email: _email.text.trim().isEmpty ? null : _email.text.trim(),
-              password: _pwd.text,
-              communeId: _communeId,
-              sexe: _sexe!.apiCode,
-              conditionsAcceptees: _conditions,
-            ));
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .register(
+          RegisterData(
+            nom: _nom.text.trim(),
+            prenom: _prenom.text.trim(),
+            telephone: _tel.text.replaceAll(RegExp(r'[\s\-.]'), ''),
+            email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+            password: _pwd.text,
+            communeId: _communeId,
+            sexe: _sexe!.apiCode,
+            conditionsAcceptees: _conditions,
+          ),
+        );
     // Compte créé mais bloqué : la session s'ouvre à la saisie du code reçu.
     if (ok && mounted) context.go(AppRoutes.verify);
   }
@@ -164,12 +177,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final auth = ref.watch(authControllerProvider);
     final busy = auth.isLoading;
     final regions = ref.watch(regionsProvider);
-    final communes =
-        _regionId == null ? null : ref.watch(communesProvider(_regionId!));
-    final region =
-        regions.asData?.value.where((r) => r.id == _regionId).firstOrNull;
-    final commune =
-        communes?.asData?.value.where((c) => c.id == _communeId).firstOrNull;
+    final communes = _regionId == null
+        ? null
+        : ref.watch(communesProvider(_regionId!));
+    final region = regions.asData?.value
+        .where((r) => r.id == _regionId)
+        .firstOrNull;
+    final commune = communes?.asData?.value
+        .where((c) => c.id == _communeId)
+        .firstOrNull;
     return FormScaffold(
       title: S.register,
       formKey: _formKey,
@@ -179,31 +195,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       error: auth.hasError ? auth.error : null,
       children: [
         AppTextField(
-            label: 'Nom',
-            controller: _nom,
-            enabled: !busy,
-            textInputAction: TextInputAction.next,
-            validator: (v) => Validators.required(v, field: 'Le nom')),
+          label: 'Nom',
+          controller: _nom,
+          enabled: !busy,
+          textInputAction: TextInputAction.next,
+          validator: (v) => Validators.required(v, field: 'Le nom'),
+        ),
         AppTextField(
-            label: 'Prénom',
-            controller: _prenom,
-            enabled: !busy,
-            textInputAction: TextInputAction.next,
-            validator: (v) => Validators.required(v, field: 'Le prénom')),
+          label: 'Prénom',
+          controller: _prenom,
+          enabled: !busy,
+          textInputAction: TextInputAction.next,
+          validator: (v) => Validators.required(v, field: 'Le prénom'),
+        ),
         AppTextField(
-            label: 'Téléphone',
-            controller: _tel,
-            enabled: !busy,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            validator: Validators.phone),
+          label: 'Téléphone',
+          controller: _tel,
+          enabled: !busy,
+          keyboardType: TextInputType.phone,
+          textInputAction: TextInputAction.next,
+          validator: Validators.phone,
+        ),
         AppTextField(
-            label: 'Email (facultatif)',
-            controller: _email,
-            enabled: !busy,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            validator: Validators.emailOptional),
+          label: 'Email (facultatif)',
+          controller: _email,
+          enabled: !busy,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          validator: Validators.emailOptional,
+        ),
         _BandeauPosition(
           etat: _detection,
           message: _detectionMessage,
@@ -220,8 +240,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           errorText: regions.hasError
               ? failureMessage(regions.error!)
               : (_territoireErreur && _regionId == null
-                  ? 'Choisissez votre région.'
-                  : null),
+                    ? 'Choisissez votre région.'
+                    : null),
           onChanged: (r) => setState(() {
             _regionId = r.id;
             _communeId = null;
@@ -229,9 +249,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
         ChoiceSheetField<Commune>(
           label: 'Commune',
-          placeholder:
-              _regionId == null ? "Choisissez d'abord une région" : 'Choisir',
-          enabled: !busy && _regionId != null && _detection != _Detection.enCours,
+          placeholder: _regionId == null
+              ? "Choisissez d'abord une région"
+              : 'Choisir',
+          enabled:
+              !busy && _regionId != null && _detection != _Detection.enCours,
           options: communes?.asData?.value ?? const [],
           labelOf: (c) => c.nom,
           selected: commune ?? _communeDetectee(),
@@ -239,70 +261,102 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           errorText: communes != null && communes.hasError
               ? failureMessage(communes.error!)
               : (_territoireErreur && _regionId != null && _communeId == null
-                  ? 'Choisissez votre commune.'
-                  : null),
+                    ? 'Choisissez votre commune.'
+                    : null),
           onChanged: (c) => setState(() {
             _communeId = c.id;
             _territoireErreur = false;
           }),
         ),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Sexe',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.muted)),
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, children: [
-            for (final s in Sexe.values)
-              ChoiceChip(
-                label: Text(s.label),
-                selected: _sexe == s,
-                showCheckmark: false,
-                onSelected: busy
-                    ? null
-                    : (_) => setState(() {
-                          _sexe = s;
-                          _sexeErreur = false;
-                        }),
-              ),
-          ]),
-          if (_sexeErreur)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text('Indiquez votre sexe.',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.error, fontSize: 12)),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sexe',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: AppColors.muted),
             ),
-        ]),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final s in Sexe.values)
+                  ChoiceChip(
+                    label: Text(s.label),
+                    selected: _sexe == s,
+                    showCheckmark: false,
+                    onSelected: busy
+                        ? null
+                        : (_) => setState(() {
+                            _sexe = s;
+                            _sexeErreur = false;
+                          }),
+                  ),
+              ],
+            ),
+            if (_sexeErreur)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Indiquez votre sexe.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ),
         AppTextField(
-            label: 'Mot de passe',
-            controller: _pwd,
-            obscure: true,
-            enabled: !busy,
-            textInputAction: TextInputAction.next,
-            validator: Validators.password),
+          label: 'Mot de passe',
+          controller: _pwd,
+          obscure: true,
+          enabled: !busy,
+          textInputAction: TextInputAction.next,
+          validator: Validators.password,
+        ),
         AppTextField(
-            label: 'Confirmer le mot de passe',
-            controller: _pwd2,
-            obscure: true,
-            enabled: !busy,
-            textInputAction: TextInputAction.done,
-            validator: (v) => Validators.confirmPassword(v, _pwd.text)),
+          label: 'Confirmer le mot de passe',
+          controller: _pwd2,
+          obscure: true,
+          enabled: !busy,
+          textInputAction: TextInputAction.done,
+          validator: (v) => Validators.confirmPassword(v, _pwd.text),
+        ),
         CheckboxListTile(
           contentPadding: EdgeInsets.zero,
           controlAffinity: ListTileControlAffinity.leading,
           value: _conditions,
-          onChanged: busy ? null : (v) => setState(() {
-                _conditions = v ?? false;
-                if (_conditions) _conditionsErreur = false;
-              }),
-          title: const Text('J’accepte les conditions d’utilisation de MaliCompétences'),
+          onChanged: busy
+              ? null
+              : (v) => setState(() {
+                  _conditions = v ?? false;
+                  if (_conditions) _conditionsErreur = false;
+                }),
+          title: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'J’accepte les '),
+                TextSpan(
+                  text: 'conditions d’utilisation',
+                  recognizer: _lienConditions,
+                  style: const TextStyle(
+                    color: AppColors.green,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                const TextSpan(text: ' de MaliCompétences'),
+              ],
+            ),
+          ),
           subtitle: Text(
-            _conditionsErreur
-                ? 'Cochez cette case pour créer votre compte.'
-                : 'Vos données servent à faire connaître vos compétences ; vous gardez la main sur votre profil.',
-            style: TextStyle(color: _conditionsErreur ? Theme.of(context).colorScheme.error : null),
+            _conditionsErreur ? 'Cochez cette case pour créer votre compte.' : 'Vos données servent à faire connaître vos compétences ; vous gardez la main sur votre profil.',
+            style: TextStyle(
+              color: _conditionsErreur
+                  ? Theme.of(context).colorScheme.error
+                  : null,
+            ),
           ),
         ),
       ],
@@ -331,35 +385,50 @@ class _BandeauPosition extends StatelessWidget {
       case _Detection.enAttente:
         return const SizedBox.shrink();
       case _Detection.enCours:
-        return const Row(children: [
-          SizedBox(
+        return const Row(
+          children: [
+            SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2)),
-          SizedBox(width: 12),
-          Expanded(child: Text('Recherche de votre commune…')),
-        ]);
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Expanded(child: Text('Recherche de votre commune…')),
+          ],
+        );
       case _Detection.trouvee:
-        return Row(children: [
-          const Icon(Icons.check_circle_outline, color: AppColors.green),
-          const SizedBox(width: 8),
-          Expanded(
-              child: Text('Commune détectée : $message. Vous pouvez la modifier.')),
-        ]);
+        return Row(
+          children: [
+            const Icon(Icons.check_circle_outline, color: AppColors.green),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Région détectée : $message. Choisissez maintenant votre commune.',
+              ),
+            ),
+          ],
+        );
       case _Detection.manuelle:
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(message ?? 'Choisissez votre région et votre commune.'),
-          Wrap(children: [
-            if (onReessayer != null)
-              TextButton(
-                  onPressed: onReessayer,
-                  child: const Text('Utiliser ma position')),
-            if (onReglages != null)
-              TextButton(
-                  onPressed: onReglages,
-                  child: const Text('Ouvrir les réglages')),
-          ]),
-        ]);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message ?? 'Choisissez votre région et votre commune.'),
+            Wrap(
+              children: [
+                if (onReessayer != null)
+                  TextButton(
+                    onPressed: onReessayer,
+                    child: const Text('Utiliser ma position'),
+                  ),
+                if (onReglages != null)
+                  TextButton(
+                    onPressed: onReglages,
+                    child: const Text('Ouvrir les réglages'),
+                  ),
+              ],
+            ),
+          ],
+        );
     }
   }
 }

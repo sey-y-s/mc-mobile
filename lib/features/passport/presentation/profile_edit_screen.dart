@@ -15,21 +15,29 @@ import 'package:mlc_mobile/features/passport/domain/passport_models.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 
 /// Route : /passeport/profil
-/// TODO(PISTE A): suppression de la photo (endpoint à définir) ; pour l'instant « Retirer » ne supprime que l'aperçu.
+/// Photo : envoi (POST) et suppression (DELETE) sur /api/v1/citoyens/me/photo.
 class ProfileEditScreen extends ConsumerWidget {
   const ProfileEditScreen({super.key});
 
-  Widget _shell(Widget body) =>
-      Scaffold(appBar: AppBar(title: const Text('Mon profil')), body: body);
+  Widget _shell(Widget body) => Scaffold(
+    appBar: AppBar(title: const Text('Mon profil')),
+    body: body,
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // skipLoadingOnReload : le formulaire garde sa saisie quand le passeport est rechargé (ex. après l'envoi de la photo).
-    return ref.watch(passportProvider).when(
+    return ref
+        .watch(passportProvider)
+        .when(
           skipLoadingOnReload: true,
           loading: () => _shell(const LoadingView()),
-          error: (e, _) => _shell(ErrorView(
-              error: e, onRetry: () => ref.invalidate(passportProvider))),
+          error: (e, _) => _shell(
+            ErrorView(
+              error: e,
+              onRetry: () => ref.invalidate(passportProvider),
+            ),
+          ),
           data: (c) => _ProfileForm(citoyen: c),
         );
   }
@@ -60,15 +68,21 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Future<void> _onPhoto(PickedMedia? media) async {
     setState(() => _photo = media);
     if (media == null) return;
-    final ok =
-        await ref.read(passportActionsProvider.notifier).updatePhoto(media);
+    final ok = await ref
+        .read(passportActionsProvider.notifier)
+        .updatePhoto(media);
     if (ok && mounted) {
-      showSuccess(context, 'Photo enregistrée : elle apparaît sur votre passeport.');
+      showSuccess(
+        context,
+        'Photo enregistrée : elle apparaît sur votre passeport.',
+      );
     }
     if (!ok && mounted) {
       final error = ref.read(passportActionsProvider).error;
       showError(
-          context, error == null ? 'Envoi impossible.' : failureMessage(error));
+        context,
+        error == null ? 'Envoi impossible.' : failureMessage(error),
+      );
       setState(() => _photo = null);
     }
   }
@@ -81,13 +95,18 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       showSuccess(context, 'Photo retirée de votre passeport.');
     } else {
       final error = ref.read(passportActionsProvider).error;
-      showError(context, error == null ? 'Suppression impossible.' : failureMessage(error));
+      showError(
+        context,
+        error == null ? 'Suppression impossible.' : failureMessage(error),
+      );
     }
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await ref.read(passportActionsProvider.notifier).updateProfile(
+    final ok = await ref
+        .read(passportActionsProvider.notifier)
+        .updateProfile(
           nom: _nom.text.trim(),
           prenom: _prenom.text.trim(),
           sexe: _sexe,
@@ -102,7 +121,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final actions = ref.watch(passportActionsProvider);
     final progress = ref.watch(photoProgressProvider);
     final busy = actions.isLoading;
-    final photoActuelle = widget.citoyen.photoUrl == null ? null : imageDepuisUrl(ref, widget.citoyen.photoUrl);
+    final photoActuelle = widget.citoyen.photoUrl == null
+        ? null
+        : imageDepuisUrl(ref, widget.citoyen.photoUrl);
     return FormScaffold(
       title: 'Mon profil',
       formKey: _formKey,
@@ -118,7 +139,11 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               backgroundColor: AppColors.greenSoft,
               foregroundImage: photoActuelle,
               onForegroundImageError: photoActuelle == null ? null : (_, _) {},
-              child: const Icon(Icons.person_outline, color: AppColors.green, size: 40),
+              child: const Icon(
+                Icons.person_outline,
+                color: AppColors.green,
+                size: 40,
+              ),
             ),
           ),
         FilePickerField(
@@ -140,32 +165,37 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
         AppTextField(
-            label: 'Nom',
-            controller: _nom,
-            enabled: !busy,
-            textInputAction: TextInputAction.next,
-            validator: (v) => Validators.required(v, field: 'Le nom')),
+          label: 'Nom',
+          controller: _nom,
+          enabled: !busy,
+          textInputAction: TextInputAction.next,
+          validator: (v) => Validators.required(v, field: 'Le nom'),
+        ),
         AppTextField(
-            label: 'Prénom',
-            controller: _prenom,
-            enabled: !busy,
-            textInputAction: TextInputAction.next,
-            validator: (v) => Validators.required(v, field: 'Le prénom')),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Sexe',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.muted)),
-          const SizedBox(height: 8),
-          FilterChips<Sexe>(
-            options: Sexe.values,
-            labelOf: (s) => s.label,
-            selected: _sexe,
-            allLabel: 'Non précisé',
-            onChanged: (v) => setState(() => _sexe = v),
-          ),
-        ]),
+          label: 'Prénom',
+          controller: _prenom,
+          enabled: !busy,
+          textInputAction: TextInputAction.next,
+          validator: (v) => Validators.required(v, field: 'Le prénom'),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sexe',
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: AppColors.muted),
+            ),
+            const SizedBox(height: 8),
+            FilterChips<Sexe>(
+              options: Sexe.values,
+              labelOf: (s) => s.label,
+              selected: _sexe,
+              allLabel: 'Non précisé',
+              onChanged: (v) => setState(() => _sexe = v),
+            ),
+          ],
+        ),
       ],
     );
   }

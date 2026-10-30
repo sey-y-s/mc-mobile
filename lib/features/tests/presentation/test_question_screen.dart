@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/features/notifications/presentation/notification_providers.dart';
+import 'package:mlc_mobile/features/parcours_validation/presentation/parcours_validation_providers.dart';
+import 'package:mlc_mobile/features/validations/presentation/validation_providers.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/widgets/app_button.dart';
@@ -55,7 +58,7 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
           final question = test.questions[index];
           final answer = run.answers[question.id] ?? const TestAnswer();
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
               Row(
                 children: [
@@ -67,9 +70,7 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    '${index + 1} / ${test.questions.length}',
-                  ),
+                  Text('${index + 1} / ${test.questions.length}'),
                 ],
               ),
               const SizedBox(height: 24),
@@ -123,29 +124,27 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
                               );
                             },
                           )
-                        else
-                          RadioGroup<String>(
-                            groupValue: answer.optionIds.isEmpty
-                                ? null
-                                : answer.optionIds.first,
-                            onChanged: (value) => _save(
-                              id,
-                              run,
-                              question,
-                              TestAnswer(
-                                optionIds: value == null ? [] : [value],
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                for (final option in question.options)
-                                  RadioListTile<String>(
-                                    value: option.id,
-                                    title: Text(option.label),
-                                  ),
-                              ],
-                            ),
+                      else
+                        RadioGroup<String>(
+                          groupValue: answer.optionIds.isEmpty
+                              ? null
+                              : answer.optionIds.first,
+                          onChanged: (value) => _save(
+                            id,
+                            run,
+                            question,
+                            TestAnswer(optionIds: value == null ? [] : [value]),
                           ),
+                          child: Column(
+                            children: [
+                              for (final option in question.options)
+                                RadioListTile<String>(
+                                  value: option.id,
+                                  title: Text(option.label),
+                                ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -215,9 +214,13 @@ class _TestQuestionScreenState extends ConsumerState<TestQuestionScreen> {
       // Un test réussi ajoute une preuve à la compétence : on recharge compétences et preuves.
       ref.read(preuvesRevisionProvider.notifier).state++;
       ref.invalidate(competencesProvider);
+      // Un test peut valider la compétence : validations, parcours et alertes (nouvelle notification) se rechargent.
+      ref.read(validationsRevisionProvider.notifier).state++;
+      ref.read(notificationsRevisionProvider.notifier).state++;
+      ref.invalidate(parcoursValidationProvider);
       ref.read(testRunProvider(id).notifier).state = null;
       if (context.mounted) {
-        context.go('/tests/$id/resultat', extra: result);
+        context.pushReplacement('/tests/$id/resultat', extra: result);
       }
     } catch (e) {
       if (context.mounted) {

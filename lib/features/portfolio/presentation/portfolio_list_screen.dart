@@ -24,69 +24,76 @@ class PortfolioListScreen extends ConsumerWidget {
         ),
       ],
     ),
-    body: PaginatedListView<PortfolioRealisation>(
-      key: ValueKey(ref.watch(portfolioRevisionProvider)),
-      pageSize: 20,
-      emptyMessage: 'Votre portfolio est facultatif. Ajoutez une réalisation quand vous souhaitez présenter votre travail.',
-      fetchPage: (page, size) =>
-          ref.read(portfolioRepositoryProvider).list(page: page, size: size),
-      itemBuilder: (context, item) {
-        final image = item.media
-            .where((e) => e.type == PortfolioMediaType.image)
-            .firstOrNull;
-        return AppCard(
-          onTap: () => context.push('/portfolio/${item.id}'),
-          child: Row(
-            children: [
-              if (image != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: PortfolioMediaPreview(
-                    url: image.url,
-                    localBytes: image.localBytes,
-                    width: 68,
-                    height: 68,
-                    cacheWidth: 160,
-                  ),
-                )
-              else
-                _MediaIcon(
-                  type: item.media.isEmpty ? null : item.media.first.type,
-                ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    body: Column(
+      children: [
+        Expanded(
+          child: PaginatedListView<PortfolioRealisation>(
+            key: ValueKey(ref.watch(portfolioRevisionProvider)),
+            pageSize: 20,
+            emptyMessage: 'Votre portfolio est facultatif. Ajoutez une réalisation quand vous souhaitez présenter votre travail.',
+            fetchPage: (page, size) => ref
+                .read(portfolioRepositoryProvider)
+                .list(page: page, size: size),
+            itemBuilder: (context, item) {
+              final image = item.media
+                  .where((e) => e.type == PortfolioMediaType.image)
+                  .firstOrNull;
+              return AppCard(
+                onTap: () => context.push('/portfolio/${item.id}'),
+                child: Row(
                   children: [
-                    Text(
-                      item.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    if (item.date != null)
-                      Text(
-                        formatDateFr(item.date!),
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 12,
+                    if (image != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: PortfolioMediaPreview(
+                          url: image.url,
+                          localBytes: image.localBytes,
+                          width: 68,
+                          height: 68,
+                          cacheWidth: 160,
                         ),
+                      )
+                    else
+                      _MediaIcon(
+                        type: item.media.isEmpty ? null : item.media.first.type,
                       ),
-                    Text(
-                      item.media.isEmpty
-                          ? 'Sans média'
-                          : '${item.media.length} média(s)',
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          if (item.date != null)
+                            Text(
+                              formatDateFr(item.date!),
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          Text(
+                            item.media.isEmpty
+                                ? 'Sans média'
+                                : '${item.media.length} média(s)',
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const Icon(AppIcons.chevron, color: AppColors.muted),
                   ],
                 ),
-              ),
-              const Icon(AppIcons.chevron, color: AppColors.muted),
-            ],
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     ),
   );
 }

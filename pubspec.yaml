@@ -44,6 +44,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/svg/
+    - assets/images/
   fonts:
     - family: Fraunces               # Pour les grands titres, chiffres clés et cartes
       fonts:

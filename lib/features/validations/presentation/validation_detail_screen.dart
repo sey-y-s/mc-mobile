@@ -26,7 +26,10 @@ class ValidationDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final id = this.id;
     if (id == null) {
-      return Scaffold(appBar: AppBar(title: const Text('Validation')), body: const ErrorView(error: NotFoundFailure()));
+      return Scaffold(
+        appBar: AppBar(title: const Text('Validation')),
+        body: const ErrorView(error: NotFoundFailure()),
+      );
     }
     final value = ref.watch(validationDetailProvider(id));
     return Scaffold(
@@ -48,69 +51,100 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final v = validation;
-    return ListView(padding: const EdgeInsets.all(20), children: [
-      Text(v.competenceNom, style: text.headlineSmall),
-      Text(v.type.label, style: text.bodyMedium?.copyWith(color: AppColors.muted)),
-      const SizedBox(height: 16),
-      AppCard(
-        accentColor: validationAccentColor(v.statut),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          ValidationStatusBadge(v.statut),
-          const SizedBox(height: 8),
-          Text(validationStatutHelp(v.statut), style: text.bodyMedium),
-        ]),
-      ),
-      const SizedBox(height: 12),
-      AppCard(
-        child: Column(children: [
-          InfoRow(label: 'Demandée le', value: formatDateFr(v.dateDemande)),
-          if (v.dateDecision != null) InfoRow(label: 'Décision le', value: formatDateFr(v.dateDecision!)),
-          if (v.validateurLabel != null) InfoRow(label: 'Validateur', value: v.validateurLabel!),
-        ]),
-      ),
-      if (v.commentaire != null) ...[
-        const SizedBox(height: 24),
-        const SectionHeader(title: 'Commentaire'),
-        AppCard(child: Text(v.commentaire!, style: text.bodyMedium)),
-      ],
-      const SizedBox(height: 12),
-      if (v.preuveId != null) ...[
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(v.competenceNom, style: text.headlineSmall),
+        Text(
+          v.type.label,
+          style: text.bodyMedium?.copyWith(color: AppColors.muted),
+        ),
+        const SizedBox(height: 16),
         AppCard(
-          onTap: () => context.push('/preuves/${v.preuveId}'),
-          child: Row(children: [
-            Expanded(child: Text('Voir la preuve associée', style: text.titleSmall)),
-            const Icon(AppIcons.chevron, color: AppColors.muted),
-          ]),
-        ),
-        const SizedBox(height: 12),
-      ],
-      AppCard(
-        onTap: () => context.push('/competences/${v.citoyenCompetenceId}'),
-        child: Row(children: [
-          Expanded(child: Text('Voir la compétence', style: text.titleSmall)),
-          const Icon(AppIcons.chevron, color: AppColors.muted),
-        ]),
-      ),
-      if (v.statut != ValidationStatut.enAttente) ...[
-        const SizedBox(height: 24),
-        // Une décision n'est jamais modifiée : la contester demande un réexamen et, si elle est acceptée,
-        // une nouvelle décision est enregistrée.
-        AppButton(
-          label: 'Contester cette décision',
-          icon: Icons.rate_review_outlined,
-          variant: AppButtonVariant.secondary,
-          onPressed: () => ouvrirContestation(context, validationId: v.id, competenceNom: v.competenceNom),
-        ),
-      ],
-      if (v.statut == ValidationStatut.rejetee) ...[
-        const SizedBox(height: 12),
-        AppButton(
-          label: 'Demander une nouvelle validation',
-          onPressed: () => context.push(
-            '/validations/demander?competenceId=${v.citoyenCompetenceId}${v.preuveId != null ? '&preuveId=${v.preuveId}' : ''}',
+          accentColor: validationAccentColor(v.statut),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ValidationStatusBadge(v.statut),
+              const SizedBox(height: 8),
+              Text(validationStatutHelp(v.statut), style: text.bodyMedium),
+            ],
           ),
         ),
+        const SizedBox(height: 12),
+        AppCard(
+          child: Column(
+            children: [
+              InfoRow(label: 'Demandée le', value: formatDateFr(v.dateDemande)),
+              if (v.dateDecision != null)
+                InfoRow(
+                  label: 'Décision le',
+                  value: formatDateFr(v.dateDecision!),
+                ),
+              if (v.validateurLabel != null)
+                InfoRow(label: 'Validateur', value: v.validateurLabel!),
+            ],
+          ),
+        ),
+        if (v.commentaire != null) ...[
+          const SizedBox(height: 24),
+          const SectionHeader(title: 'Commentaire'),
+          AppCard(child: Text(v.commentaire!, style: text.bodyMedium)),
+        ],
+        const SizedBox(height: 12),
+        if (v.preuveId != null) ...[
+          AppCard(
+            onTap: () => context.push('/preuves/${v.preuveId}'),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Voir la preuve associée',
+                    style: text.titleSmall,
+                  ),
+                ),
+                const Icon(AppIcons.chevron, color: AppColors.muted),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        AppCard(
+          onTap: () => context.push('/competences/${v.citoyenCompetenceId}'),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text('Voir la compétence', style: text.titleSmall),
+              ),
+              const Icon(AppIcons.chevron, color: AppColors.muted),
+            ],
+          ),
+        ),
+        if (v.statut != ValidationStatut.enAttente) ...[
+          const SizedBox(height: 24),
+          // Une décision n'est jamais modifiée : la contester demande un réexamen et, si elle est acceptée,
+          // une nouvelle décision est enregistrée.
+          AppButton(
+            label: 'Contester cette décision',
+            icon: Icons.rate_review_outlined,
+            variant: AppButtonVariant.secondary,
+            onPressed: () => ouvrirContestation(
+              context,
+              validationId: v.id,
+              competenceNom: v.competenceNom,
+            ),
+          ),
+        ],
+        if (v.statut == ValidationStatut.rejetee) ...[
+          const SizedBox(height: 12),
+          AppButton(
+            label: 'Demander une nouvelle validation',
+            onPressed: () => context.push(
+              '/validations/demander?competenceId=${v.citoyenCompetenceId}${v.preuveId != null ? '&preuveId=${v.preuveId}' : ''}',
+            ),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }

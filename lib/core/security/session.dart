@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/core/security/jwt_utils.dart';
+import 'package:mlc_mobile/core/storage/local_cache.dart';
 import 'package:mlc_mobile/core/storage/token_storage.dart';
 
-final tokenStorageProvider = Provider<TokenStorage>((ref) => SecureTokenStorage());
+final tokenStorageProvider = Provider<TokenStorage>(
+  (ref) => SecureTokenStorage(),
+);
 
 enum SessionStatus { unknown, authenticated, unauthenticated }
 
@@ -32,7 +35,11 @@ class SessionNotifier extends Notifier<SessionStatus> {
   Future<void> expire() async {
     await ref.read(tokenStorageProvider).clear();
     state = SessionStatus.unauthenticated;
+    // La copie locale du profil est effacée juste après : elle ne doit pas survivre à la déconnexion.
+    await LocalCache.clear();
   }
 }
 
-final sessionProvider = NotifierProvider<SessionNotifier, SessionStatus>(SessionNotifier.new);
+final sessionProvider = NotifierProvider<SessionNotifier, SessionStatus>(
+  SessionNotifier.new,
+);

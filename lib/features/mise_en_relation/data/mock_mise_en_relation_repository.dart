@@ -122,6 +122,32 @@ class MockMiseEnRelationRepository implements MiseEnRelationRepository {
   }
 
   @override
+  Future<MiseEnRelation> cancel(String id) async {
+    await _wait();
+    final index = _items.indexWhere((e) => e.id == id);
+    if (index < 0) throw const NotFoundFailure();
+    final existing = _items[index];
+    if (existing.senderId != _me) throw const ForbiddenFailure();
+    if (existing.status != RelationStatus.enAttente) {
+      throw ValidationFailure(
+        'Seule une demande en attente peut être annulée.',
+      );
+    }
+    final updated = MiseEnRelation(
+      id: existing.id,
+      senderId: existing.senderId,
+      recipientId: existing.recipientId,
+      status: RelationStatus.annulee,
+      message: existing.message,
+      requestedAt: existing.requestedAt,
+      respondedAt: DateTime.now(),
+      followUpId: existing.followUpId,
+    );
+    _items[index] = updated;
+    return updated;
+  }
+
+  @override
   Future<MiseEnRelation> respond(String id, {required bool accept}) async {
     await _wait();
     final index = _items.indexWhere((e) => e.id == id);

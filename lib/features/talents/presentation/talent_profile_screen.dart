@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mlc_mobile/features/portfolio/presentation/realisation_card.dart';
+import 'package:mlc_mobile/features/talents/presentation/talent_avatar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
@@ -22,34 +24,28 @@ class TalentProfileScreen extends ConsumerWidget {
     }
     final value = ref.watch(talentProfileProvider(talentId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil anonymisé')),
+      appBar: AppBar(title: Text(value.asData?.value.summary.relationEtablie == true ? 'Profil' : 'Profil anonymisé')),
       body: AsyncValueView<TalentProfileAnonymized>(
         value: value,
         onRetry: () => ref.invalidate(talentProfileProvider(talentId)),
         data: (profile) {
           final talent = profile.summary;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
               AppCard(
                 child: Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.greenSoft,
-                      child: Icon(
-                        AppIcons.person,
-                        color: AppColors.green,
-                        size: 30,
-                      ),
-                    ),
+                    TalentAvatar(photoUrl: talent.photoUrl, radius: 28),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Profil anonymisé',
+                            talent.relationEtablie
+                                ? (talent.fullName ?? 'Contact')
+                                : 'Profil anonymisé',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           Text(
@@ -126,7 +122,12 @@ class TalentProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (profile.portfolioTitles.isNotEmpty) ...[
+              if (talent.relationEtablie) ...[
+                const SizedBox(height: 16),
+                Text('Réalisations', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _RealisationsDuContact(id: talent.id),
+              ] else if (profile.portfolioTitles.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
                   'Réalisations présentées',
@@ -205,4 +206,31 @@ class _CountRow extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Réalisations (avec leurs photos) d'un contact établi : chargées depuis le profil complet protégé.
+class _RealisationsDuContact extends ConsumerWidget {
+  const _RealisationsDuContact({required this.id});
+  final String id;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final valeur = ref.watch(contactProfilProvider(id));
+    return valeur.when(
+      loading: () => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Text(failureMessage(e), style: const TextStyle(color: AppColors.error)),
+      data: (profil) {
+        final liste = (profil['realisations'] is List ? profil['realisations'] as List : const [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+        if (liste.isEmpty) {
+          return const Text('Aucune réalisation pour le moment.', style: TextStyle(color: AppColors.muted));
+        }
+        return Column(children: [
+          for (final r in liste) ...[RealisationCard(r: r), const SizedBox(height: 12)],
+        ]);
+      },
+    );
+  }
 }

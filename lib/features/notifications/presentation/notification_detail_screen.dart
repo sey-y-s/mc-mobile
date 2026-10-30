@@ -9,9 +9,9 @@ import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/info_row.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
-import 'package:mlc_mobile/core/widgets/status_badge.dart';
 import 'package:mlc_mobile/features/notifications/domain/notification_models.dart';
 import 'package:mlc_mobile/features/notifications/presentation/notification_providers.dart';
+import 'package:mlc_mobile/features/notifications/presentation/notification_style.dart';
 
 class NotificationDetailScreen extends ConsumerStatefulWidget {
   const NotificationDetailScreen({super.key, this.id});
@@ -87,13 +87,35 @@ class _NotificationDetailScreenState
             NotificationType.systeme => null,
           };
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
-              Text(item.title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              StatusBadge(
-                label: item.type.label,
-                tone: item.isRead ? BadgeTone.neutral : BadgeTone.accent,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: item.type.softColor,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(item.type.icon, color: item.type.color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 8),
+                        NotificationTypeChip(type: item.type),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               AppCard(

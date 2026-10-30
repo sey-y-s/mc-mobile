@@ -8,5 +8,14 @@ class AppRoutes {
   static const verify = '/verify';
   static const home = '/home';
 
-  static const publicRoutes = {login, register, forgotPassword, resetPassword, verify};
+  /// Lisible sans compte (depuis l'inscription) comme avec un compte (depuis « Plus »).
+  static const terms = '/conditions';
+
+  static const publicRoutes = {
+    login,
+    register,
+    forgotPassword,
+    resetPassword,
+    verify,
+  };
 }

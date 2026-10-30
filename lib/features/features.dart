@@ -26,7 +26,6 @@ export 'opportunites/presentation/opportunite_detail_screen.dart';
 export 'opportunites/presentation/opportunites_list_screen.dart';
 export 'parametres/presentation/account_settings_screen.dart';
 export 'parametres/presentation/location_settings_screen.dart';
-export 'contestations/presentation/corrections_screen.dart';
 export 'parametres/presentation/preferences_screen.dart';
 export 'parametres/presentation/security_settings_screen.dart';
 export 'parametres/presentation/settings_screen.dart';
@@ -53,9 +52,8 @@ export 'validations/presentation/validation_detail_screen.dart';
 export 'validations/presentation/validations_history_screen.dart';
 export 'validations/presentation/validations_list_screen.dart';
 
-export 'validations/presentation/request_validation_screen.dart';
-
 export 'evaluateur/presentation/evaluateur_screen.dart';
+export 'evaluateur/presentation/evaluateur_portfolio_screen.dart';
 
 export 'centre_admin/presentation/centre_admin_evaluateurs_screen.dart';
 export 'evaluateur/presentation/evaluateur_providers.dart';

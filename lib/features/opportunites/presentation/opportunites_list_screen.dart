@@ -102,7 +102,7 @@ class OpportunitesListScreen extends ConsumerWidget {
         children: [
           Container(
             margin: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppColors.greenDark, AppColors.green],
@@ -228,13 +228,21 @@ class OpportunitesListScreen extends ConsumerWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: FilterChip(
-                avatar: const Icon(AppIcons.location, size: 18, color: AppColors.green),
+                avatar: const Icon(
+                  AppIcons.location,
+                  size: 18,
+                  color: AppColors.green,
+                ),
                 label: const Text('Près de chez moi'),
                 selected: presDeChezMoi,
                 showCheckmark: false,
                 selectedColor: AppColors.greenSoft,
-                side: BorderSide(color: presDeChezMoi ? AppColors.green : AppColors.border),
-                onSelected: (v) => ref.read(opportunitePresDeChezMoiProvider.notifier).state = v,
+                side: BorderSide(
+                  color: presDeChezMoi ? AppColors.green : AppColors.border,
+                ),
+                onSelected: (v) =>
+                    ref.read(opportunitePresDeChezMoiProvider.notifier).state =
+                        v,
               ),
             ),
           ),
@@ -270,7 +278,12 @@ class OpportunitesListScreen extends ConsumerWidget {
                   : 'Aucune opportunité disponible dans cette catégorie pour le moment.',
               fetchPage: (page, size) => ref
                   .read(opportuniteRepositoryProvider)
-                  .list(type: selectedType, presDeChezMoi: presDeChezMoi, page: page, size: size),
+                  .list(
+                    type: selectedType,
+                    presDeChezMoi: presDeChezMoi,
+                    page: page,
+                    size: size,
+                  ),
               itemBuilder: (context, item) {
                 final isUrgent =
                     item.expirationDate != null &&
@@ -305,7 +318,10 @@ class OpportunitesListScreen extends ConsumerWidget {
                       ),
                       if (item.proximite?.estLocale ?? false) ...[
                         const SizedBox(height: 8),
-                        StatusBadge(label: item.proximite!.label, tone: BadgeTone.success),
+                        StatusBadge(
+                          label: item.proximite!.label,
+                          tone: BadgeTone.success,
+                        ),
                       ],
                       const SizedBox(height: 10),
                       Text(
@@ -329,18 +345,32 @@ class OpportunitesListScreen extends ConsumerWidget {
                       ),
                       if (item.localite != null) ...[
                         const SizedBox(height: 8),
-                        Row(children: [
-                          const Icon(AppIcons.location, size: 15, color: AppColors.muted),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(item.localite!,
+                        Row(
+                          children: [
+                            const Icon(
+                              AppIcons.location,
+                              size: 15,
+                              color: AppColors.muted,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                item.localite!,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12, color: AppColors.muted)),
-                          ),
-                          if (item.dejaPostule)
-                            const StatusBadge(label: 'Candidature envoyée', tone: BadgeTone.accent),
-                        ]),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.muted,
+                                ),
+                              ),
+                            ),
+                            if (item.dejaPostule)
+                              const StatusBadge(
+                                label: 'Candidature envoyée',
+                                tone: BadgeTone.accent,
+                              ),
+                          ],
+                        ),
                       ],
                       const SizedBox(height: 12),
                       Row(
@@ -406,53 +436,55 @@ class _CategorySheet extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 38,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(4),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Choisir une catégorie',
-              style: TextStyle(
-                color: AppColors.anthracite,
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 20),
+              const Text(
+                'Choisir une catégorie',
+                style: TextStyle(
+                  color: AppColors.anthracite,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 5),
-            const Text(
-              'Affinez la liste selon ce que vous recherchez.',
-              style: TextStyle(color: AppColors.muted, fontSize: 13),
-            ),
-            const SizedBox(height: 18),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 2.5,
-              children: [
-                for (final category in categories)
-                  _CategoryTile(
-                    option: category,
-                    selected: category.type == selected,
-                    onTap: () => Navigator.of(context).pop(category),
-                  ),
-              ],
-            ),
-          ],
+              const SizedBox(height: 5),
+              const Text(
+                'Affinez la liste selon ce que vous recherchez.',
+                style: TextStyle(color: AppColors.muted, fontSize: 13),
+              ),
+              const SizedBox(height: 18),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 2.5,
+                children: [
+                  for (final category in categories)
+                    _CategoryTile(
+                      option: category,
+                      selected: category.type == selected,
+                      onTap: () => Navigator.of(context).pop(category),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

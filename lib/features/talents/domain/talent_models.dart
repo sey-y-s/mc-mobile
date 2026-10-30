@@ -44,7 +44,7 @@ class TalentCompetence {
       );
 }
 
-/// Résumé public anonymisé : le parseur ne conserve aucun nom, contact ou photo.
+/// Résumé public anonymisé : nom et photo ne sont conservés que pour un contact établi (mise en relation acceptée).
 class TalentSummary {
   const TalentSummary({
     required this.id,
@@ -58,6 +58,9 @@ class TalentSummary {
     this.regionId,
     this.communeId,
     this.metierIds = const [],
+    this.relationEtablie = false,
+    this.fullName,
+    this.photoUrl,
   });
   final String id;
   final List<TalentCompetence> skills;
@@ -70,6 +73,11 @@ class TalentSummary {
   final String? regionId;
   final String? communeId;
   final List<String> metierIds;
+
+  /// Mise en relation acceptée : seul cas où le serveur envoie le nom et la photo.
+  final bool relationEtablie;
+  final String? fullName;
+  final String? photoUrl;
 
   factory TalentSummary.fromJson(Map<String, dynamic> json) {
     final rawSkills = json['competences'];
@@ -101,6 +109,9 @@ class TalentSummary {
       metierIds: rawMetiers is List
           ? rawMetiers.map((e) => e.toString()).toList()
           : const [],
+      relationEtablie: json['enRelation'] == true,
+      fullName: json['enRelation'] == true ? json['nomComplet']?.toString() : null,
+      photoUrl: json['enRelation'] == true ? json['photoUrl']?.toString() : null,
     );
   }
 }

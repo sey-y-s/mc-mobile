@@ -6,14 +6,34 @@ import 'package:mlc_mobile/core/utils/date_format.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/paginated_list_view.dart';
+import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/core/widgets/status_badge.dart';
+import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/features/mise_en_relation/domain/mise_en_relation_models.dart';
 import 'package:mlc_mobile/features/mise_en_relation/presentation/mise_en_relation_providers.dart';
 
-class RelationsScreen extends StatelessWidget {
+class RelationsScreen extends ConsumerWidget {
   const RelationsScreen({super.key});
   @override
-  Widget build(BuildContext context) => DefaultTabController(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final completion = ref.watch(profileCompletionProvider);
+    // Les mises en relation n'existent qu'entre profils complets.
+    if (completion.hasValue && !completion.requireValue.isComplete) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Mises en relation')),
+        body: EmptyView(
+          icon: AppIcons.lock,
+          message: 'Les mises en relation sont réservées aux profils complets.\n'
+              'Prochaine étape : ${completion.requireValue.next?.hint ?? 'terminer votre profil'}.',
+          actionLabel: 'Compléter mon passeport',
+          onAction: () => context.go('/passeport'),
+        ),
+      );
+    }
+    return _onglets();
+  }
+
+  Widget _onglets() => DefaultTabController(
     length: 2,
     child: Scaffold(
       appBar: AppBar(

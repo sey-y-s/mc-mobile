@@ -4,6 +4,7 @@ import 'package:mlc_mobile/core/network/api_endpoints.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
 import 'package:mlc_mobile/core/network/page_utils.dart';
 import 'package:mlc_mobile/core/security/current_user_id.dart';
+import 'package:mlc_mobile/core/storage/local_cache.dart';
 import 'package:mlc_mobile/core/storage/token_storage.dart';
 import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
 import 'package:mlc_mobile/features/competences/domain/competence_ref.dart';
@@ -20,16 +21,34 @@ class ApiCompetencesRepository implements CompetencesRepository {
   @override
   Future<List<CitoyenCompetence>> list({int page = 0, int size = 20}) async {
     final base = ApiEndpoints.citoyenCompetences(await _citoyenId);
-    final res = await guardDio(
-      () => _dio.get<dynamic>(
-        base,
-        queryParameters: {'page': page, 'size': size},
-      ),
-    );
-    return pageItems(res.data)
-        .map((e) => CitoyenCompetence.fromJson(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final res = await guardDio(
+        () => _dio.get<dynamic>(
+          base,
+          queryParameters: {'page': page, 'size': size},
+        ),
+      );
+      final rows = pageItems(res.data);
+      if (page == 0) await LocalCache.write(_cacheKey, rows);
+      return rows
+          .map((e) => CitoyenCompetence.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on NetworkFailure {
+      // Sans réseau : la dernière liste connue reste consultable.
+      final cached = page == 0 ? await LocalCache.read(_cacheKey) : null;
+      if (cached is List) {
+        return cached
+            .whereType<Map>()
+            .map(
+              (e) => CitoyenCompetence.fromJson(Map<String, dynamic>.from(e)),
+            )
+            .toList();
+      }
+      rethrow;
+    }
   }
+
+  static const _cacheKey = 'competences';
 
   @override
   Future<CitoyenCompetence> get(String id) async {

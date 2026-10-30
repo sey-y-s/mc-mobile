@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:mlc_mobile/core/errors/app_failure.dart';
+import 'package:mlc_mobile/core/storage/local_cache.dart';
 import 'package:mlc_mobile/core/media/picked_media.dart';
 import 'package:mlc_mobile/core/network/api_endpoints.dart';
 import 'package:mlc_mobile/core/network/dio_provider.dart';
@@ -14,22 +16,42 @@ class ApiPassportRepository implements PassportRepository {
 
   String get _me => ApiEndpoints.citoyen(ApiEndpoints.me);
 
-  Future<Citoyen> _citoyen(Response<Map<String, dynamic>> res) async {
+  /// Réponse du serveur complétée par la commune (le serveur n'envoie que son identifiant).
+  Future<Map<String, dynamic>> _citoyenJson(
+    Response<Map<String, dynamic>> res,
+  ) async {
     final data = res.data!;
     final communeId = (data['communeId'] ?? '').toString();
-    if (communeId.isEmpty || data['commune'] is Map) {
-      return Citoyen.fromJson(data);
-    }
+    if (communeId.isEmpty || data['commune'] is Map) return data;
     final communeResponse = await guardDio(
       () => _dio.get<Map<String, dynamic>>(ApiEndpoints.commune(communeId)),
     );
-    return Citoyen.fromJson({...data, 'commune': communeResponse.data});
+    return {...data, 'commune': communeResponse.data};
   }
 
+  Future<Citoyen> _citoyen(Response<Map<String, dynamic>> res) async {
+    final json = await _citoyenJson(res);
+    await LocalCache.write(_cacheKey, json);
+    return Citoyen.fromJson(json);
+  }
+
+  static const _cacheKey = 'passeport';
+
+  /// Sans réseau, le dernier profil connu reste affiché.
   @override
-  Future<Citoyen> getMine() async => _citoyen(
-    await guardDio(() => _dio.get<Map<String, dynamic>>(_me)),
-  );
+  Future<Citoyen> getMine() async {
+    try {
+      return await _citoyen(
+        await guardDio(() => _dio.get<Map<String, dynamic>>(_me)),
+      );
+    } on NetworkFailure {
+      final cached = await LocalCache.read(_cacheKey);
+      if (cached is Map) {
+        return Citoyen.fromJson(Map<String, dynamic>.from(cached));
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<Citoyen> updateProfile({

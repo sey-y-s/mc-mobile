@@ -55,7 +55,7 @@ class _ResultContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(16),
     children: [
       Center(
         child: Container(
@@ -80,7 +80,9 @@ class _ResultContent extends StatelessWidget {
       const SizedBox(height: 8),
       Center(
         child: StatusBadge(
-          label: result.passed ? 'Résultat favorable' : 'À retenter',
+          label: result.competenceValidated
+              ? 'Compétence validée'
+              : (result.passed ? 'Résultat favorable' : 'À retenter'),
           tone: result.passed ? BadgeTone.success : BadgeTone.neutral,
         ),
       ),
@@ -91,9 +93,11 @@ class _ResultContent extends StatelessWidget {
             Text('Date : ${formatDateFr(result.date)}'),
             const SizedBox(height: 8),
             Text(
-              result.passed
-                  ? 'Bravo ! Ce test réussi a été ajouté comme preuve à votre compétence. Ce n’est pas une certification officielle.'
-                  : 'Il faut au moins 60 % pour obtenir une preuve. Aucune preuve n’a été ajoutée : vous pouvez retenter le test.',
+              result.competenceValidated
+                  ? 'Bravo ! Ce test réussi valide votre compétence : c’est la démarche prévue dans votre parcours.'
+                  : result.passed
+                  ? 'Bravo ! Ce test réussi a été ajouté comme preuve à votre compétence. Pour la valider, suivez la démarche proposée dans « Mon parcours ».'
+                  : 'Le seuil de réussite n’est pas atteint. Aucune preuve n’a été ajoutée : vous pouvez retenter le test.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.muted),
             ),
@@ -112,13 +116,19 @@ class _ResultContent extends StatelessWidget {
       AppButton(
         label: 'Voir mes compétences',
         variant: AppButtonVariant.secondary,
-        onPressed: () => context.go('/competences'),
+        onPressed: () {
+          context.go('/home');
+          context.push('/competences');
+        },
       ),
       const SizedBox(height: 12),
       AppButton(
         label: 'Retour aux tests',
         variant: AppButtonVariant.secondary,
-        onPressed: () => context.go('/tests'),
+        onPressed: () {
+          context.go('/home');
+          context.push('/tests');
+        },
       ),
     ],
   );

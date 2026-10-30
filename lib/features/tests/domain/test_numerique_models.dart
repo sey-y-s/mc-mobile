@@ -8,9 +8,10 @@ enum QuestionType {
   final String apiCode;
   final String label;
 
-  static QuestionType fromApi(String? value) => QuestionType.values
-      .firstWhere((e) => e.apiCode == value?.toUpperCase(),
-          orElse: () => QuestionType.texteLibre);
+  static QuestionType fromApi(String? value) => QuestionType.values.firstWhere(
+    (e) => e.apiCode == value?.toUpperCase(),
+    orElse: () => QuestionType.texteLibre,
+  );
 }
 
 class TestOption {
@@ -21,10 +22,10 @@ class TestOption {
 
   /// Le parseur ignore volontairement toute propriété `correcte` renvoyée par le serveur.
   factory TestOption.fromJson(Map<String, dynamic> json) => TestOption(
-        id: (json['id'] ?? '').toString(),
-        label: (json['texte'] ?? json['libelle'] ?? '').toString(),
-        order: json['ordre'] is num ? (json['ordre'] as num).toInt() : 0,
-      );
+    id: (json['id'] ?? '').toString(),
+    label: (json['texte'] ?? json['libelle'] ?? '').toString(),
+    order: json['ordre'] is num ? (json['ordre'] as num).toInt() : 0,
+  );
 }
 
 class TestQuestion {
@@ -49,8 +50,10 @@ class TestQuestion {
       type: QuestionType.fromApi((json['type'] ?? '').toString()),
       order: json['ordre'] is num ? (json['ordre'] as num).toInt() : 0,
       options: rawOptions is List
-          ? rawOptions.whereType<Map>().map((e) =>
-              TestOption.fromJson(Map<String, dynamic>.from(e))).toList()
+          ? rawOptions
+                .whereType<Map>()
+                .map((e) => TestOption.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
           : const [],
     );
   }
@@ -64,6 +67,7 @@ class ResultatTest {
     required this.passed,
     required this.date,
     this.proofId,
+    this.competenceValidated = false,
   });
   final String id;
   final String testId;
@@ -72,17 +76,21 @@ class ResultatTest {
   final DateTime date;
   final String? proofId;
 
+  /// Le test réussi a validé la compétence (c'était la démarche de son parcours).
+  final bool competenceValidated;
+
   factory ResultatTest.fromJson(Map<String, dynamic> json) => ResultatTest(
-        id: (json['id'] ?? '').toString(),
-        testId: (json['testId'] ?? '').toString(),
-        score: json['score'] is num ? (json['score'] as num).toDouble() : 0,
-        passed: json['reussi'] == true || json['passed'] == true,
-        date: json['datePassage'] is String
-            ? DateTime.tryParse(json['datePassage'] as String) ??
-                DateTime.fromMillisecondsSinceEpoch(0)
-            : DateTime.fromMillisecondsSinceEpoch(0),
-        proofId: (json['preuveId'] ?? json['proofId'])?.toString(),
-      );
+    id: (json['id'] ?? '').toString(),
+    testId: (json['testId'] ?? '').toString(),
+    score: json['score'] is num ? (json['score'] as num).toDouble() : 0,
+    passed: json['reussi'] == true || json['passed'] == true,
+    date: json['datePassage'] is String
+        ? DateTime.tryParse(json['datePassage'] as String) ??
+              DateTime.fromMillisecondsSinceEpoch(0)
+        : DateTime.fromMillisecondsSinceEpoch(0),
+    proofId: (json['preuveId'] ?? json['proofId'])?.toString(),
+    competenceValidated: json['competenceValidee'] == true,
+  );
 }
 
 class TestNumerique {
@@ -110,17 +118,16 @@ class TestNumerique {
   TestNumerique copyWith({
     List<TestQuestion>? questions,
     ResultatTest? lastResult,
-  }) =>
-      TestNumerique(
-        id: id,
-        title: title,
-        description: description,
-        competenceId: competenceId,
-        competenceName: competenceName,
-        durationMinutes: durationMinutes,
-        questions: questions ?? this.questions,
-        lastResult: lastResult ?? this.lastResult,
-      );
+  }) => TestNumerique(
+    id: id,
+    title: title,
+    description: description,
+    competenceId: competenceId,
+    competenceName: competenceName,
+    durationMinutes: durationMinutes,
+    questions: questions ?? this.questions,
+    lastResult: lastResult ?? this.lastResult,
+  );
 
   factory TestNumerique.fromJson(Map<String, dynamic> json) {
     final competence = json['competence'];
@@ -129,20 +136,24 @@ class TestNumerique {
       id: (json['id'] ?? '').toString(),
       title: (json['titre'] ?? json['title'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
-      competenceId: (json['competenceId'] ??
-              (competence is Map ? competence['id'] : null) ??
-              '')
-          .toString(),
-      competenceName: (json['competenceNom'] ??
-              (competence is Map ? competence['nom'] : null) ??
-              'Compétence')
-          .toString(),
+      competenceId:
+          (json['competenceId'] ??
+                  (competence is Map ? competence['id'] : null) ??
+                  '')
+              .toString(),
+      competenceName:
+          (json['competenceNom'] ??
+                  (competence is Map ? competence['nom'] : null) ??
+                  'Compétence')
+              .toString(),
       durationMinutes: json['dureeMinutes'] is num
           ? (json['dureeMinutes'] as num).toInt()
           : null,
       questions: rawQuestions is List
-          ? rawQuestions.whereType<Map>().map((e) =>
-              TestQuestion.fromJson(Map<String, dynamic>.from(e))).toList()
+          ? rawQuestions
+                .whereType<Map>()
+                .map((e) => TestQuestion.fromJson(Map<String, dynamic>.from(e)))
+                .toList()
           : const [],
     );
   }

@@ -6,20 +6,12 @@ import 'package:mlc_mobile/core/utils/date_format.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/paginated_list_view.dart';
-import 'package:mlc_mobile/core/widgets/status_badge.dart';
 import 'package:mlc_mobile/features/notifications/domain/notification_models.dart';
 import 'package:mlc_mobile/features/notifications/presentation/notification_providers.dart';
+import 'package:mlc_mobile/features/notifications/presentation/notification_style.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
-  IconData _icon(NotificationType type) => switch (type) {
-    NotificationType.miseEnRelation => AppIcons.relations,
-    NotificationType.validation => AppIcons.validations,
-    NotificationType.opportunite => AppIcons.opportunites,
-    NotificationType.besoinCompetence => AppIcons.competences,
-    NotificationType.systeme => AppIcons.passport,
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(unreadNotificationCountProvider).value ?? 0;
@@ -60,7 +52,7 @@ class NotificationsScreen extends ConsumerWidget {
         itemBuilder: (context, item) {
           final unread = !item.isRead;
           return AppCard(
-            accentColor: unread ? AppColors.gold : null,
+            accentColor: unread ? item.type.color : null,
             onTap: () => context.push('/notifications/${item.id}'),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,13 +61,10 @@ class NotificationsScreen extends ConsumerWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: unread ? AppColors.goldSoft : AppColors.greenSoft,
+                    color: item.type.softColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    _icon(item.type),
-                    color: unread ? AppColors.goldDeep : AppColors.green,
-                  ),
+                  child: Icon(item.type.icon, color: item.type.color),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -124,10 +113,7 @@ class NotificationsScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          StatusBadge(
-                            label: item.type.label,
-                            tone: unread ? BadgeTone.accent : BadgeTone.neutral,
-                          ),
+                          NotificationTypeChip(type: item.type),
                         ],
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/app/config/app_config.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
@@ -37,7 +38,9 @@ class VerificationNotifier extends Notifier<VerificationEnCours?> {
 }
 
 final verificationProvider =
-    NotifierProvider<VerificationNotifier, VerificationEnCours?>(VerificationNotifier.new);
+    NotifierProvider<VerificationNotifier, VerificationEnCours?>(
+      VerificationNotifier.new,
+    );
 
 /// État d'une action d'authentification (login/register/logout) : loading / error / data.
 class AuthController extends AsyncNotifier<void> {
@@ -46,16 +49,26 @@ class AuthController extends AsyncNotifier<void> {
 
   Future<bool> login(String identifiant, String password) async {
     final ok = await _run(
-      () => ref.read(authRepositoryProvider).login(identifiant: identifiant, password: password),
+      () => ref
+          .read(authRepositoryProvider)
+          .login(identifiant: identifiant, password: password),
     );
     // Mot de passe correct mais compte non vérifié : on prépare l'écran du code.
     if (!ok && state.error is AccountNotVerifiedFailure) {
       final estEmail = identifiant.contains('@');
-      ref.read(verificationProvider.notifier).definir(VerificationEnCours(
-            identifiant: identifiant,
-            canaux: [estEmail ? CanalVerification.email : CanalVerification.telephone],
-            codeDejaEnvoye: false,
-          ));
+      ref
+          .read(verificationProvider.notifier)
+          .definir(
+            VerificationEnCours(
+              identifiant: identifiant,
+              canaux: [
+                estEmail
+                    ? CanalVerification.email
+                    : CanalVerification.telephone,
+              ],
+              codeDejaEnvoye: false,
+            ),
+          );
     }
     return ok;
   }
@@ -67,11 +80,15 @@ class AuthController extends AsyncNotifier<void> {
       canaux = await ref.read(authRepositoryProvider).register(data);
     }, ouvreSession: false);
     if (ok) {
-      ref.read(verificationProvider.notifier).definir(VerificationEnCours(
-            identifiant: data.telephone,
-            canaux: canaux,
-            codeDejaEnvoye: true,
-          ));
+      ref
+          .read(verificationProvider.notifier)
+          .definir(
+            VerificationEnCours(
+              identifiant: data.telephone,
+              canaux: canaux,
+              codeDejaEnvoye: true,
+            ),
+          );
     }
     return ok;
   }
@@ -82,20 +99,27 @@ class AuthController extends AsyncNotifier<void> {
     required CanalVerification canal,
     required String code,
   }) async {
-    final ok = await _run(() => ref
-        .read(authRepositoryProvider)
-        .verifyOtp(identifiant: identifiant, canal: canal, code: code));
+    final ok = await _run(
+      () => ref
+          .read(authRepositoryProvider)
+          .verifyOtp(identifiant: identifiant, canal: canal, code: code),
+    );
     if (ok) ref.read(verificationProvider.notifier).effacer();
     return ok;
   }
 
   Future<void> logout() async {
-    // D'abord le serveur (il reçoit encore le jeton), ensuite la session locale.
-    await ref.read(authRepositoryProvider).logout();
+    // La révocation côté serveur démarre d'abord (elle lit les jetons tout de suite), mais on ne l'attend pas :
+    // la session locale se ferme immédiatement, même si le serveur est lent ou injoignable.
+    final serveur = ref.read(authRepositoryProvider).logout();
     await ref.read(sessionProvider.notifier).expire();
+    unawaited(serveur.then((_) {}, onError: (_) {}));
   }
 
-  Future<bool> _run(Future<void> Function() action, {bool ouvreSession = true}) async {
+  Future<bool> _run(
+    Future<void> Function() action, {
+    bool ouvreSession = true,
+  }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(action);
     if (state.hasError) return false;

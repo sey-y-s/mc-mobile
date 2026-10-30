@@ -6,7 +6,8 @@ class MockParcoursValidationRepository implements ParcoursValidationRepository {
   const MockParcoursValidationRepository();
 
   @override
-  Future<ParcoursValidation> get(String citoyenCompetenceId) async => ParcoursValidation(
+  Future<ParcoursValidation> get(String citoyenCompetenceId) async =>
+      ParcoursValidation(
         citoyenCompetenceId: citoyenCompetenceId,
         competenceNom: 'Compétence',
         statut: StatutParcours.declaree,
@@ -17,7 +18,8 @@ class MockParcoursValidationRepository implements ParcoursValidationRepository {
           ModaliteProposee(
             modalite: ModaliteValidation.documentaire,
             libelle: 'Validation documentaire',
-            description: 'Vérification de vos diplômes, certificats ou attestations.',
+            description:
+                'Vérification de vos diplômes, certificats ou attestations.',
             disponible: true,
             recommandee: true,
             raison: 'Déposez un justificatif : il sera vérifié.',
@@ -38,6 +40,7 @@ class MockParcoursValidationRepository implements ParcoursValidationRepository {
   Future<void> demanderEvaluation({
     required String citoyenCompetenceId,
     required ModaliteValidation modalite,
-    required String centreId,
+    String? centreId,
+    String? preuveId,
   }) async {}
 }

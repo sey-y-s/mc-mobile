@@ -47,7 +47,7 @@ class _AdminDashboardBody extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppColors.greenDark, AppColors.green],

@@ -33,18 +33,28 @@ class FormScaffold extends StatelessWidget {
       appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: Form(
             key: formKey,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              for (final c in children) ...[c, const SizedBox(height: 16)],
-              if (error != null) ...[
-                Text(failureMessage(error!), style: const TextStyle(color: AppColors.error)),
-                const SizedBox(height: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final c in children) ...[c, const SizedBox(height: 16)],
+                if (error != null) ...[
+                  Text(
+                    failureMessage(error!),
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 8),
+                AppButton(
+                  label: submitLabel,
+                  onPressed: onSubmit,
+                  isLoading: isLoading,
+                ),
               ],
-              const SizedBox(height: 8),
-              AppButton(label: submitLabel, onPressed: onSubmit, isLoading: isLoading),
-            ]),
+            ),
           ),
         ),
       ),
