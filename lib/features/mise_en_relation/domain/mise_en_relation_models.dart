@@ -1,15 +1,18 @@
 enum RelationStatus {
   enAttente('EN_ATTENTE', 'En attente'),
   acceptee('ACCEPTEE', 'Acceptée'),
-  refusee('REFUSEE', 'Refusée');
+  refusee('REFUSEE', 'Refusée'),
+  annulee('ANNULEE', 'Annulée');
 
   const RelationStatus(this.apiCode, this.label);
   final String apiCode;
   final String label;
 
-  static RelationStatus fromApi(String? value) => RelationStatus.values
-      .firstWhere((e) => e.apiCode == value?.toUpperCase(),
-          orElse: () => RelationStatus.enAttente);
+  static RelationStatus fromApi(String? value) =>
+      RelationStatus.values.firstWhere(
+        (e) => e.apiCode == value?.toUpperCase(),
+        orElse: () => RelationStatus.enAttente,
+      );
 }
 
 class RelationContact {
@@ -17,12 +20,14 @@ class RelationContact {
   final String? telephone;
   final String? email;
 
-  factory RelationContact.fromJson(Map<String, dynamic> json) => RelationContact(
+  factory RelationContact.fromJson(Map<String, dynamic> json) =>
+      RelationContact(
         telephone: (json['telephone'] ?? json['phone'])?.toString(),
         email: json['email']?.toString(),
       );
 
-  bool get isEmpty => (telephone == null || telephone!.isEmpty) &&
+  bool get isEmpty =>
+      (telephone == null || telephone!.isEmpty) &&
       (email == null || email!.isEmpty);
 }
 
@@ -40,6 +45,10 @@ class MiseEnRelation {
     this.contact,
     this.followUpId,
   });
+
+  /// Identifiant de l'autre personne, vu de [currentUserId].
+  String interlocutorIdFor(String currentUserId) =>
+      senderId == currentUserId ? recipientId : senderId;
 
   final String id;
   final String senderId;
@@ -68,8 +77,8 @@ class MiseEnRelation {
     final rawContact = json['contact'];
     final contact = status == RelationStatus.acceptee
         ? (rawContact is Map
-            ? RelationContact.fromJson(Map<String, dynamic>.from(rawContact))
-            : RelationContact.fromJson(json))
+              ? RelationContact.fromJson(Map<String, dynamic>.from(rawContact))
+              : RelationContact.fromJson(json))
         : null;
     return MiseEnRelation(
       id: (json['id'] ?? '').toString(),
@@ -78,14 +87,17 @@ class MiseEnRelation {
       status: status,
       message: (json['message'] ?? '').toString(),
       requestedAt: date(json['dateDemande']),
-      respondedAt: json['dateReponse'] == null ? null : date(json['dateReponse']),
+      respondedAt: json['dateReponse'] == null
+          ? null
+          : date(json['dateReponse']),
       senderName: status == RelationStatus.acceptee
           ? json['demandeurNomComplet']?.toString()
           : null,
       recipientName: status == RelationStatus.acceptee
           ? json['destinataireNomComplet']?.toString()
           : null,
-      followUpId: (json['suiviBesoinTalentId'] ?? json['SuiviBesoinTalentId'])?.toString(),
+      followUpId: (json['suiviBesoinTalentId'] ?? json['SuiviBesoinTalentId'])
+          ?.toString(),
       contact: contact?.isEmpty == true ? null : contact,
     );
   }

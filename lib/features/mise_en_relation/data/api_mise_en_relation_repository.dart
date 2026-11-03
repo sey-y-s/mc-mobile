@@ -84,6 +84,16 @@ class ApiMiseEnRelationRepository implements MiseEnRelationRepository {
   }
 
   @override
+  Future<MiseEnRelation> cancel(String id) async {
+    final response = await guardDio(
+      () => _dio.patch<Map<String, dynamic>>(
+        '${ApiEndpoints.mobileRelation(id)}/annulation',
+      ),
+    );
+    return MiseEnRelation.fromJson(response.data!);
+  }
+
+  @override
   Future<MiseEnRelation> respond(String id, {required bool accept}) async {
     final userId = await requireCurrentUserId(_storage);
     final request = await get(id);
@@ -95,7 +105,8 @@ class ApiMiseEnRelationRepository implements MiseEnRelationRepository {
       () => _dio.patch<Map<String, dynamic>>(
         ApiEndpoints.mobileRelationAnswer(id),
         data: {
-          'statut': (accept ? RelationStatus.acceptee : RelationStatus.refusee).apiCode,
+          'statut': (accept ? RelationStatus.acceptee : RelationStatus.refusee)
+              .apiCode,
         },
       ),
     );

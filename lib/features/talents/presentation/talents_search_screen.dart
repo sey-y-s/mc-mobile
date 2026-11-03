@@ -7,9 +7,12 @@ import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/filter_chips.dart';
 import 'package:mlc_mobile/core/widgets/paginated_list_view.dart';
+import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/core/widgets/status_badge.dart';
 import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
+import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/features/talents/domain/talent_models.dart';
+import 'package:mlc_mobile/features/talents/presentation/talent_avatar.dart';
 import 'package:mlc_mobile/features/talents/presentation/talent_providers.dart';
 
 class TalentsSearchScreen extends ConsumerStatefulWidget {
@@ -50,6 +53,22 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
   Widget build(BuildContext context) {
     final filters = ref.watch(talentFiltersProvider);
     final requested = ref.watch(talentSearchRequestedProvider);
+    final completion = ref.watch(profileCompletionProvider);
+    // Réciproque de la visibilité : un profil incomplet n'apparaît pas dans les recherches des autres,
+    // et il ne peut pas chercher non plus. Le serveur applique la même règle.
+    if (completion.hasValue && !completion.requireValue.isComplete) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Recherche de talents')),
+        body: EmptyView(
+          icon: AppIcons.lock,
+          message:
+              'Complétez votre passeport pour rechercher des talents et être contacté.\n'
+              'Prochaine étape : ${completion.requireValue.next?.hint ?? 'terminer votre profil'}.',
+          actionLabel: 'Compléter mon passeport',
+          onAction: () => context.go('/passeport'),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Recherche de talents'),
@@ -114,10 +133,9 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
           ),
           Expanded(
             child: !requested
-                ? const Center(
-                    child: Text(
-                      'Recherchez un métier ou une compétence pour voir les profils anonymisés.',
-                    ),
+                ? const EmptyView(
+                    icon: AppIcons.talents,
+                    message: 'Recherchez un métier ou une compétence pour voir les profils anonymisés.',
                   )
                 : PaginatedListView<TalentSummary>(
                     key: ValueKey(filters),
@@ -138,21 +156,16 @@ class _TalentsSearchScreenState extends ConsumerState<TalentsSearchScreen> {
                         children: [
                           Row(
                             children: [
-                              const CircleAvatar(
-                                radius: 21,
-                                backgroundColor: AppColors.greenSoft,
-                                child: Icon(
-                                  AppIcons.person,
-                                  color: AppColors.green,
-                                ),
-                              ),
+                              TalentAvatar(photoUrl: talent.photoUrl),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Profil anonymisé',
+                                    Text(
+                                      talent.relationEtablie
+                                          ? (talent.fullName ?? 'Contact')
+                                          : 'Profil anonymisé',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -242,7 +255,7 @@ class _TalentFilterSheetState extends ConsumerState<_TalentFilterSheet> {
     padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
     child: ListView(
       shrinkWrap: true,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       children: [
         Text(
           'Filtres de recherche',

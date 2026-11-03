@@ -12,13 +12,13 @@ import 'package:mlc_mobile/features/competences/domain/citoyen_competence.dart';
 import 'package:mlc_mobile/features/competences/presentation/competences_providers.dart';
 
 import 'package:mlc_mobile/core/widgets/app_card.dart';
+import 'package:mlc_mobile/features/evaluateur/presentation/evaluateur_providers.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
-import 'package:mlc_mobile/features/home/presentation/blocks/notifications_block.dart';
 import 'package:mlc_mobile/features/home/presentation/blocks/opportunites_block.dart';
 import 'package:mlc_mobile/features/parametres/presentation/suggestion_commune_card.dart';
 
 /// Dashboard citoyen : en-tête (résumé + progression), carte « Mon passeport », accès rapide,
-/// puis les blocs notifications et opportunités (voir features/home/presentation/blocks/).
+/// puis le bloc opportunités (les notifications ont leur onglet « Alertes ») (voir features/home/presentation/blocks/).
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -40,47 +40,70 @@ class HomeScreen extends ConsumerWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        body: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _Header(
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref
+              ..invalidate(competencesProvider)
+              ..invalidate(passportProvider);
+            try {
+              await ref.read(competencesProvider.future);
+            } catch (_) {
+              // L'erreur s'affiche déjà dans l'en-tête, avec « Réessayer ».
+            }
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: [
+                          _Header(
+              prenom: ref.watch(passportProvider).value?.prenom,
               comps: comps,
-              onRetry: () => ref.invalidate(competencesProvider),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Proposition de commune (détection ponctuelle, jamais appliquée sans accord).
-                  const SuggestionCommuneBandeau(),
-                  const _PassportCard(),
-                  const SizedBox(height: 28),
-                  const SectionHeader(title: 'Accès rapide'),
-                  GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.8,
-                    children: [
-                      for (final s in _shortcuts)
-                        _Shortcut(
-                          label: s.$1,
-                          icon: s.$2,
-                          onTap: () => context.push(s.$3),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  const NotificationsBlock(),
-                  const SizedBox(height: 28),
-                  const OpportunitesBlock(),
-                ],
+                onRetry: () => ref.invalidate(competencesProvider),
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Proposition de commune (détection ponctuelle, jamais appliquée sans accord).
+                    const SuggestionCommuneBandeau(),
+                    const _PassportCard(),
+                    const SizedBox(height: 28),
+                    const SectionHeader(title: 'Accès rapide'),
+                    GridView.count(
+                      crossAxisCount: 4,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 0.8,
+                      children: [
+                        for (final s in _shortcuts)
+                          _Shortcut(
+                            label: s.$1,
+                            icon: s.$2,
+                            onTap: () => context.push(s.$3),
+                          ),
+                        // Visible seulement pour un citoyen désigné évaluateur par un centre.
+                        if (ref
+                                .watch(evaluatorCentresProvider)
+                                .value
+                                ?.isNotEmpty ==
+                            true)
+                          _Shortcut(
+                            label: 'Espace évaluateur',
+                            icon: Icons.fact_check_outlined,
+                            onTap: () => context.push('/evaluateur'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
+                    const OpportunitesBlock(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -88,7 +111,9 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.comps, required this.onRetry});
+    const _Header({required this.comps, required this.onRetry, this.prenom});
+  final String? prenom;
+
   final AsyncValue<List<CitoyenCompetence>> comps;
   final VoidCallback onRetry;
 
@@ -108,12 +133,12 @@ class _Header extends StatelessWidget {
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Bonjour',
+                                        prenom == null || prenom!.trim().isEmpty ? 'Bonjour' : 'Bonjour, ${prenom!.trim()}',
                     style: text.bodyMedium?.copyWith(color: Colors.white70),
                   ),
                   const SizedBox(height: 4),
@@ -147,33 +172,28 @@ class _Header extends StatelessWidget {
                       ],
                     ),
                     data: (items) {
-                      int n(EtatCompetence e) =>
-                          items.where((c) => c.etat == e).length;
+                      // Chiffres cumulés : une compétence validée a aussi été déclarée et prouvée.
+                      // (Compter chaque état séparément laissait « déclarées » à 0 dès la première preuve.)
+                      final validees = items
+                          .where((c) => c.etat == EtatCompetence.validee)
+                          .length;
+                      final avecPreuve = items
+                          .where((c) => c.etat != EtatCompetence.declaree)
+                          .length;
                       return Column(
                         children: [
                           Row(
                             children: [
-                              _Stat(
-                                label: 'déclarées',
-                                value: n(EtatCompetence.declaree),
-                              ),
-                              _Stat(
-                                label: 'preuve reçue',
-                                value: n(EtatCompetence.attestee),
-                              ),
-                              _Stat(
-                                label: 'validées',
-                                value: n(EtatCompetence.validee),
-                              ),
+                              _Stat(label: 'déclarées', value: items.length),
+                              _Stat(label: 'avec preuve', value: avecPreuve),
+                              _Stat(label: 'validées', value: validees),
                             ],
                           ),
                           const SizedBox(height: 20),
                           AppProgressBar(
                             onDark: true,
                             label: 'Compétences validées',
-                            value: items.isEmpty
-                                ? 0
-                                : n(EtatCompetence.validee) / items.length,
+                            value: items.isEmpty ? 0 : validees / items.length,
                           ),
                         ],
                       );

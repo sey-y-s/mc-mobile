@@ -22,20 +22,26 @@ class PreuvesListScreen extends ConsumerWidget {
         icon: const Icon(AppIcons.add),
         label: const Text('Ajouter'),
       ),
-      body: PaginatedListView<Preuve>(
-        key: ValueKey(
-            revision), // nouvelle clé après un ajout : la liste se recharge
-        emptyMessage:
-            "Aucune preuve pour l'instant.\nAjoutez un diplôme, un certificat ou une attestation.",
-        fetchPage: (page, size) =>
-            ref.read(preuveRepositoryProvider).listMine(page: page, size: size),
-        itemBuilder: (_, p) => PreuveTile(
-          typeLabel: p.type.label,
-          competenceNom: p.competenceNom,
-          dateLabel: formatDateFr(p.date),
-          statut: p.statut,
-          onTap: () => context.push('/preuves/${p.id}'),
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PaginatedListView<Preuve>(
+              key: ValueKey(
+                revision,
+              ), // nouvelle clé après un ajout : la liste se recharge
+              emptyMessage: "Aucune preuve pour l'instant.\nAjoutez un diplôme, un certificat ou une attestation.",
+              fetchPage: (page, size) => ref
+                  .read(preuveRepositoryProvider)
+                  .listMine(page: page, size: size),
+              itemBuilder: (_, p) => PreuveTile(
+                typeLabel: p.type.label,
+                competenceNom: p.competenceNom,
+                dateLabel: formatDateFr(p.date),
+                onTap: () => context.push('/preuves/${p.id}'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,4 +6,7 @@ abstract interface class MiseEnRelationRepository {
   Future<MiseEnRelation> get(String id);
   Future<MiseEnRelation> send(String talentId, {String? message});
   Future<MiseEnRelation> respond(String id, {required bool accept});
+
+  /// Retire une demande envoyée qui attend encore une réponse.
+  Future<MiseEnRelation> cancel(String id);
 }

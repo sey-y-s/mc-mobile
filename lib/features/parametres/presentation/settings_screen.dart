@@ -18,13 +18,14 @@ class SettingsScreen extends ConsumerWidget {
     final role = ref.watch(currentRoleProvider).value;
     final isAdmin = role == 'ADMIN' || role == 'SUPER_ADMIN';
     final isCentreAdmin = role == 'CENTRE_ADMIN';
-    final isEvaluator = ref.watch(evaluatorCentresProvider).value?.isNotEmpty == true;
+    final isEvaluator =
+        ref.watch(evaluatorCentresProvider).value?.isNotEmpty == true;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Paramètres')),
       body: LayoutBuilder(
         builder: (context, _) => SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 640),
@@ -33,7 +34,8 @@ class SettingsScreen extends ConsumerWidget {
                 children: [
                   const _SectionHeading(
                     title: 'Votre espace',
-                    subtitle: 'Gérez votre profil et vos informations de contact.',
+                    subtitle:
+                        'Gérez votre profil et vos informations de contact.',
                   ),
                   const SizedBox(height: 12),
                   _SettingsGroup(
@@ -41,23 +43,9 @@ class SettingsScreen extends ConsumerWidget {
                       _SettingsItemData(
                         icon: AppIcons.person,
                         title: 'Mon compte',
-                        subtitle: 'Téléphone, adresse e-mail et coordonnées',
+                        subtitle: 'Téléphone, adresse e-mail et commune',
                         onTap: () => context.push('/parametres/compte'),
                       ),
-                      if (role == 'CITOYEN')
-                        _SettingsItemData(
-                          icon: Icons.location_on_outlined,
-                          title: 'Ma commune',
-                          subtitle: 'Votre commune de référence ; aucune position n’est enregistrée',
-                          onTap: () => context.push('/parametres/localisation'),
-                        ),
-                      if (role == 'CITOYEN')
-                        _SettingsItemData(
-                          icon: Icons.rate_review_outlined,
-                          title: 'Contester ou corriger',
-                          subtitle: 'Une décision ou une information de votre profil',
-                          onTap: () => context.push('/parametres/corrections'),
-                        ),
                       _SettingsItemData(
                         icon: AppIcons.lock,
                         title: 'Sécurité',
@@ -73,15 +61,17 @@ class SettingsScreen extends ConsumerWidget {
                       subtitle: 'Votre agrément de centre est actif.',
                     ),
                     const SizedBox(height: 12),
-                    _SettingsGroup(items: [
-                      _SettingsItemData(
-                        icon: Icons.fact_check_outlined,
-                        title: 'Espace évaluateur',
-                        subtitle: 'Consulter les demandes et valider les compétences de votre centre',
-                        onTap: () => context.push('/evaluateur'),
-                        iconColor: AppColors.green,
-                      ),
-                    ]),
+                    _SettingsGroup(
+                      items: [
+                        _SettingsItemData(
+                          icon: Icons.fact_check_outlined,
+                          title: 'Espace évaluateur',
+                          subtitle: 'Consulter les demandes et valider les compétences de votre centre',
+                          onTap: () => context.push('/evaluateur'),
+                          iconColor: AppColors.green,
+                        ),
+                      ],
+                    ),
                   ],
                   if (isCentreAdmin) ...[
                     const SizedBox(height: 24),
@@ -90,20 +80,24 @@ class SettingsScreen extends ConsumerWidget {
                       subtitle: 'Désignez les citoyens évaluateurs et gérez leurs agréments.',
                     ),
                     const SizedBox(height: 12),
-                    _SettingsGroup(items: [
-                      _SettingsItemData(
-                        icon: Icons.school_outlined,
-                        title: 'Gérer les évaluateurs',
-                        subtitle: 'Désignation, spécialités et suspension des agréments',
-                        onTap: () => context.push('/centre-admin/evaluateurs'),
-                        iconColor: AppColors.green,
-                      ),
-                    ]),
+                    _SettingsGroup(
+                      items: [
+                        _SettingsItemData(
+                          icon: Icons.school_outlined,
+                          title: 'Gérer les évaluateurs',
+                          subtitle: 'Désignation, spécialités et suspension des agréments',
+                          onTap: () =>
+                              context.push('/centre-admin/evaluateurs'),
+                          iconColor: AppColors.green,
+                        ),
+                      ],
+                    ),
                   ],
                   const SizedBox(height: 24),
                   const _SectionHeading(
                     title: 'Application',
-                    subtitle: 'Personnalisez votre expérience sur cet appareil.',
+                    subtitle:
+                        'Personnalisez votre expérience sur cet appareil.',
                   ),
                   const SizedBox(height: 12),
                   _SettingsGroup(
@@ -117,8 +111,9 @@ class SettingsScreen extends ConsumerWidget {
                       _SettingsItemData(
                         icon: AppIcons.document,
                         title: 'Conditions d’utilisation',
-                        subtitle: 'Consulter les règles d’utilisation du service',
-                        onTap: () => context.push('/parametres/conditions'),
+                        subtitle:
+                            'Consulter les règles d’utilisation du service',
+                        onTap: () => context.push(AppRoutes.terms),
                       ),
                     ],
                   ),
@@ -157,9 +152,7 @@ class SettingsScreen extends ConsumerWidget {
                   Text(
                     'Mali Compétences · Votre parcours, vos talents.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
+                    style: Theme.of(context).textTheme.bodySmall
                         ?.copyWith(color: AppColors.muted),
                   ),
                 ],
@@ -201,19 +194,17 @@ class _SectionHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 3),
-          Text(
-            subtitle,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: AppColors.muted),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: 3),
+      Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: AppColors.muted),
+      ),
+    ],
+  );
 }
 
 class _SettingsGroup extends StatelessWidget {
@@ -222,24 +213,24 @@ class _SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          children: [
-            for (var index = 0; index < items.length; index++) ...[
-              _SettingsItem(item: items[index]),
-              if (index < items.length - 1)
-                const Padding(
-                  padding: EdgeInsets.only(left: 68),
-                  child: Divider(height: 1),
-                ),
-            ],
-          ],
-        ),
-      );
+    decoration: BoxDecoration(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          _SettingsItem(item: items[index]),
+          if (index < items.length - 1)
+            const Padding(
+              padding: EdgeInsets.only(left: 68),
+              child: Divider(height: 1),
+            ),
+        ],
+      ],
+    ),
+  );
 }
 
 class _SettingsItemData {
@@ -266,43 +257,40 @@ class _SettingsItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: item.onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: item.iconBackground,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(item.icon, color: item.iconColor, size: 21),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.title,
-                        style: Theme.of(context).textTheme.titleSmall),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.subtitle,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: AppColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(AppIcons.chevron, color: AppColors.muted, size: 19),
-            ],
+    onTap: item.onTap,
+    borderRadius: BorderRadius.circular(18),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: item.iconBackground,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(item.icon, color: item.iconColor, size: 21),
           ),
-        ),
-      );
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title, style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 3),
+                Text(
+                  item.subtitle,
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(AppIcons.chevron, color: AppColors.muted, size: 19),
+        ],
+      ),
+    ),
+  );
 }

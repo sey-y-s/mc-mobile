@@ -42,18 +42,22 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
     final manquant = _competenceId == null
         ? 'Choisissez la compétence concernée.'
         : _type == null
-            ? 'Choisissez le type de preuve.'
-            : _media == null
-                ? 'Ajoutez la photo ou le document de la preuve.'
-                : null;
+        ? 'Choisissez le type de preuve.'
+        : _media == null
+        ? 'Ajoutez la photo ou le document de la preuve.'
+        : null;
     if (manquant != null) {
       showError(context, manquant);
       return;
     }
-    final comps = ref.read(competencesProvider).value ?? const <CitoyenCompetence>[];
+    final comps =
+        ref.read(competencesProvider).value ?? const <CitoyenCompetence>[];
     final competence = comps.where((c) => c.id == _competenceId).firstOrNull;
     if (competence != null && !competence.preuvesAcceptees.contains(_type)) {
-      showError(context, "Ce type de preuve n'est pas accepté pour cette compétence.");
+      showError(
+        context,
+        "Ce type de preuve n'est pas accepté pour cette compétence.",
+      );
       return;
     }
     final ok = await ref
@@ -66,10 +70,18 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
     if (!mounted) return;
     if (!ok) {
       final error = ref.read(addPreuveControllerProvider).error;
-      showError(context, error == null ? "L'envoi de la preuve a échoué. Réessayez." : failureMessage(error));
+      showError(
+        context,
+        error == null
+            ? "L'envoi de la preuve a échoué. Réessayez."
+            : failureMessage(error),
+      );
       return;
     }
-    showSuccess(context, 'Preuve envoyée. Elle est maintenant jointe à votre compétence.');
+    showSuccess(
+      context,
+      'Justificatif ajouté. Envoyez-le pour examen depuis votre parcours de validation.',
+    );
     Navigator.of(context).maybePop();
   }
 
@@ -104,7 +116,9 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
           );
         }
         // Une seule compétence : elle est choisie d'office.
-        if (_competenceId == null && items.length == 1) _competenceId = items.first.id;
+        if (_competenceId == null && items.length == 1) {
+          _competenceId = items.first.id;
+        }
         final selected = items.where((c) => c.id == _competenceId).firstOrNull;
         final types = selected?.preuvesAcceptees ?? const <PreuveType>[];
         // Type devenu incompatible après un changement de compétence.
@@ -131,36 +145,31 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
                   : null,
               onChanged: (c) => setState(() => _competenceId = c.id),
             ),
-            if (selected != null && selected.parcours == null && selected.parcoursPossibles.length > 1)
+            if (selected != null &&
+                selected.parcours == null &&
+                selected.parcoursPossibles.length > 1)
               AppCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text(
-                    "Indiquez d'abord si vous avez appris cette compétence à l'école (secteur formel) ou sur le terrain (secteur informel).",
-                    style: text.bodyMedium,
-                  ),
-                  const SizedBox(height: 10),
-                  AppButton(
-                    label: 'Préciser le secteur',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () => context.push('/competences/${selected.id}'),
-                  ),
-                ]),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "Indiquez d'abord si vous avez appris cette compétence à l'école (secteur formel) ou sur le terrain (secteur informel).",
+                      style: text.bodyMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    AppButton(
+                      label: 'Préciser le secteur',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: () =>
+                          context.push('/competences/${selected.id}'),
+                    ),
+                  ],
+                ),
               ),
-            if (selected?.parcours == Parcours.informel ||
-                (selected?.parcours == null && selected?.parcoursPossibles.length == 1 && selected?.parcoursPossibles.first == Parcours.informel))
-              AppCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text(
-                    "Secteur informel : joignez le certificat délivré par un centre professionnel. Pas de certificat ? Vous pouvez passer un test de validation dans un centre.",
-                    style: text.bodySmall?.copyWith(color: AppColors.muted),
-                  ),
-                  const SizedBox(height: 10),
-                  AppButton(
-                    label: 'Passer un test au centre',
-                    variant: AppButtonVariant.secondary,
-                    onPressed: busy ? null : () => context.push('/validations/demander?competenceId=${selected!.id}&test=1'),
-                  ),
-                ]),
+            if (selected != null)
+              Text(
+                'Le justificatif sera examiné lorsque vous l’enverrez depuis « Voir mon parcours de validation ».',
+                style: text.bodySmall?.copyWith(color: AppColors.muted),
               ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -171,7 +180,10 @@ class _AddPreuveScreenState extends ConsumerState<AddPreuveScreen> {
                 ),
                 const SizedBox(height: 8),
                 if (selected == null)
-                  Text("Choisissez d'abord la compétence.", style: text.bodySmall?.copyWith(color: AppColors.muted)),
+                  Text(
+                    "Choisissez d'abord la compétence.",
+                    style: text.bodySmall?.copyWith(color: AppColors.muted),
+                  ),
                 if (types.isNotEmpty)
                   ProgressiveChoice<PreuveType>(
                     key: ValueKey(selected?.id),

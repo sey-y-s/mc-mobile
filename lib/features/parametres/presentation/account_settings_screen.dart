@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/app/theme/app_colors.dart';
+import 'package:mlc_mobile/core/widgets/app_card.dart';
+import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/validators.dart';
 import 'package:mlc_mobile/core/widgets/app_button.dart';
@@ -53,7 +57,7 @@ class _AccountFormState extends ConsumerState<_AccountForm> {
   @override
   Widget build(BuildContext context) => SafeArea(
     child: SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Form(
         key: _key,
         child: Column(
@@ -77,6 +81,8 @@ class _AccountFormState extends ConsumerState<_AccountForm> {
               'Une modification du téléphone peut demander une nouvelle vérification.',
               style: TextStyle(color: Colors.black54),
             ),
+            const SizedBox(height: 24),
+            const _CommuneCard(),
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -120,5 +126,46 @@ class _AccountFormState extends ConsumerState<_AccountForm> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+/// Commune de référence : une information de compte, modifiable ici (choix manuel ou détection ponctuelle).
+class _CommuneCard extends ConsumerWidget {
+  const _CommuneCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final citoyen = ref.watch(passportProvider);
+    final text = Theme.of(context).textTheme;
+    final commune = citoyen.asData?.value.commune?.fullLabel;
+    return AppCard(
+      onTap: () => context.push('/parametres/localisation'),
+      child: Row(
+        children: [
+          const Icon(Icons.location_on_outlined, color: AppColors.green),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ma commune', style: text.titleSmall),
+                const SizedBox(height: 2),
+                Text(
+                  citoyen.isLoading
+                      ? 'Chargement…'
+                      : (commune ?? 'Non renseignée'),
+                  style: text.bodyMedium,
+                ),
+                Text(
+                  'Aucune position n’est enregistrée.',
+                  style: text.bodySmall?.copyWith(color: AppColors.muted),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.muted),
+        ],
+      ),
+    );
   }
 }

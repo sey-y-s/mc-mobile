@@ -11,13 +11,9 @@ import 'package:mlc_mobile/core/widgets/app_button.dart';
 import 'package:mlc_mobile/core/widgets/app_card.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/info_row.dart';
-import 'package:mlc_mobile/core/widgets/section_header.dart';
 import 'package:mlc_mobile/core/widgets/state_views.dart';
 import 'package:mlc_mobile/features/preuves/domain/preuve_models.dart';
 import 'package:mlc_mobile/features/preuves/presentation/preuve_providers.dart';
-import 'package:mlc_mobile/features/validations/domain/validation_statut.dart';
-import 'package:mlc_mobile/shared/widgets/validation_status_badge.dart';
-
 
 /// Route : /preuves/:id
 /// Un document (PDF, Word…) s'ouvre avec l'application de l'appareil ; une image s'affiche directement.
@@ -31,8 +27,9 @@ class PreuveDetailScreen extends ConsumerWidget {
     final id = this.id;
     if (id == null) {
       return Scaffold(
-          appBar: AppBar(title: const Text('Preuve')),
-          body: const ErrorView(error: NotFoundFailure()));
+        appBar: AppBar(title: const Text('Preuve')),
+        body: const ErrorView(error: NotFoundFailure()),
+      );
     }
     final value = ref.watch(preuveDetailProvider(id));
     return Scaffold(
@@ -50,84 +47,68 @@ class _Content extends StatelessWidget {
   const _Content({required this.preuve});
   final Preuve preuve;
 
-  static String _statutHelp(ValidationStatut s) => switch (s) {
-        ValidationStatut.enAttente => 'Un évaluateur examine cette preuve.',
-        ValidationStatut.approuvee => 'Cette preuve a été confirmée.',
-        ValidationStatut.rejetee =>
-          'Cette preuve a été refusée. Vous pouvez en ajouter une autre.',
-      };
-
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final statut = preuve.statut;
-    return ListView(padding: const EdgeInsets.all(20), children: [
-      Text(preuve.type.label, style: text.headlineSmall),
-      const SizedBox(height: 16),
-      AppCard(
-        onTap: () => context.push('/competences/${preuve.citoyenCompetenceId}'),
-        child: Row(children: [
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Compétence concernée',
-                  style: text.bodySmall?.copyWith(color: AppColors.muted)),
-              Text(preuve.competenceNom, style: text.titleSmall),
-            ]),
-          ),
-          const Icon(AppIcons.chevron, color: AppColors.muted),
-        ]),
-      ),
-      const SizedBox(height: 12),
-      AppCard(
-        child: Column(children: [
-          InfoRow(label: 'Ajoutée le', value: formatDateFr(preuve.date)),
-          InfoRow(
-              label: 'Fichier', value: preuve.fichierNom ?? 'Non disponible'),
-        ]),
-      ),
-      if (preuve.isImage && preuve.fichierUrl != null) ...[
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          // Fichier privé : chargé avec le jeton de connexion (une NetworkImage échouerait).
-          child: PortfolioMediaPreview(
-            url: preuve.fichierUrl!,
-            height: 220,
-            width: double.infinity,
-            cacheWidth: 800, // jamais l'image pleine résolution en mémoire
-          ),
-        ),
-      ],
-      if (!preuve.isImage && preuve.fichierUrl != null) ...[
-        const SizedBox(height: 12),
-        _BoutonOuvrir(url: preuve.fichierUrl!, nom: preuve.fichierNom),
-      ],
-      const SizedBox(height: 28),
-      const SectionHeader(title: 'Validation'),
-      AppCard(
-        child: statut == null
-            ? Text('Aucune validation demandée pour cette preuve.',
-                style: text.bodyMedium?.copyWith(color: AppColors.muted))
-            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                ValidationStatusBadge(statut),
-                const SizedBox(height: 8),
-                Text(_statutHelp(statut), style: text.bodyMedium),
-              ]),
-      ),
-
-      if (statut == null || statut == ValidationStatut.rejetee) ...[
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(preuve.type.label, style: text.headlineSmall),
         const SizedBox(height: 16),
-        AppButton(
-          label: statut == null ? 'Demander une validation' : 'Demander une nouvelle validation',
-          onPressed: () => context.push('/validations/demander?competenceId=${preuve.citoyenCompetenceId}&preuveId=${preuve.id}'),
+        AppCard(
+          onTap: () =>
+              context.push('/competences/${preuve.citoyenCompetenceId}'),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Compétence concernée',
+                      style: text.bodySmall?.copyWith(color: AppColors.muted),
+                    ),
+                    Text(preuve.competenceNom, style: text.titleSmall),
+                  ],
+                ),
+              ),
+              const Icon(AppIcons.chevron, color: AppColors.muted),
+            ],
+          ),
         ),
+        const SizedBox(height: 12),
+        AppCard(
+          child: Column(
+            children: [
+              InfoRow(label: 'Ajoutée le', value: formatDateFr(preuve.date)),
+              InfoRow(
+                label: 'Fichier',
+                value: preuve.fichierNom ?? 'Non disponible',
+              ),
+            ],
+          ),
+        ),
+        if (preuve.isImage && preuve.fichierUrl != null) ...[
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            // Fichier privé : chargé avec le jeton de connexion (une NetworkImage échouerait).
+            child: PortfolioMediaPreview(
+              url: preuve.fichierUrl!,
+              height: 220,
+              width: double.infinity,
+              cacheWidth: 800, // jamais l'image pleine résolution en mémoire
+            ),
+          ),
+        ],
+        if (!preuve.isImage && preuve.fichierUrl != null) ...[
+          const SizedBox(height: 12),
+          _BoutonOuvrir(url: preuve.fichierUrl!, nom: preuve.fichierNom),
+        ],
       ],
-    
-    ]);
+    );
   }
 }
-
 
 /// Télécharge puis ouvre le document de la preuve.
 class _BoutonOuvrir extends ConsumerStatefulWidget {
@@ -155,10 +136,10 @@ class _BoutonOuvrirState extends ConsumerState<_BoutonOuvrir> {
 
   @override
   Widget build(BuildContext context) => AppButton(
-        label: 'Ouvrir le document',
-        icon: Icons.open_in_new,
-        variant: AppButtonVariant.secondary,
-        isLoading: _enCours,
-        onPressed: _ouvrir,
-      );
+    label: 'Ouvrir le document',
+    icon: Icons.open_in_new,
+    variant: AppButtonVariant.secondary,
+    isLoading: _enCours,
+    onPressed: _ouvrir,
+  );
 }

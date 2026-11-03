@@ -15,7 +15,8 @@ class ValidationsListScreen extends ConsumerStatefulWidget {
   const ValidationsListScreen({super.key});
 
   @override
-  ConsumerState<ValidationsListScreen> createState() => _ValidationsListScreenState();
+  ConsumerState<ValidationsListScreen> createState() =>
+      _ValidationsListScreenState();
 }
 
 class _ValidationsListScreenState extends ConsumerState<ValidationsListScreen> {
@@ -29,7 +30,11 @@ class _ValidationsListScreenState extends ConsumerState<ValidationsListScreen> {
       appBar: AppBar(
         title: const Text('Mes validations'),
         actions: [
-          IconButton(tooltip: 'Historique', icon: const Icon(AppIcons.history), onPressed: () => context.push('/validations/historique')),
+          IconButton(
+            tooltip: 'Historique',
+            icon: const Icon(AppIcons.history),
+            onPressed: () => context.push('/validations/historique'),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -37,88 +42,92 @@ class _ValidationsListScreenState extends ConsumerState<ValidationsListScreen> {
         icon: const Icon(AppIcons.add),
         label: const Text('Demander'),
       ),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-          child: Material(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            child: InkWell(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+            child: Material(
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(16),
-              onTap: () => _chooseStatus(context, selectedStatus),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 13,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.greenSoft,
-                        borderRadius: BorderRadius.circular(13),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () => _chooseStatus(context, selectedStatus),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.greenSoft,
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                        child: Icon(
+                          selectedStatus.icon,
+                          color: AppColors.green,
+                          size: 22,
+                        ),
                       ),
-                      child: Icon(
-                        selectedStatus.icon,
-                        color: AppColors.green,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Explorer par statut',
-                            style: TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 11,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Explorer par statut',
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            selectedStatus.label,
-                            style: const TextStyle(
-                              color: AppColors.anthracite,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                            const SizedBox(height: 3),
+                            Text(
+                              selectedStatus.label,
+                              style: const TextStyle(
+                                color: AppColors.anthracite,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const Icon(AppIcons.expand, color: AppColors.green),
-                  ],
+                      const Icon(AppIcons.expand, color: AppColors.green),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: PaginatedListView<Validation>(
-            key: ValueKey('$revision-${_statut?.apiCode}'),
-            emptyMessage: _statut == null
-                ? "Aucune validation pour l'instant.\nAjoutez une preuve, puis demandez une validation."
-                : 'Aucune validation « ${_statut!.label.toLowerCase()} ».',
-            fetchPage: (page, size) => ref.read(validationRepositoryProvider).listMine(statut: _statut, page: page, size: size),
-            itemBuilder: (_, v) => ValidationTile(
-              competenceNom: v.competenceNom,
-              typeLabel: v.type.label,
-              statut: v.statut,
-              dateLabel: validationDateLabel(v),
-              validateurLabel: v.validateurLabel,
-              onTap: () => context.push('/validations/${v.id}'),
+          Expanded(
+            child: PaginatedListView<Validation>(
+              key: ValueKey('$revision-${_statut?.apiCode}'),
+              emptyMessage: _statut == null
+                  ? "Aucune validation pour l'instant.\nAjoutez une preuve, puis demandez une validation."
+                  : 'Aucune validation « ${_statut!.label.toLowerCase()} ».',
+              fetchPage: (page, size) => ref
+                  .read(validationRepositoryProvider)
+                  .listMine(statut: _statut, page: page, size: size),
+              itemBuilder: (_, v) => ValidationTile(
+                competenceNom: v.competenceNom,
+                typeLabel: v.type.label,
+                statut: v.statut,
+                dateLabel: validationDateLabel(v),
+                validateurLabel: v.validateurLabel,
+                onTap: () => context.push('/validations/${v.id}'),
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -133,8 +142,10 @@ class _ValidationsListScreenState extends ConsumerState<ValidationsListScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) =>
-          _ValidationStatusSheet(selected: selected, options: _StatusOption.all),
+      builder: (context) => _ValidationStatusSheet(
+        selected: selected,
+        options: _StatusOption.all,
+      ),
     );
     if (choice != null) setState(() => _statut = choice.statut);
   }
@@ -148,11 +159,7 @@ class _StatusOption {
   });
 
   static const all = [
-    _StatusOption(
-      statut: null,
-      label: 'Toutes',
-      icon: AppIcons.validations,
-    ),
+    _StatusOption(statut: null, label: 'Toutes', icon: AppIcons.validations),
     _StatusOption(
       statut: ValidationStatut.approuvee,
       label: 'Approuvées',
@@ -179,10 +186,7 @@ class _StatusOption {
 }
 
 class _ValidationStatusSheet extends StatelessWidget {
-  const _ValidationStatusSheet({
-    required this.selected,
-    required this.options,
-  });
+  const _ValidationStatusSheet({required this.selected, required this.options});
 
   final _StatusOption selected;
   final List<_StatusOption> options;
@@ -191,7 +195,7 @@ class _ValidationStatusSheet extends StatelessWidget {
   Widget build(BuildContext context) => SafeArea(
     top: false,
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/features/admin/presentation/admin_providers.dart';
 import 'package:mlc_mobile/app/theme/app_colors.dart';
 import 'package:mlc_mobile/core/errors/app_failure.dart';
 import 'package:mlc_mobile/core/utils/date_format.dart';
@@ -29,13 +31,17 @@ class RelationDetailScreen extends ConsumerWidget {
         value: value,
         onRetry: () => ref.invalidate(relationDetailProvider(relationId)),
         data: (item) {
+          final me = ref.watch(currentUserIdProvider).value;
           final accepted = item.status == RelationStatus.acceptee;
           final contact = accepted ? item.contact : null;
-          final name = accepted
-              ? (item.senderName ?? item.recipientName)
+          // Vu de celui qui regarde : le destinataire voit le demandeur, le demandeur voit le destinataire.
+          final iAmRecipient = me != null && item.recipientId == me;
+          final iAmSender = me != null && item.senderId == me;
+          final name = accepted && me != null
+              ? item.interlocutorNameFor(me)
               : null;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             children: [
               AppCard(
                 child: Column(
@@ -74,7 +80,7 @@ class RelationDetailScreen extends ConsumerWidget {
                   children: [
                     InfoRow(
                       icon: AppIcons.calendar,
-                      label: 'Demande reçue',
+                      label: iAmSender ? 'Demande envoyée' : 'Demande reçue',
                       value: formatDateFr(item.requestedAt),
                     ),
                     if (item.respondedAt != null)
@@ -120,7 +126,30 @@ class RelationDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-              if (item.status == RelationStatus.enAttente) ...[
+              if (accepted && iAmSender) ...[
+                const SizedBox(height: 16),
+                AppButton(
+                  label: 'Voir son profil',
+                  icon: AppIcons.person,
+                  onPressed: () => context.push('/talents/${item.recipientId}'),
+                ),
+              ],
+              if (item.status == RelationStatus.enAttente && iAmSender) ...[
+                const SizedBox(height: 24),
+                const AppCard(
+                  child: Text(
+                    'Votre demande attend la réponse de cette personne. Vous serez prévenu dans vos alertes.',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                AppButton(
+                  label: 'Annuler ma demande',
+                  icon: AppIcons.close,
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => _cancel(context, ref, relationId),
+                ),
+              ],
+              if (item.status == RelationStatus.enAttente && iAmRecipient) ...[
                 const SizedBox(height: 24),
                 AppButton(
                   label: 'Accepter la demande',
@@ -140,6 +169,30 @@ class RelationDetailScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _cancel(BuildContext context, WidgetRef ref, String id) async {
+    final confirmed = await confirmDialog(
+      context,
+      title: 'Annuler cette demande ?',
+      message: 'La personne ne pourra plus y répondre.',
+      confirmLabel: 'Annuler la demande',
+      destructive: true,
+    );
+    if (!confirmed || !context.mounted) return;
+    try {
+      await ref.read(miseEnRelationRepositoryProvider).cancel(id);
+      ref.read(relationsRevisionProvider.notifier).state++;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Demande annulée.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(failureMessage(e))));
+      }
+    }
   }
 
   Future<void> _respond(

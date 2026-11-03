@@ -71,124 +71,162 @@ class _AddCompetenceScreenState extends ConsumerState<AddCompetenceScreen> {
           transitionBuilder: (w, a) => FadeTransition(
             opacity: a,
             child: SlideTransition(
-                position: Tween(begin: const Offset(.04, 0), end: Offset.zero).animate(a), child: w),
+              position: Tween(
+                begin: const Offset(.04, 0),
+                end: Offset.zero,
+              ).animate(a),
+              child: w,
+            ),
           ),
           child: _selected == null
-              ? KeyedSubtree(key: const ValueKey('recherche'), child: _searchStep())
-              : KeyedSubtree(key: ValueKey(_selected!.id), child: _levelStep(add)),
+              ? KeyedSubtree(
+                  key: const ValueKey('recherche'),
+                  child: _searchStep(),
+                )
+              : KeyedSubtree(
+                  key: ValueKey(_selected!.id),
+                  child: _levelStep(add),
+                ),
         ),
       ),
     );
   }
 
   Widget _searchStep() => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('Quelle compétence voulez-vous ajouter ?',
-              style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
-          AppTextField(
-              label: 'Rechercher (ex. soudure, couture)',
-              controller: _search,
-              textInputAction: TextInputAction.search),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _query.length < 2
-                ? const EmptyView(
-                    message:
-                        'Tapez au moins 2 lettres pour chercher une compétence.',
-                    icon: AppIcons.competences)
-                : _Results(
-                    query: _query,
-                    onSelect: _choisirCompetence),
-          ),
-        ]),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Quelle compétence voulez-vous ajouter ?',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 12),
+        AppTextField(
+          label: 'Rechercher (ex. soudure, couture)',
+          controller: _search,
+          textInputAction: TextInputAction.search,
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _query.length < 2
+              ? const EmptyView(
+                  message:
+                      'Tapez au moins 2 lettres pour chercher une compétence.',
+                  icon: AppIcons.competences,
+                )
+              : _Results(query: _query, onSelect: _choisirCompetence),
+        ),
+      ],
+    ),
+  );
 
   void _choisirCompetence(CompetenceRef c) => setState(() {
-        _selected = c;
-        _niveau = null;
-        // Un seul secteur possible : il est choisi d'office, sans question inutile.
-        _parcours = c.parcoursPossibles.length == 1 ? c.parcoursPossibles.first : null;
-      });
+    _selected = c;
+    _niveau = null;
+    // Un seul secteur possible : il est choisi d'office, sans question inutile.
+    _parcours = c.parcoursPossibles.length == 1
+        ? c.parcoursPossibles.first
+        : null;
+  });
 
   Widget _levelStep(AsyncValue<void> add) {
     final busy = add.isLoading;
     final c = _selected!;
-    return ListView(padding: const EdgeInsets.all(20), children: [
-      AppCard(
-        accentColor: AppColors.green,
-        child: Row(children: [
-          Expanded(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(c.nom, style: Theme.of(context).textTheme.titleMedium),
-              if (c.secteurNom != null || c.metierNom != null)
-                Text([c.metierNom, c.secteurNom].whereType<String>().join(' · '),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.muted)),
-            ]),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        AppCard(
+          accentColor: AppColors.green,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(c.nom, style: Theme.of(context).textTheme.titleMedium),
+                    if (c.secteurNom != null || c.metierNom != null)
+                      Text(
+                        [
+                          c.metierNom,
+                          c.secteurNom,
+                        ].whereType<String>().join(' · '),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: AppColors.muted),
+                      ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => setState(() {
+                        _selected = null;
+                        _niveau = null;
+                        _parcours = null;
+                      }),
+                child: const Text('Changer'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: busy
-                ? null
-                : () => setState(() {
-                      _selected = null;
-                      _niveau = null;
-                      _parcours = null;
-                    }),
-            child: const Text('Changer'),
+        ),
+        const SizedBox(height: 24),
+        const SectionHeader(title: 'Votre niveau'),
+        ProgressiveChoice<Niveau>(
+          options: Niveau.values,
+          selected: _niveau,
+          enabled: !busy,
+          titleOf: (n) => n.label,
+          descriptionOf: _levelDescription,
+          onChanged: (n) => setState(() => _niveau = n),
+        ),
+        // Étape suivante : n'apparaît qu'une fois le niveau choisi.
+        _Revelation(
+          visible: _niveau != null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 12),
+              const SectionHeader(title: 'Comment avez-vous appris ?'),
+              ProgressiveChoice<Parcours>(
+                options: c.parcoursPossibles,
+                selected: _parcours,
+                enabled: !busy,
+                singleNote: Parcours.noteUnique(c.parcoursPossibles),
+                titleOf: (p) => p.label,
+                descriptionOf: (p) => p.description,
+                detailsOf: (p) => _PreuvesAttendues(parcours: p),
+                onChanged: (p) => setState(() => _parcours = p),
+              ),
+            ],
           ),
-        ]),
-      ),
-      const SizedBox(height: 24),
-      const SectionHeader(title: 'Votre niveau'),
-      ProgressiveChoice<Niveau>(
-        options: Niveau.values,
-        selected: _niveau,
-        enabled: !busy,
-        titleOf: (n) => n.label,
-        descriptionOf: _levelDescription,
-        onChanged: (n) => setState(() => _niveau = n),
-      ),
-      // Étape suivante : n'apparaît qu'une fois le niveau choisi.
-      _Revelation(
-        visible: _niveau != null,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const SizedBox(height: 12),
-          const SectionHeader(title: 'Comment avez-vous appris ?'),
-          ProgressiveChoice<Parcours>(
-            options: c.parcoursPossibles,
-            selected: _parcours,
-            enabled: !busy,
-            singleNote: Parcours.noteUnique(c.parcoursPossibles),
-            titleOf: (p) => p.label,
-            descriptionOf: (p) => p.description,
-            detailsOf: (p) => _PreuvesAttendues(parcours: p),
-            onChanged: (p) => setState(() => _parcours = p),
+        ),
+        _Revelation(
+          visible: _niveau != null && _parcours != null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (add.hasError) ...[
+                const SizedBox(height: 4),
+                Text(
+                  failureMessage(add.error!),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 8),
+              AppButton(
+                label: 'Ajouter cette compétence',
+                onPressed: _niveau == null || _parcours == null
+                    ? null
+                    : _submit,
+                isLoading: busy,
+              ),
+            ],
           ),
-        ]),
-      ),
-      _Revelation(
-        visible: _niveau != null && _parcours != null,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (add.hasError) ...[
-            const SizedBox(height: 4),
-            Text(failureMessage(add.error!),
-                style: const TextStyle(color: AppColors.error)),
-            const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 8),
-          AppButton(
-              label: 'Ajouter cette compétence',
-              onPressed: _niveau == null || _parcours == null ? null : _submit,
-              isLoading: busy),
-        ]),
-      ),
-    ]);
+        ),
+      ],
+    );
   }
 }
 
@@ -211,9 +249,16 @@ class _Revelation extends StatelessWidget {
         transitionBuilder: (w, a) => FadeTransition(
           opacity: a,
           child: SlideTransition(
-              position: Tween(begin: const Offset(0, .06), end: Offset.zero).animate(a), child: w),
+            position: Tween(
+              begin: const Offset(0, .06),
+              end: Offset.zero,
+            ).animate(a),
+            child: w,
+          ),
         ),
-        child: visible ? KeyedSubtree(key: const ValueKey(true), child: child) : const SizedBox(key: ValueKey(false), width: double.infinity),
+        child: visible
+            ? KeyedSubtree(key: const ValueKey(true), child: child)
+            : const SizedBox(key: ValueKey(false), width: double.infinity),
       ),
     );
   }
@@ -228,22 +273,29 @@ class _PreuvesAttendues extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return AppCard(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Preuves que vous pourrez joindre', style: text.titleSmall),
-        const SizedBox(height: 8),
-        for (final t in parcours.preuves)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(children: [
-              const Icon(Icons.task_alt, size: 18, color: AppColors.green),
-              const SizedBox(width: 8),
-              Expanded(child: Text(t.label, style: text.bodyMedium)),
-            ]),
-          ),
-        if (parcours == Parcours.informel)
-          Text("Pas de certificat ? Vous pourrez passer un test de validation dans un centre professionnel.",
-              style: text.bodySmall?.copyWith(color: AppColors.muted)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Preuves que vous pourrez joindre', style: text.titleSmall),
+          const SizedBox(height: 8),
+          for (final t in parcours.preuves)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.task_alt, size: 18, color: AppColors.green),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(t.label, style: text.bodyMedium)),
+                ],
+              ),
+            ),
+          if (parcours == Parcours.informel)
+            Text(
+              "Pas de certificat ? Vous pourrez passer un test de validation dans un centre professionnel.",
+              style: text.bodySmall?.copyWith(color: AppColors.muted),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -267,29 +319,34 @@ class _Results extends ConsumerWidget {
         separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (_, i) => AppCard(
           onTap: () => onSelect(items[i]),
-          child: Row(children: [
-            Expanded(
-              child: Column(
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(items[i].nom,
-                        style: Theme.of(context).textTheme.titleSmall),
+                    Text(
+                      items[i].nom,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                     if (items[i].secteurNom != null)
-                      Text(items[i].secteurNom!,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: AppColors.muted)),
+                      Text(
+                        items[i].secteurNom!,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: AppColors.muted),
+                      ),
                     if (items[i].parcoursPossibles.length == 1)
-                      Text('${items[i].parcoursPossibles.first.label} uniquement',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(color: AppColors.green)),
-                  ]),
-            ),
-            const Icon(AppIcons.chevron, color: AppColors.muted),
-          ]),
+                      Text(
+                        '${items[i].parcoursPossibles.first.label} uniquement',
+                        style: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(color: AppColors.green),
+                      ),
+                  ],
+                ),
+              ),
+              const Icon(AppIcons.chevron, color: AppColors.muted),
+            ],
+          ),
         ),
       ),
     );
@@ -297,7 +354,7 @@ class _Results extends ConsumerWidget {
 }
 
 String _levelDescription(Niveau n) => switch (n) {
-      Niveau.debutant => "Je découvre ou j'apprends encore.",
-      Niveau.intermediaire => 'Je réalise seul les tâches courantes.',
-      Niveau.expert => 'Je maîtrise et je peux former les autres.',
-    };
+  Niveau.debutant => "Je découvre ou j'apprends encore.",
+  Niveau.intermediaire => 'Je réalise seul les tâches courantes.',
+  Niveau.expert => 'Je maîtrise et je peux former les autres.',
+};

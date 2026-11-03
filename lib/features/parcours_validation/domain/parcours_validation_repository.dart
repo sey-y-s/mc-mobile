@@ -4,10 +4,12 @@ abstract interface class ParcoursValidationRepository {
   /// Parcours de validation recommandé pour une compétence du citoyen connecté.
   Future<ParcoursValidation> get(String citoyenCompetenceId);
 
-  /// Envoie une demande d'évaluation (pratique en centre, portfolio ou maître artisan) au centre choisi.
+  /// Envoie une demande d'évaluation : au centre choisi (pratique, portfolio, maître artisan)
+  /// ou, pour la validation documentaire, à l'administrateur avec la preuve à examiner ([preuveId]).
   Future<void> demanderEvaluation({
     required String citoyenCompetenceId,
     required ModaliteValidation modalite,
-    required String centreId,
+    String? centreId,
+    String? preuveId,
   });
 }

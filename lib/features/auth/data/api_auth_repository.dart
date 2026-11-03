@@ -48,7 +48,8 @@ class ApiAuthRepository implements AuthRepository {
         },
       ),
     );
-    final canaux = (res.data?['canaux'] as List?)
+    final canaux =
+        (res.data?['canaux'] as List?)
             ?.map(CanalVerification.fromApi)
             .whereType<CanalVerification>()
             .toList() ??
@@ -72,13 +73,15 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> resendOtp({required String identifiant, required CanalVerification canal}) =>
-      guardDio(
-        () => _dio.post<void>(
-          ApiEndpoints.resendOtp,
-          data: {'identifiant': identifiant, 'canal': canal.api},
-        ),
-      );
+  Future<void> resendOtp({
+    required String identifiant,
+    required CanalVerification canal,
+  }) => guardDio(
+    () => _dio.post<void>(
+      ApiEndpoints.resendOtp,
+      data: {'identifiant': identifiant, 'canal': canal.api},
+    ),
+  );
 
   @override
   Future<void> logout() async {
@@ -86,13 +89,20 @@ class ApiAuthRepository implements AuthRepository {
     try {
       // Les appels /auth n'envoient pas le jeton automatiquement : on le joint ici pour que le
       // serveur révoque l'accès, et on envoie le jeton de renouvellement pour couper toute la chaîne.
-      final access = await _storage.readAccess();
-      final refresh = await _storage.readRefresh();
+      // Les deux lectures partent ensemble, avant que la session locale ne soit effacée.
+      final jetons = await Future.wait([
+        _storage.readAccess(),
+        _storage.readRefresh(),
+      ]);
+      final access = jetons[0];
+      final refresh = jetons[1];
       await _dio
           .post<void>(
             ApiEndpoints.logout,
             data: refresh == null ? null : {'refreshToken': refresh},
-            options: Options(headers: {if (access != null) 'Authorization': 'Bearer $access'}),
+            options: Options(
+              headers: {if (access != null) 'Authorization': 'Bearer $access'},
+            ),
           )
           .timeout(const Duration(seconds: 3));
     } on DioException {
@@ -120,7 +130,11 @@ class ApiAuthRepository implements AuthRepository {
   }) => guardDio(
     () => _dio.post<void>(
       ApiEndpoints.resetPassword,
-      data: {'identifiant': identifiant, 'code': code, 'motDePasse': newPassword},
+      data: {
+        'identifiant': identifiant,
+        'code': code,
+        'motDePasse': newPassword,
+      },
     ),
   );
 

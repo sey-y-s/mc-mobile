@@ -30,13 +30,6 @@ final unreadNotificationCountProvider = FutureProvider.autoDispose<int>((
   return ref.watch(notificationRepositoryProvider).unreadCount();
 });
 
-/// Bloc des 3 dernières notifications pour la page d'accueil
-final recentNotificationsProvider =
-    FutureProvider.autoDispose<List<AppNotification>>((ref) async {
-      ref.watch(notificationsRevisionProvider);
-      return ref.watch(notificationRepositoryProvider).list(size: 3);
-    });
-
 /// Détail d'une notification spécifique
 final notificationDetailProvider = FutureProvider.autoDispose
     .family<AppNotification, String>((ref, id) {
@@ -55,9 +48,10 @@ class NotificationsController extends AsyncNotifier<void> {
     state = await AsyncValue.guard(() async {
       await ref.read(notificationRepositoryProvider).markRead(id);
     });
-    if (state.hasError) return false;
+    // Dans tous les cas, listes et pastille se resynchronisent avec le serveur : même si la réponse
+    // n'a pas pu être lue, la notification a pu être marquée lue côté serveur.
     ref.read(notificationsRevisionProvider.notifier).state++;
-    return true;
+    return !state.hasError;
   }
 
   /// Marque toutes les notifications comme lues
@@ -72,7 +66,9 @@ class NotificationsController extends AsyncNotifier<void> {
   }
 }
 
+/// Volontairement sans autoDispose : l'écran de détail lance « marquer lue » sans l'observer ;
+/// un contrôleur libéré en cours d'appel n'incrémentait jamais la révision, et la pastille restait fausse.
 final notificationsControllerProvider =
-    AsyncNotifierProvider.autoDispose<NotificationsController, void>(
+    AsyncNotifierProvider<NotificationsController, void>(
       NotificationsController.new,
     );

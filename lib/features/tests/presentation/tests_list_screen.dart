@@ -17,7 +17,7 @@ class TestsListScreen extends ConsumerWidget {
     body: Column(
       children: [
         const Padding(
-          padding: EdgeInsets.fromLTRB(20, 12, 20, 0),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Text(
             'Ces tests peuvent générer une preuve de vos connaissances. Ils ne constituent pas une certification officielle.',
             style: TextStyle(color: AppColors.muted),

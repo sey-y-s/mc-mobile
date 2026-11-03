@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mlc_mobile/features/passport/presentation/passport_providers.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -51,19 +52,19 @@ class _SuggestionCommuneCardState extends ConsumerState<SuggestionCommuneCard> {
         Row(children: [
           const Icon(Icons.place_outlined, color: AppColors.green),
           const SizedBox(width: 8),
-          Expanded(child: Text('Avez-vous changé de commune ?', style: text.titleSmall)),
+          Expanded(child: Text('Avez-vous déménagé ?', style: text.titleSmall)),
         ]),
         const SizedBox(height: 6),
         Text(
-          'Vous semblez être à ${widget.suggestion.libelle}.'
+                    'Vous semblez être en région ${widget.suggestion.regionNom ?? widget.suggestion.libelle}.'
           '${actuelle != null ? ' Votre commune actuelle est $actuelle.' : ''}',
           style: text.bodyMedium,
         ),
         const SizedBox(height: 12),
-        AppButton(
-          label: 'Oui, c’est ma nouvelle commune',
+                AppButton(
+          label: 'Choisir ma nouvelle commune',
           isLoading: _busy,
-          onPressed: () => _repondre(true),
+          onPressed: _busy ? null : () => context.push('/parametres/localisation'),
         ),
         const SizedBox(height: 8),
         AppButton(

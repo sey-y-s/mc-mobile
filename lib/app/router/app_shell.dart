@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mlc_mobile/core/widgets/app_dialogs.dart';
 import 'package:mlc_mobile/core/widgets/app_icons.dart';
 import 'package:mlc_mobile/core/widgets/app_nav_bar.dart';
 import 'package:mlc_mobile/features/notifications/presentation/notification_providers.dart';
@@ -12,30 +14,32 @@ class AppShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final unreadCount =
-        ref.watch(unreadNotificationCountProvider).value ?? 0;
+    final unreadCount = ref.watch(unreadNotificationCountProvider).value ?? 0;
 
     final tabs = <(AppNavItem, String)>[
       (
         const AppNavItem(
-            label: 'Accueil',
-            icon: AppIcons.home,
-            activeIcon: AppIcons.homeActive),
-        '/home'
+          label: 'Accueil',
+          icon: AppIcons.home,
+          activeIcon: AppIcons.homeActive,
+        ),
+        '/home',
       ),
       (
         const AppNavItem(
-            label: 'Passeport',
-            icon: AppIcons.passport,
-            activeIcon: AppIcons.passportActive),
-        '/passeport'
+          label: 'Passeport',
+          icon: AppIcons.passport,
+          activeIcon: AppIcons.passportActive,
+        ),
+        '/passeport',
       ),
       (
         const AppNavItem(
-            label: 'Talents',
-            icon: AppIcons.talents,
-            activeIcon: AppIcons.talentsActive),
-        '/talents'
+          label: 'Talents',
+          icon: AppIcons.talents,
+          activeIcon: AppIcons.talentsActive,
+        ),
+        '/talents',
       ),
       (
         AppNavItem(
@@ -44,25 +48,41 @@ class AppShell extends ConsumerWidget {
           activeIcon: AppIcons.notificationsActive,
           badgeCount: unreadCount,
         ),
-        '/notifications'
+        '/notifications',
       ),
       (
         const AppNavItem(
-            label: 'Plus',
-            icon: AppIcons.more,
-            activeIcon: AppIcons.moreActive),
-        '/parametres'
+          label: 'Plus',
+          icon: AppIcons.more,
+          activeIcon: AppIcons.moreActive,
+        ),
+        '/parametres',
       ),
     ];
 
     final path = GoRouterState.of(context).uri.path;
     final index = tabs.indexWhere((t) => path.startsWith(t.$2));
-    return Scaffold(
-      body: _FonduOnglet(index: index, child: child),
-      bottomNavigationBar: AppNavBar(
-        items: [for (final t in tabs) t.$1],
-        currentIndex: index < 0 ? 0 : index,
-        onTap: (i) => context.go(tabs[i].$2),
+    // Les 5 onglets sont la racine de l'application : « Retour » y quitte l'appli, après confirmation.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final quitter = await confirmDialog(
+          context,
+          title: 'Quitter l’application ?',
+          message: 'Voulez-vous vraiment fermer MaliCompétences ?',
+          confirmLabel: 'Quitter',
+          cancelLabel: 'Rester',
+        );
+        if (quitter) await SystemNavigator.pop();
+      },
+      child: Scaffold(
+        body: _FonduOnglet(index: index, child: child),
+        bottomNavigationBar: AppNavBar(
+          items: [for (final t in tabs) t.$1],
+          currentIndex: index < 0 ? 0 : index,
+          onTap: (i) => context.go(tabs[i].$2),
+        ),
       ),
     );
   }
@@ -78,14 +98,20 @@ class _FonduOnglet extends StatefulWidget {
   State<_FonduOnglet> createState() => _FonduOngletState();
 }
 
-class _FonduOngletState extends State<_FonduOnglet> with SingleTickerProviderStateMixin {
-  late final _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 260), value: 1);
+class _FonduOngletState extends State<_FonduOnglet>
+    with SingleTickerProviderStateMixin {
+  late final _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 1,
+  );
   late final _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
 
   @override
   void didUpdateWidget(covariant _FonduOnglet old) {
     super.didUpdateWidget(old);
-    if (old.index != widget.index && !(MediaQuery.maybeOf(context)?.disableAnimations ?? false)) {
+    if (old.index != widget.index &&
+        !(MediaQuery.maybeOf(context)?.disableAnimations ?? false)) {
       _ctrl.forward(from: 0);
     }
   }
@@ -98,10 +124,13 @@ class _FonduOngletState extends State<_FonduOnglet> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-        opacity: _anim,
-        child: SlideTransition(
-          position: Tween(begin: const Offset(0, .015), end: Offset.zero).animate(_anim),
-          child: widget.child,
-        ),
-      );
+    opacity: _anim,
+    child: SlideTransition(
+      position: Tween(
+        begin: const Offset(0, .015),
+        end: Offset.zero,
+      ).animate(_anim),
+      child: widget.child,
+    ),
+  );
 }

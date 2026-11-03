@@ -145,6 +145,20 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
         : 'Utilisez un lien HTTP ou HTTPS valide.';
   }
 
+  /// Revient sur la liste du portfolio en gardant la pile de navigation : « go » l'effaçait,
+  /// et la touche « Retour » n'avait alors plus nulle part où aller.
+  /// Création : formulaire → liste. Modification : formulaire → détail → liste.
+  void _retourALaListe() {
+    final router = GoRouter.of(context);
+    final pages = widget.initial == null ? 1 : 2;
+    var retour = 0;
+    while (retour < pages && router.canPop()) {
+      router.pop();
+      retour++;
+    }
+    if (retour == 0) router.go('/portfolio');
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
@@ -184,7 +198,7 @@ class _PortfolioFormScreenState extends ConsumerState<PortfolioFormScreen> {
         if (mounted) setState(() => _progress[i] = 1);
       }
       ref.read(portfolioRevisionProvider.notifier).state++;
-      if (mounted) context.go('/portfolio/${saved.id}');
+      if (mounted) _retourALaListe();
     } catch (e) {
       if (mounted) {
         setState(() => _error = e is AppFailure ? e : const UnknownFailure());

@@ -51,6 +51,10 @@ class AdminValidation {
     required this.type,
     required this.label,
     required this.status,
+    this.proofTitle,
+    this.proofUrl,
+    this.centreName,
+    this.comment,
   });
 
   final String id;
@@ -58,12 +62,22 @@ class AdminValidation {
   final String label;
   final String status;
 
+  /// Pièce jointe à examiner (validation documentaire) ; null pour une évaluation faite par un centre.
+  final String? proofTitle;
+  final String? proofUrl;
+  final String? centreName;
+  final String? comment;
+
   factory AdminValidation.fromJson(Map<String, dynamic> json) =>
       AdminValidation(
         id: (json['id'] ?? '').toString(),
         type: (json['type'] ?? '').toString(),
         label: (json['libelle'] ?? '').toString(),
         status: (json['statut'] ?? '').toString(),
+        proofTitle: json['preuveTitre']?.toString(),
+        proofUrl: json['preuveUrl']?.toString(),
+        centreName: json['centreNom']?.toString(),
+        comment: json['commentaire']?.toString(),
       );
 }
 
@@ -129,9 +143,8 @@ class AdminQcmQuestion {
           ? propositions
                 .whereType<Map>()
                 .map(
-                  (item) => AdminQcmAnswer.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ),
+                  (item) =>
+                      AdminQcmAnswer.fromJson(Map<String, dynamic>.from(item)),
                 )
                 .toList()
           : const [],

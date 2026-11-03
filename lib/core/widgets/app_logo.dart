@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
+/// Logo MaliCompétences (le même visuel que l'icône de l'application).
 class AppLogo extends StatelessWidget {
   const AppLogo({super.key, this.size = 80});
   final double size;
   @override
-  Widget build(BuildContext context) => SvgPicture.asset(
-        'assets/svg/logo.svg',
-        width: size,
-        height: size,
-        semanticsLabel: 'Logo MaliCompétences',
-      );
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(size * 0.22),
+    child: Image.asset(
+      'assets/images/logo.png',
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.high,
+      semanticLabel: 'Logo MaliCompétences',
+    ),
+  );
 }

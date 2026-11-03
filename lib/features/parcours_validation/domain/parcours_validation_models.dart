@@ -16,13 +16,15 @@ enum ModaliteValidation {
     return null;
   }
 
-  /// Type de demande envoyé au serveur quand l'évaluation se fait auprès d'un centre (null sinon).
+  /// Type de demande envoyé au serveur (null pour le test numérique, qui se passe dans l'application).
+  /// Documentaire : examinée par un administrateur, sans centre. Les autres : auprès d'un centre.
   String? get typeDemande => switch (this) {
-        ModaliteValidation.pratiqueCentre => 'VALIDATION_PRATIQUE',
-        ModaliteValidation.portfolioMedia => 'PORTFOLIO_MEDIA',
-        ModaliteValidation.maitreArtisan => 'MAITRE_ARTISAN',
-        _ => null,
-      };
+    ModaliteValidation.documentaire => 'DIPLOME_VERIFIE',
+    ModaliteValidation.pratiqueCentre => 'VALIDATION_PRATIQUE',
+    ModaliteValidation.portfolioMedia => 'PORTFOLIO_MEDIA',
+    ModaliteValidation.maitreArtisan => 'MAITRE_ARTISAN',
+    _ => null,
+  };
 }
 
 /// Les 4 statuts d'avancement d'une compétence.
@@ -37,25 +39,30 @@ enum StatutParcours {
   final String label;
 
   static StatutParcours fromApi(String? v) => StatutParcours.values.firstWhere(
-        (s) => s.apiCode == v,
-        orElse: () => StatutParcours.declaree,
-      );
+    (s) => s.apiCode == v,
+    orElse: () => StatutParcours.declaree,
+  );
 }
 
 /// Centre pouvant évaluer la compétence, avec sa position par rapport au citoyen.
 class CentreProche {
-  const CentreProche({required this.id, required this.nom, this.adresse, this.proximite});
+  const CentreProche({
+    required this.id,
+    required this.nom,
+    this.adresse,
+    this.proximite,
+  });
   final String id;
   final String nom;
   final String? adresse;
   final String? proximite;
 
   factory CentreProche.fromJson(Map<String, dynamic> json) => CentreProche(
-        id: json['id'].toString(),
-        nom: (json['nom'] ?? 'Centre').toString(),
-        adresse: json['adresse']?.toString(),
-        proximite: (json['proximiteLibelle'] ?? json['proximite'])?.toString(),
-      );
+    id: json['id'].toString(),
+    nom: (json['nom'] ?? 'Centre').toString(),
+    adresse: json['adresse']?.toString(),
+    proximite: (json['proximiteLibelle'] ?? json['proximite'])?.toString(),
+  );
 }
 
 class ModaliteProposee {
@@ -104,7 +111,10 @@ class ModaliteProposee {
       seuilReussite: (json['seuilReussite'] as num?)?.toInt(),
       criteres: json['criteres']?.toString(),
       centres: centres is List
-          ? centres.whereType<Map>().map((c) => CentreProche.fromJson(Map<String, dynamic>.from(c))).toList()
+          ? centres
+                .whereType<Map>()
+                .map((c) => CentreProche.fromJson(Map<String, dynamic>.from(c)))
+                .toList()
           : const [],
     );
   }
@@ -143,10 +153,13 @@ class ParcoursValidation {
       message: (json['message'] ?? '').toString(),
       modalites: liste is List
           ? liste
-              .whereType<Map>()
-              .map((m) => ModaliteProposee.fromJson(Map<String, dynamic>.from(m)))
-              .whereType<ModaliteProposee>()
-              .toList()
+                .whereType<Map>()
+                .map(
+                  (m) =>
+                      ModaliteProposee.fromJson(Map<String, dynamic>.from(m)),
+                )
+                .whereType<ModaliteProposee>()
+                .toList()
           : const [],
     );
   }

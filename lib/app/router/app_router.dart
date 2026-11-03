@@ -15,8 +15,12 @@ import 'package:mlc_mobile/features/tests/domain/test_numerique_models.dart';
 /// Ordre important : les routes statiques (/x/ajouter) doivent précéder les routes à paramètre (/x/:id).
 /// Rôles autorisés pour une adresse réservée, ou null si elle est ouverte à tout compte connecté.
 Set<String>? _rolesRequis(String loc) {
-  if (loc == '/admin' || loc.startsWith('/admin/')) return const {'ADMIN', 'SUPER_ADMIN'};
-  if (loc == '/centre-admin' || loc.startsWith('/centre-admin/')) return const {'CENTRE_ADMIN'};
+  if (loc == '/admin' || loc.startsWith('/admin/')) {
+    return const {'ADMIN', 'SUPER_ADMIN'};
+  }
+  if (loc == '/centre-admin' || loc.startsWith('/centre-admin/')) {
+    return const {'CENTRE_ADMIN'};
+  }
   return null;
 }
 
@@ -36,14 +40,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       final isPublic = AppRoutes.publicRoutes.contains(loc);
       if (status == SessionStatus.unauthenticated) {
-        return isPublic ? null : AppRoutes.login;
+        return isPublic || loc == AppRoutes.terms ? null : AppRoutes.login;
       }
       if (isPublic || loc == AppRoutes.splash) return AppRoutes.home;
       // Pages réservées : un lien direct ne doit pas ouvrir l'espace d'un autre rôle
       // (le serveur refuse de toute façon ; ici on évite l'écran d'erreur).
       final roles = _rolesRequis(loc);
       if (roles != null) {
-        final role = JwtUtils.role(await ref.read(tokenStorageProvider).readAccess());
+        final role = JwtUtils.role(
+          await ref.read(tokenStorageProvider).readAccess(),
+        );
         if (role == null || !roles.contains(role)) return AppRoutes.home;
       }
       return null;
@@ -55,7 +61,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (c, s) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (c, s) => const LoginScreen()),
-      GoRoute(path: AppRoutes.verify, builder: (c, s) => const VerifyOtpScreen()),
+      GoRoute(
+        path: AppRoutes.verify,
+        builder: (c, s) => const VerifyOtpScreen(),
+      ),
       GoRoute(
         path: AppRoutes.register,
         builder: (c, s) => const RegisterScreen(),
@@ -68,8 +77,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => AppShell(child: child),
         routes: [
           GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
-          GoRoute(path: '/evaluateur', builder: (c, s) => const EvaluateurScreen()),
-          GoRoute(path: '/centre-admin/evaluateurs', builder: (c, s) => const CentreAdminEvaluateursScreen()),
+          GoRoute(
+            path: '/evaluateur',
+            builder: (c, s) => const EvaluateurScreen(),
+          ),
+          GoRoute(
+            path: '/evaluateur/demandes/:id/portfolio',
+            builder: (c, s) => EvaluateurPortfolioScreen(
+              demandeId: s.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: '/centre-admin/evaluateurs',
+            builder: (c, s) => const CentreAdminEvaluateursScreen(),
+          ),
           GoRoute(
             path: '/passeport',
             builder: (c, s) => const PassportScreen(),
@@ -111,10 +132,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/passeport/disponibilite',
         builder: (c, s) => const AvailabilityScreen(),
       ),
-      GoRoute(
-        path: '/passeport/cv',
-        builder: (c, s) => const CvScreen(),
-      ),
+      GoRoute(path: '/passeport/cv', builder: (c, s) => const CvScreen()),
       GoRoute(
         path: '/competences/ajouter',
         builder: (c, s) => const AddCompetenceScreen(),
@@ -179,12 +197,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const ValidationsHistoryScreen(),
       ),
       GoRoute(
+        // Ancienne adresse conservée : il n'y a plus qu'un seul parcours de validation, celui du serveur.
         path: '/validations/demander',
-        builder: (c, s) => RequestValidationScreen(
-          competenceId: s.uri.queryParameters['competenceId'],
-          preuveId: s.uri.queryParameters['preuveId'],
-          testCentre: s.uri.queryParameters['test'] == '1',
-        ),
+        redirect: (c, s) {
+          final id = s.uri.queryParameters['competenceId'];
+          return id == null || id.isEmpty
+              ? '/competences'
+              : '/competences/$id/parcours';
+        },
       ),
       GoRoute(
         path: '/validations/:id',
@@ -212,9 +232,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/opportunites',
-        builder: (c, s) => AdminRouteGuard(
-          child: const AdminOpportunitiesScreen(),
-        ),
+        builder: (c, s) =>
+            AdminRouteGuard(child: const AdminOpportunitiesScreen()),
       ),
       GoRoute(
         path: '/admin/tests',
@@ -222,15 +241,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/validations',
-        builder: (c, s) => AdminRouteGuard(
-          child: const AdminValidationsScreen(),
-        ),
+        builder: (c, s) =>
+            AdminRouteGuard(child: const AdminValidationsScreen()),
       ),
       GoRoute(
         path: '/admin/organisations',
-        builder: (c, s) => AdminRouteGuard(
-          child: const AdminOrganizationsScreen(),
-        ),
+        builder: (c, s) =>
+            AdminRouteGuard(child: const AdminOrganizationsScreen()),
       ),
       GoRoute(
         path: '/admin/utilisateurs',
@@ -269,10 +286,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const LocationSettingsScreen(),
       ),
       GoRoute(
-        path: '/parametres/corrections',
-        builder: (c, s) => const CorrectionsScreen(),
-      ),
-      GoRoute(
         path: '/parametres/securite',
         builder: (c, s) => const SecuritySettingsScreen(),
       ),
@@ -280,10 +293,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/parametres/preferences',
         builder: (c, s) => const PreferencesScreen(),
       ),
-      GoRoute(
-        path: '/parametres/conditions',
-        builder: (c, s) => const TermsScreen(),
-      ),
+      GoRoute(path: AppRoutes.terms, builder: (c, s) => const TermsScreen()),
     ],
   );
 });

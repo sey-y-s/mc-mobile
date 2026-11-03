@@ -29,7 +29,7 @@ class PortfolioDetailScreen extends ConsumerWidget {
         value: value,
         onRetry: () => ref.invalidate(portfolioDetailProvider(itemId)),
         data: (item) => ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           children: [
             Text(item.title, style: Theme.of(context).textTheme.headlineSmall),
             if (item.date != null)
@@ -102,8 +102,7 @@ class PortfolioDetailScreen extends ConsumerWidget {
             AppButton(
               label: 'Modifier',
               icon: AppIcons.edit,
-              onPressed: () =>
-                  context.push('/portfolio/${item.id}/modifier'),
+              onPressed: () => context.push('/portfolio/${item.id}/modifier'),
             ),
             const SizedBox(height: 8),
             AppButton(
@@ -122,7 +121,10 @@ class PortfolioDetailScreen extends ConsumerWidget {
                 try {
                   await ref.read(portfolioRepositoryProvider).delete(item.id);
                   ref.read(portfolioRevisionProvider.notifier).state++;
-                  if (context.mounted) context.go('/portfolio');
+                  if (context.mounted) {
+                    // La liste est juste en dessous : on y revient sans effacer la navigation.
+                    context.canPop() ? context.pop() : context.go('/portfolio');
+                  }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(

@@ -22,18 +22,28 @@ class ExperiencesListScreen extends ConsumerWidget {
         icon: const Icon(AppIcons.add),
         label: const Text('Ajouter'),
       ),
-      body: PaginatedListView<Experience>(
-        key: ValueKey(revision), // nouvelle clé après une modification : la liste se recharge
-        emptyMessage: "Aucune expérience pour l'instant.\nAjoutez votre parcours : emplois, apprentissages, reconversions.",
-        fetchPage: (page, size) => ref.read(experienceRepositoryProvider).list(page: page, size: size),
-        itemBuilder: (_, e) => ExperienceTile(
-          titre: e.titre,
-          entreprise: e.entreprise,
-          periodLabel: experiencePeriodLabel(e),
-          enCours: e.enCours,
-          reconversion: e.reconversion,
-          onTap: () => context.push('/experiences/${e.id}'),
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: PaginatedListView<Experience>(
+              key: ValueKey(
+                revision,
+              ), // nouvelle clé après une modification : la liste se recharge
+              emptyMessage: "Aucune expérience pour l'instant.\nAjoutez votre parcours : emplois, apprentissages, reconversions.",
+              fetchPage: (page, size) => ref
+                  .read(experienceRepositoryProvider)
+                  .list(page: page, size: size),
+              itemBuilder: (_, e) => ExperienceTile(
+                titre: e.titre,
+                entreprise: e.entreprise,
+                periodLabel: experiencePeriodLabel(e),
+                enCours: e.enCours,
+                reconversion: e.reconversion,
+                onTap: () => context.push('/experiences/${e.id}'),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -69,3 +69,9 @@ final talentProfileProvider = FutureProvider.autoDispose
     .family<TalentProfileAnonymized, String>(
       (ref, id) => ref.watch(talentRepositoryProvider).getAnonymized(id),
     );
+
+/// Profil complet d'un contact établi (photo, réalisations) : le serveur le refuse sans mise en relation acceptée.
+final contactProfilProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, id) async {
+  final response = await ref.watch(dioProvider).get<Map<String, dynamic>>('/api/v1/talents/$id/profil');
+  return response.data ?? const {};
+});
